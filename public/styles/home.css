@@ -1,0 +1,412 @@
+/* =====================================================
+   HOMEPAGE SPECIFIC STYLES
+   Wildcat.chat Platform Homepage
+   ===================================================== */
+
+/* =====================================================
+   HERO SECTION
+   ===================================================== */
+.hero-section {
+  text-align: center;
+  padding: var(--spacing-large) var(--spacing-medium);
+  margin-bottom: var(--spacing-large);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.hero-title {
+  font-size: var(--font-size-huge);
+  font-weight: 300;
+  margin: 0 0 var(--spacing-medium) 0;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-medium);
+  flex-wrap: wrap;
+}
+
+.wildcat-svg {
+  width: 5rem;
+  height: 5rem;
+  fill: var(--color-text);
+  flex-shrink: 0;
+}
+
+.hero-tagline {
+  font-size: var(--font-size-medium);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-large) 0;
+  font-weight: 400;
+  max-width: 800px;
+  line-height: 1.6;
+}
+
+.hero-cta-buttons {
+  display: flex;
+  gap: var(--spacing-medium);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: var(--spacing-medium);
+}
+
+.hero-cta-buttons a {
+  font-size: var(--font-size-regular);
+  padding: 12px 24px;
+}
+
+/* Twitch purple button styling */
+.twitch-button {
+  background-color: #9146FF;
+  color: white;
+  border-color: #772CE8;
+  box-shadow: 4px 4px 0 #772CE8;
+}
+
+.twitch-button:hover,
+.twitch-button:focus {
+  background-color: #9146FF;
+  color: white;
+  box-shadow: 6px 6px 1px rgba(119, 44, 232, 0.6);
+}
+
+.twitch-button:active {
+  background-color: #7928d8;
+  color: white;
+  box-shadow: 1px 1px 0 #772CE8;
+}
+
+/* =====================================================
+   PLATFORM OVERVIEW
+   ===================================================== */
+.platform-overview {
+  max-width: 900px;
+  margin: 0 auto var(--spacing-large) auto;
+  padding: var(--spacing-large);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 2px solid var(--color-border);
+  box-shadow: 8px 8px 0 var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.platform-overview p {
+  font-size: var(--font-size-regular);
+  line-height: 1.8;
+  margin: 0 0 var(--spacing-medium) 0;
+}
+
+.platform-overview p:last-child {
+  margin-bottom: 0;
+}
+
+.invite-notice {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  padding: var(--spacing-medium);
+  border-radius: 4px;
+  margin-top: var(--spacing-medium);
+  font-size: 0.95em;
+}
+
+.invite-notice a {
+  color: #007bff;
+  text-decoration: underline;
+  border: none;
+  box-shadow: none;
+  background: none;
+  padding: 0;
+  font-weight: 600;
+}
+
+.invite-notice a:hover {
+  color: #0056b3;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =====================================================
+   FEATURES SECTION
+   ===================================================== */
+.features-section {
+  margin: var(--spacing-large) auto;
+  padding: 0 var(--spacing-medium);
+  max-width: 1400px;
+}
+
+.features-section h2 {
+  font-size: var(--font-size-large);
+  text-align: center;
+  margin-bottom: var(--spacing-large);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-large);
+  margin-bottom: var(--spacing-large);
+}
+
+.feature-card {
+  border: 3px solid var(--color-border);
+  padding: var(--spacing-large);
+  background-color: var(--color-card-bg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 8px 8px 0 var(--color-border);
+  border-radius: 8px;
+}
+
+.feature-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 11px 11px 1px rgba(0, 0, 0, 0.6);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-medium);
+  text-align: center;
+}
+
+.feature-card h3 {
+  font-size: var(--font-size-medium);
+  margin-bottom: var(--spacing-medium);
+  text-align: center;
+}
+
+.feature-card p {
+  margin-bottom: var(--spacing-medium);
+  line-height: 1.6;
+}
+
+.feature-list {
+  list-style: disc;
+  padding-left: var(--spacing-large);
+  margin: var(--spacing-medium) 0;
+}
+
+.feature-list li {
+  margin-bottom: var(--spacing-small);
+  line-height: 1.6;
+}
+
+.feature-card-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-medium);
+  padding-top: var(--spacing-medium);
+}
+
+.feature-card-actions a {
+  text-align: center;
+  font-size: var(--font-size-regular);
+}
+
+.secondary-link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.secondary-link:hover {
+  transform: none;
+  box-shadow: none;
+  color: #666666;
+}
+
+.secondary-link:active {
+  transform: none;
+  box-shadow: none;
+  color: #999999;
+}
+
+/* =====================================================
+   RESOURCES SECTION
+   ===================================================== */
+.resources-section {
+  max-width: 900px;
+  margin: var(--spacing-large) auto;
+  padding: var(--spacing-large);
+  background-color: var(--color-card-bg);
+  border: 2px solid var(--color-border);
+  box-shadow: 8px 8px 0 var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.resources-section h2 {
+  font-size: var(--font-size-large);
+  margin-bottom: var(--spacing-large);
+}
+
+.resources-section p {
+  font-size: var(--font-size-regular);
+  line-height: 1.8;
+  margin-bottom: var(--spacing-medium);
+}
+
+.resources-links {
+  display: flex;
+  gap: var(--spacing-medium);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--spacing-large);
+}
+
+/* =====================================================
+   DARK MODE
+   ===================================================== */
+@media (prefers-color-scheme: dark) {
+  .wildcat-svg {
+    fill: var(--color-text);
+  }
+
+  .platform-overview {
+    background-color: rgba(30, 30, 30, 0.7);
+    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+  }
+
+  .invite-notice {
+    background: #2a2a1a;
+    border-color: #544c3a;
+    color: #e0e0e0;
+  }
+
+  .invite-notice a {
+    color: #66b3ff;
+  }
+
+  .invite-notice a:hover {
+    color: #99ccff;
+  }
+
+  .feature-card {
+    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+  }
+
+  .feature-card:hover {
+    box-shadow: 11px 11px 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .resources-section {
+    background-color: var(--color-card-bg);
+    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+  }
+
+  .twitch-button {
+    background-color: #9146FF;
+    color: white;
+    border-color: #772CE8;
+    box-shadow: 4px 4px 0 #5c16c5;
+  }
+
+  .twitch-button:hover,
+  .twitch-button:focus {
+    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .twitch-button:active {
+    background-color: #5c16c5;
+    box-shadow: 1px 1px 0 #772CE8;
+  }
+
+  .secondary-link {
+    color: #cccccc;
+  }
+
+  .secondary-link:hover {
+    color: #ffffff;
+  }
+
+  .secondary-link:active {
+    color: #bbbbbb;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE ADJUSTMENTS
+   ===================================================== */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: auto;
+    padding: var(--spacing-large) var(--spacing-small);
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+    flex-direction: column;
+  }
+
+  .wildcat-svg {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .hero-tagline {
+    font-size: 1.2rem;
+  }
+
+  .hero-cta-buttons {
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .hero-cta-buttons a {
+    width: 100%;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-medium);
+  }
+
+  .platform-overview,
+  .resources-section {
+    padding: var(--spacing-medium);
+  }
+}
+
+@media (max-width: 575px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .wildcat-svg {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .hero-tagline {
+    font-size: 1.1rem;
+  }
+
+  .feature-card {
+    padding: var(--spacing-medium);
+    box-shadow: 6px 6px 0 var(--color-border);
+  }
+
+  .feature-card:hover {
+    box-shadow: 8px 8px 1px rgba(0, 0, 0, 0.6);
+  }
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 575px) {
+  .feature-card {
+    box-shadow: 6px 6px 0 rgba(255, 255, 255, 0.33);
+  }
+
+  .feature-card:hover {
+    box-shadow: 8px 8px 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
