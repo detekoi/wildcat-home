@@ -21,15 +21,11 @@ fi
 
 # Explicitly set the Firebase project
 echo "🔧 Setting Firebase project to ${PROJECT_ID}..."
-firebase use "${PROJECT_ID}"
-
-# Verify we're using the correct project
-CURRENT_PROJECT=$(firebase use 2>&1 | grep -E "Now using|Using" | grep -oE '[a-z0-9-]+' | tail -1)
-if [ "$CURRENT_PROJECT" != "$PROJECT_ID" ]; then
-    echo "❌ Error: Expected project ${PROJECT_ID}, but got ${CURRENT_PROJECT}"
+if ! firebase use "${PROJECT_ID}" 2>&1 | grep -q "Now using project ${PROJECT_ID}"; then
+    echo "❌ Error: Failed to set Firebase project to ${PROJECT_ID}"
     exit 1
 fi
-echo "✅ Confirmed using project: ${CURRENT_PROJECT}"
+echo "✅ Confirmed using project: ${PROJECT_ID}"
 
 # Deploy to Firebase Hosting
 echo "📦 Deploying to Firebase Hosting..."
