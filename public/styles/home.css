@@ -84,6 +84,7 @@
 .hero-cta-buttons a {
   font-size: var(--font-size-regular);
   padding: 12px 24px;
+  text-align: center;
 }
 
 /* Post-Industrial Button Styling - Preserve Lift/Shadow */
@@ -387,7 +388,7 @@
 @media (max-width: 768px) {
   .hero-section {
     min-height: auto;
-    padding: var(--spacing-large) var(--spacing-small);
+    padding: var(--spacing-large) var(--spacing-medium);
   }
 
   .hero-title {
