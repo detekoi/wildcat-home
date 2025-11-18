@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Get the current page filename
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const currentHost = window.location.hostname;
 
     // Get all navigation links
     const navLinks = document.querySelectorAll('.site-navbar-menu a');
@@ -13,7 +14,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set active class based on current page
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
-        const linkPage = href.split('/').pop();
+        
+        // Skip external links (those starting with http:// or https:// and pointing to different domains)
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+            try {
+                const linkUrl = new URL(href);
+                if (linkUrl.hostname !== currentHost) {
+                    // External link - don't mark as active
+                    return;
+                }
+            } catch (e) {
+                // Invalid URL - skip
+                return;
+            }
+        }
+        
+        // Process internal links only
+        const linkPage = href.split('/').pop() || (href === '/' || href === '' ? 'index.html' : '');
 
         if (linkPage === currentPage) {
             link.classList.add('active');
@@ -21,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Also handle index.html vs root
         if ((currentPage === '' || currentPage === 'index.html') &&
-            (linkPage === 'index.html' || linkPage === '')) {
+            (linkPage === 'index.html' || linkPage === '' || href === '/' || href === '')) {
             link.classList.add('active');
         }
     });

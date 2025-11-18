@@ -5,6 +5,7 @@
 
 /* =====================================================
    CSS VARIABLES
+   Post-Industrial Modernism Design System
    ===================================================== */
 :root {
   /* Typography */
@@ -13,14 +14,16 @@
   --font-mascot: 'Cabin Condensed', sans-serif;
   --font-carousel: var(--font-mascot);
 
-  /* Colors - Light Mode Default */
-  --color-background: #ffffff;
-  --color-text: #121212;
-  --color-secondary: #eeeeee;
+  /* Colors - Post-Industrial Dark Mode */
+  --color-background: #050505;
+  --color-text: #ffffff;
+  --color-secondary: #333333;
   --color-border: #333333;
-  --color-card-bg: #f5f5f5;
-  --color-active-light: #eaeaea;
-  --color-active-dark: #333333;
+  --color-card-bg: #0a0a0a;
+  --color-active-light: #1a1a1a;
+  --color-active-dark: #ffffff;
+  --color-accent-grey: #666666;
+  --color-grid-line: #333333;
 
   /* Spacing */
   --spacing-unit: 8px;
@@ -28,18 +31,19 @@
   --spacing-medium: calc(var(--spacing-unit) * 3);
   --spacing-large: calc(var(--spacing-unit) * 8);
 
-  /* Typography Scale */
-  --font-size-huge: 5rem;
-  --font-size-large: 3rem;
-  --font-size-medium: 1.5rem;
+  /* Typography Scale - Massive for Post-Industrial */
+  --font-size-huge: 8rem;
+  --font-size-large: 4rem;
+  --font-size-medium: 2rem;
   --font-size-regular: 1rem;
   --font-size-small: 0.875rem;
 
-  /* Shadow and Transform Variables */
+  /* Shadow and Transform Variables - Hard, High-Contrast */
   --shadow-size-default: 4px;
   --shadow-size-hover: 6px;
   --shadow-size-card: 8px;
-  --shadow-opacity-light: 0.6;
+  --shadow-color: rgba(255, 255, 255, 0.2);
+  --shadow-color-hover: rgba(255, 255, 255, 0.3);
   --hover-transform: translate(-2px, -2px);
   --active-transform: translate(2px, 2px);
 
@@ -65,6 +69,8 @@ body {
   margin: 0;
   padding: 0;
   transition: background-color 0.3s ease;
+  /* Post-Industrial: Sharp corners everywhere */
+  border-radius: 0;
 }
 
 /* Body padding when navigation is present */
@@ -86,7 +92,9 @@ main {
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   line-height: 1.2;
-  font-weight: 700;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 /* =====================================================
@@ -99,13 +107,13 @@ h1, h2, h3, h4, h5, h6 {
   right: 0;
   height: var(--nav-height);
   background-color: var(--color-background);
-  border-bottom: 3px solid var(--color-border);
+  border-bottom: 1px solid var(--color-grid-line);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--spacing-large);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* Post-Industrial: No soft shadows */
 }
 
 .site-navbar-brand {
@@ -142,59 +150,63 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .site-navbar-menu a {
-  background-color: white;
+  background-color: transparent;
   color: var(--color-text);
-  border: 2px solid var(--color-text);
-  box-shadow: 4px 4px 0 var(--color-text);
+  border: 1px solid var(--color-grid-line);
   text-decoration: none;
   transition: all 0.2s ease;
   padding: 6px 12px;
   display: inline-block;
   font-weight: 600;
   font-size: var(--font-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0;
 }
 
 .site-navbar-menu a:hover,
 .site-navbar-menu a:focus {
-  transform: var(--hover-transform);
-  box-shadow: 6px 6px 1px rgba(0, 0, 0, var(--shadow-opacity-light));
+  background-color: var(--color-text);
+  color: var(--color-background);
+  border-color: var(--color-text);
 }
 
 .site-navbar-menu a:active {
-  transform: var(--active-transform);
-  box-shadow: 1px 1px 0 var(--color-text);
-  background-color: var(--color-active-light);
+  background-color: var(--color-accent-grey);
+  color: var(--color-text);
 }
 
 .site-navbar-menu a.active {
-  background-color: var(--color-border);
+  background-color: var(--color-text);
   color: var(--color-background);
+  border-color: var(--color-text);
 }
 
 /* Mobile menu toggle */
 .navbar-toggle {
   display: none;
-  background-color: white;
+  background-color: transparent;
   color: var(--color-text);
-  border: 2px solid var(--color-text);
-  box-shadow: 4px 4px 0 var(--color-text);
+  border: 1px solid var(--color-grid-line);
   padding: 8px 12px;
   cursor: pointer;
   font-size: var(--font-size-regular);
   font-weight: 600;
   transition: all 0.2s ease;
+  text-transform: uppercase;
+  border-radius: 0;
 }
 
 .navbar-toggle:hover,
 .navbar-toggle:focus {
-  transform: var(--hover-transform);
-  box-shadow: 6px 6px 1px rgba(0, 0, 0, var(--shadow-opacity-light));
+  background-color: var(--color-text);
+  color: var(--color-background);
+  border-color: var(--color-text);
 }
 
 .navbar-toggle:active {
-  transform: var(--active-transform);
-  box-shadow: 1px 1px 0 var(--color-text);
-  background-color: var(--color-active-light);
+  background-color: var(--color-accent-grey);
+  color: var(--color-text);
 }
 
 /* =====================================================
@@ -383,27 +395,25 @@ h1, h2, h3, h4, h5, h6 {
    BUTTONS & LINKS (3D Skeuomorphic Style)
    ===================================================== */
 a {
-  background-color: white;
+  background-color: transparent;
   color: var(--color-text);
-  border: 2px solid var(--color-text);
-  box-shadow: 4px 4px 0 var(--color-text);
-  text-decoration: none;
+  border: none;
+  text-decoration: underline;
   transition: all 0.2s ease;
-  padding: 6px 12px;
-  display: inline-block;
-  font-weight: 600;
+  padding: 0;
+  display: inline;
+  font-weight: 400;
+  border-radius: 0;
 }
 
 a:hover,
 a:focus {
-  transform: var(--hover-transform);
-  box-shadow: 6px 6px 1px rgba(0, 0, 0, var(--shadow-opacity-light));
+  color: var(--color-accent-grey);
+  text-decoration: underline;
 }
 
 a:active {
-  transform: var(--active-transform);
-  box-shadow: 1px 1px 0 var(--color-text);
-  background-color: var(--color-active-light);
+  color: var(--color-accent-grey);
 }
 
 /* Footer links (simple style) */
@@ -436,15 +446,11 @@ footer a:active {
 
 /* =====================================================
    DARK MODE
+   Post-Industrial: Always dark, no media query needed
    ===================================================== */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #121212;
-    --color-text: #ffffff;
-    --color-secondary: #333333;
-    --color-card-bg: #1e1e1e;
-    --color-border: #ffffff;
-    --shadow-color: rgba(255, 255, 255, 0.33);
+    /* Already set to dark mode by default */
   }
 
   /* Navigation */
@@ -462,42 +468,42 @@ footer a:active {
   }
 
   .site-navbar-menu a {
-    background-color: #ffffff;
-    color: #000000;
-    border: 2px solid #555555;
-    box-shadow: 4px 4px 0 var(--shadow-color);
+    background-color: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-grid-line);
   }
 
   .site-navbar-menu a:hover,
   .site-navbar-menu a:focus {
-    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.1);
+    background-color: var(--color-text);
+    color: var(--color-background);
   }
 
   .site-navbar-menu a:active {
-    box-shadow: 1px 1px 0 var(--shadow-color);
-    background-color: #eaeaea;
+    background-color: var(--color-accent-grey);
+    color: var(--color-text);
   }
 
   .site-navbar-menu a.active {
-    background-color: var(--color-border);
+    background-color: var(--color-text);
     color: var(--color-background);
   }
 
   .navbar-toggle {
-    background-color: #ffffff;
-    color: #000000;
-    border: 2px solid #555555;
-    box-shadow: 4px 4px 0 var(--shadow-color);
+    background-color: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-grid-line);
   }
 
   .navbar-toggle:hover,
   .navbar-toggle:focus {
-    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.1);
+    background-color: var(--color-text);
+    color: var(--color-background);
   }
 
   .navbar-toggle:active {
-    box-shadow: 1px 1px 0 var(--shadow-color);
-    background-color: #eaeaea;
+    background-color: var(--color-accent-grey);
+    color: var(--color-text);
   }
 
   /* Sidebar */
@@ -549,20 +555,19 @@ footer a:active {
 
   /* Links */
   a {
-    background-color: #ffffff;
-    color: #000000;
-    border: 2px solid #555555;
-    box-shadow: 4px 4px 0 var(--shadow-color);
+    background-color: transparent;
+    color: var(--color-text);
+    border: none;
+    text-decoration: underline;
   }
 
   a:hover,
   a:focus {
-    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.1);
+    color: var(--color-accent-grey);
   }
 
   a:active {
-    box-shadow: 1px 1px 0 var(--shadow-color);
-    background-color: #eaeaea;
+    color: var(--color-accent-grey);
   }
 
   /* Footer links */

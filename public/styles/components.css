@@ -681,8 +681,10 @@ footer {
   padding-top: var(--spacing-large);
   padding-bottom: 80px;
   padding-left: var(--spacing-medium);
-  border-top: 4px solid var(--color-border);
+  border-top: 1px solid var(--color-grid-line);
   font-size: var(--font-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* =====================================================

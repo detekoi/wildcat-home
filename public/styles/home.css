@@ -7,27 +7,30 @@
    HERO SECTION
    ===================================================== */
 .hero-section {
-  text-align: center;
+  text-align: left;
   padding: var(--spacing-large) var(--spacing-medium);
   margin-bottom: var(--spacing-large);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   min-height: 60vh;
+  border-bottom: 1px solid var(--color-grid-line);
 }
 
 .hero-title {
   font-size: var(--font-size-huge);
-  font-weight: 300;
+  font-weight: 800;
   margin: 0 0 var(--spacing-medium) 0;
   color: var(--color-text);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--spacing-medium);
   flex-wrap: wrap;
+  text-transform: uppercase;
+  text-align: left;
 }
 
 .wildcat-svg {
@@ -38,12 +41,13 @@
 }
 
 .hero-tagline {
-  font-size: var(--font-size-medium);
+  font-size: var(--font-size-regular);
   color: var(--color-text);
   margin: 0 0 var(--spacing-large) 0;
   font-weight: 400;
   max-width: 800px;
-  line-height: 1.6;
+  line-height: 1.8;
+  text-transform: none;
 }
 
 .hero-cta-buttons {
@@ -59,25 +63,31 @@
   padding: 12px 24px;
 }
 
-/* Twitch purple button styling */
+/* Post-Industrial Button Styling - Preserve Lift/Shadow */
 .twitch-button {
-  background-color: #9146FF;
-  color: white;
-  border-color: #772CE8;
-  box-shadow: 4px 4px 0 #772CE8;
+  background-color: transparent;
+  color: var(--color-text);
+  border: 2px solid var(--color-text);
+  box-shadow: 4px 4px 0 var(--shadow-color);
+  text-decoration: none !important;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border-radius: 0;
+  transition: all 0.2s ease;
 }
 
 .twitch-button:hover,
 .twitch-button:focus {
-  background-color: #9146FF;
-  color: white;
-  box-shadow: 6px 6px 1px rgba(119, 44, 232, 0.6);
+  transform: var(--hover-transform);
+  box-shadow: 6px 6px 0 var(--shadow-color-hover);
+  text-decoration: none !important;
 }
 
 .twitch-button:active {
-  background-color: #7928d8;
-  color: white;
-  box-shadow: 1px 1px 0 #772CE8;
+  transform: var(--active-transform);
+  box-shadow: 2px 2px 0 var(--shadow-color);
+  text-decoration: none !important;
 }
 
 /* =====================================================
@@ -87,11 +97,10 @@
   max-width: 900px;
   margin: 0 auto var(--spacing-large) auto;
   padding: var(--spacing-large);
-  background-color: rgba(255, 255, 255, 0.7);
-  border: 2px solid var(--color-border);
-  box-shadow: 8px 8px 0 var(--color-border);
-  border-radius: 8px;
-  text-align: center;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-grid-line);
+  text-align: left;
+  border-radius: 0;
 }
 
 .platform-overview p {
@@ -105,26 +114,28 @@
 }
 
 .invite-notice {
-  background: #fff3cd;
-  border: 2px solid #ffc107;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-grid-line);
   padding: var(--spacing-medium);
-  border-radius: 4px;
+  border-radius: 0;
   margin-top: var(--spacing-medium);
   font-size: 0.95em;
+  text-transform: uppercase;
 }
 
 .invite-notice a {
-  color: #007bff;
+  color: var(--color-text);
   text-decoration: underline;
   border: none;
   box-shadow: none;
   background: none;
   padding: 0;
-  font-weight: 600;
+  font-weight: 400;
+  text-transform: none;
 }
 
 .invite-notice a:hover {
-  color: #0056b3;
+  color: var(--color-accent-grey);
   transform: none;
   box-shadow: none;
 }
@@ -136,47 +147,55 @@
   margin: var(--spacing-large) auto;
   padding: 0 var(--spacing-medium);
   max-width: 1400px;
+  border-top: 1px solid var(--color-grid-line);
+  border-bottom: 1px solid var(--color-grid-line);
 }
 
 .features-section h2 {
   font-size: var(--font-size-large);
-  text-align: center;
+  text-align: left;
   margin-bottom: var(--spacing-large);
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-large);
+  gap: 0;
   margin-bottom: var(--spacing-large);
+  border: 1px solid var(--color-grid-line);
 }
 
 .feature-card {
-  border: 3px solid var(--color-border);
+  border: 1px solid var(--color-grid-line);
   padding: var(--spacing-large);
   background-color: var(--color-card-bg);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: 8px 8px 0 var(--color-border);
-  border-radius: 8px;
+  border-radius: 0;
+  position: relative;
 }
 
 .feature-card:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 11px 11px 1px rgba(0, 0, 0, 0.6);
+  box-shadow: 6px 6px 0 var(--shadow-color-hover);
+  z-index: 1;
 }
 
 .feature-icon {
   font-size: 3rem;
   margin-bottom: var(--spacing-medium);
-  text-align: center;
+  text-align: left;
 }
 
 .feature-card h3 {
   font-size: var(--font-size-medium);
   margin-bottom: var(--spacing-medium);
-  text-align: center;
+  text-align: left;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .feature-card p {
@@ -214,19 +233,20 @@
   box-shadow: none;
   padding: 0;
   text-decoration: underline;
-  font-weight: 600;
+  font-weight: 400;
+  text-transform: none;
 }
 
 .secondary-link:hover {
   transform: none;
   box-shadow: none;
-  color: #666666;
+  color: var(--color-accent-grey);
 }
 
 .secondary-link:active {
   transform: none;
   box-shadow: none;
-  color: #999999;
+  color: var(--color-accent-grey);
 }
 
 /* =====================================================
@@ -237,15 +257,16 @@
   margin: var(--spacing-large) auto;
   padding: var(--spacing-large);
   background-color: var(--color-card-bg);
-  border: 2px solid var(--color-border);
-  box-shadow: 8px 8px 0 var(--color-border);
-  border-radius: 8px;
-  text-align: center;
+  border: 1px solid var(--color-grid-line);
+  border-radius: 0;
+  text-align: left;
 }
 
 .resources-section h2 {
   font-size: var(--font-size-large);
   margin-bottom: var(--spacing-large);
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .resources-section p {
@@ -257,9 +278,14 @@
 .resources-links {
   display: flex;
   gap: var(--spacing-medium);
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   margin-top: var(--spacing-large);
+}
+
+.resources-links a {
+  text-transform: none;
+  font-weight: 400;
 }
 
 /* =====================================================
@@ -271,64 +297,64 @@
   }
 
   .platform-overview {
-    background-color: rgba(30, 30, 30, 0.7);
-    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+    background-color: var(--color-card-bg);
+    border-color: var(--color-grid-line);
   }
 
   .invite-notice {
-    background: #2a2a1a;
-    border-color: #544c3a;
-    color: #e0e0e0;
+    background: var(--color-card-bg);
+    border-color: var(--color-grid-line);
+    color: var(--color-text);
   }
 
   .invite-notice a {
-    color: #66b3ff;
+    color: var(--color-text);
   }
 
   .invite-notice a:hover {
-    color: #99ccff;
+    color: var(--color-accent-grey);
   }
 
   .feature-card {
-    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+    background-color: var(--color-card-bg);
+    border-color: var(--color-grid-line);
   }
 
   .feature-card:hover {
-    box-shadow: 11px 11px 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 6px 6px 0 var(--shadow-color-hover);
   }
 
   .resources-section {
     background-color: var(--color-card-bg);
-    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.33);
+    border-color: var(--color-grid-line);
   }
 
   .twitch-button {
-    background-color: #9146FF;
-    color: white;
-    border-color: #772CE8;
-    box-shadow: 4px 4px 0 #5c16c5;
+    background-color: transparent;
+    color: var(--color-text);
+    border-color: var(--color-text);
+    box-shadow: 4px 4px 0 var(--shadow-color);
   }
 
   .twitch-button:hover,
   .twitch-button:focus {
-    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.2);
+    box-shadow: 6px 6px 0 var(--shadow-color-hover);
   }
 
   .twitch-button:active {
-    background-color: #5c16c5;
-    box-shadow: 1px 1px 0 #772CE8;
+    box-shadow: 2px 2px 0 var(--shadow-color);
   }
 
   .secondary-link {
-    color: #cccccc;
+    color: var(--color-text);
   }
 
   .secondary-link:hover {
-    color: #ffffff;
+    color: var(--color-accent-grey);
   }
 
   .secondary-link:active {
-    color: #bbbbbb;
+    color: var(--color-accent-grey);
   }
 }
 
@@ -367,7 +393,7 @@
 
   .features-grid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-medium);
+    gap: 0;
   }
 
   .platform-overview,
