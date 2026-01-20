@@ -1,6 +1,6 @@
 # Wildcat.chat Platform Homepage
 
-The unified landing page for the Wildcat.chat platform, featuring all Wildcat tools (ChatSage, ChatVibes, and Chat Overlay) with consistent branding and modern design.
+The unified landing page for the Wildcat.chat platform, featuring all Wildcat tools (ChatSage, WildcatTTS, and Chat Overlay) with consistent branding and modern design.
 
 ## Overview
 
@@ -177,7 +177,7 @@ box-shadow: 1px 1px 0;
 ## Related Projects
 
 - **ChatSage**: AI-powered Twitch chatbot - [app.wildcat.chat](https://app.wildcat.chat)
-- **ChatVibes**: TTS bot for Twitch - [tts.wildcat.chat](https://tts.wildcat.chat)
+- **WildcatTTS**: TTS bot for Twitch - [tts.wildcat.chat](https://tts.wildcat.chat)
 - **Chat Overlay**: AI-themed chat overlay - [GitHub](https://github.com/detekoi/compact-chat-overlay)
 - **Documentation**: [docs.wildcat.chat](https://docs.wildcat.chat)
 
