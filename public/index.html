@@ -21,6 +21,9 @@
         href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <!-- Analytics -->
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
 </head>
@@ -44,11 +47,11 @@
                 <text x="50%" y="50%" class="kaomoji">- ˕ •マ</text>
             </svg>
         </a>
-        <button class="navbar-toggle" aria-label="Toggle navigation">☰</button>
+        <button class="navbar-toggle" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
         <ul class="site-navbar-menu">
             <li><a href="/" class="active">Home</a></li>
-            <li><a href="https://app.wildcat.chat">WildcatSage</a></li>
-            <li><a href="https://tts.wildcat.chat">WildcatTTS</a></li>
+            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
+            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
             <li><a href="https://detekoi.github.io/compact-chat-overlay/">Chat Overlay</a></li>
             <li><a href="https://docs.wildcat.chat">Docs</a></li>
             <li><a href="https://detekoi.github.io/#contact-me">Contact</a></li>
@@ -99,8 +102,8 @@
             <div class="features-grid">
                 <!-- Sage Card -->
                 <article class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3>WildcatSage</h3>
+                    <div class="feature-icon"><i data-lucide="message-circle"></i></div>
+                    <h3>Wildcat Sage</h3>
                     <p>
                         An AI-powered chatbot that lives in your Twitch chat. Sage can answer viewer questions,
                         fetch information from the web, play trivia and mini-games, and even translate or role-play
@@ -122,12 +125,12 @@
 
                 <!-- WildcatTTS Card -->
                 <article class="feature-card">
-                    <div class="feature-icon">🔊</div>
-                    <h3>WildcatTTS</h3>
+                    <div class="feature-icon"><i data-lucide="volume-2"></i></div>
+                    <h3>Wildcat TTS</h3>
                     <p>
                         Give your chat a voice with WildcatTTS. This text-to-speech bot reads chat messages and
                         alerts aloud in real time using natural-sounding AI voices. Engage your audience with
-                        hundreds of voice options and even generate AI music on command!
+                        hundreds of voice options!
                     </p>
                     <ul class="feature-list">
                         <li>Natural-sounding TTS with 300+ voices</li>
@@ -145,7 +148,7 @@
 
                 <!-- Chat Overlay Card -->
                 <article class="feature-card">
-                    <div class="feature-icon">🎨</div>
+                    <div class="feature-icon"><i data-lucide="palette"></i></div>
                     <h3>Wildcat Chat Overlay</h3>
                     <p>
                         A customizable Twitch chat overlay with AI-generated themes. Describe any aesthetic
@@ -180,9 +183,9 @@
                 the Wildcat platform.
             </p>
             <div class="resources-links">
-                <a href="https://docs.wildcat.chat">📚 View Documentation</a>
-                <a href="https://detekoi.github.io/#contact-me">✉️ Contact & Request Access</a>
-                <a href="https://github.com/detekoi">💻 GitHub</a>
+                <a href="https://docs.wildcat.chat"><i data-lucide="book-open"></i> View Documentation</a>
+                <a href="https://detekoi.github.io/#contact-me"><i data-lucide="mail"></i> Contact & Request Access</a>
+                <a href="https://github.com/detekoi"><i data-lucide="github"></i> GitHub</a>
             </div>
         </section>
     </main>
@@ -195,6 +198,7 @@
     <!-- Scripts -->
     <script src="scripts/static-background.js"></script>
     <script src="scripts/navigation.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>
