@@ -183,7 +183,7 @@ box-shadow: 1px 1px 0;
 
 ## License
 
-All rights reserved © 2025 Wildcat.chat
+All rights reserved © 2026 Wildcat.chat
 
 ## Support
 
