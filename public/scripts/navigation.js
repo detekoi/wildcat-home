@@ -3,7 +3,7 @@
  * Handles the top navigation bar, active page highlighting, and mobile menu toggle
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Get the current page filename
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     const currentHost = window.location.hostname;
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set active class based on current page
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
-        
+
         // Skip external links (those starting with http:// or https:// and pointing to different domains)
         if (href.startsWith('http://') || href.startsWith('https://')) {
             try {
@@ -28,17 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
         }
-        
+
         // Process internal links only
-        const linkPage = href.split('/').pop() || (href === '/' || href === '' ? 'index.html' : '');
+        const linkPath = new URL(href, window.location.origin).pathname.replace(/\/$/, '') || '/';
+        const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
 
-        if (linkPage === currentPage) {
-            link.classList.add('active');
-        }
-
-        // Also handle index.html vs root
-        if ((currentPage === '' || currentPage === 'index.html') &&
-            (linkPage === 'index.html' || linkPage === '' || href === '/' || href === '')) {
+        if (linkPath === currentPath) {
             link.classList.add('active');
         }
     });
@@ -48,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navbarMenu = document.querySelector('.site-navbar-menu');
 
     if (navbarToggle && navbarMenu) {
-        navbarToggle.addEventListener('click', function() {
+        navbarToggle.addEventListener('click', function () {
             navbarMenu.classList.toggle('active');
 
             // Update button text
@@ -61,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Close mobile menu when clicking a link
         navLinks.forEach(link => {
-            link.addEventListener('click', function() {
+            link.addEventListener('click', function () {
                 if (window.innerWidth <= 768) {
                     navbarMenu.classList.remove('active');
                     navbarToggle.textContent = '☰';
@@ -70,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             if (!navbarToggle.contains(event.target) &&
                 !navbarMenu.contains(event.target) &&
                 navbarMenu.classList.contains('active')) {
@@ -82,9 +77,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle window resize - close mobile menu if window gets larger
     let resizeTimer;
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
+        resizeTimer = setTimeout(function () {
             if (window.innerWidth > 768 && navbarMenu && navbarMenu.classList.contains('active')) {
                 navbarMenu.classList.remove('active');
                 if (navbarToggle) {

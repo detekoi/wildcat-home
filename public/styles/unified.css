@@ -89,7 +89,12 @@ main {
   padding: var(--spacing-large);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 0;
   line-height: 1.2;
   font-weight: 800;
@@ -323,7 +328,7 @@ h1, h2, h3, h4, h5, h6 {
   transition: max-height 0.2s ease;
 }
 
-#sidebar ul li.open > .submenu {
+#sidebar ul li.open>.submenu {
   display: block;
 }
 
@@ -347,7 +352,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: none;
 }
 
-#sidebar ul li > a.has-submenu {
+#sidebar ul li>a.has-submenu {
   position: relative;
   padding-right: 2.2em;
 }
@@ -372,7 +377,7 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-block;
 }
 
-#sidebar ul li.open > a.has-submenu .submenu-caret {
+#sidebar ul li.open>a.has-submenu .submenu-caret {
   transform: translateY(-50%) rotate(180deg);
   color: var(--color-border);
 }
@@ -549,7 +554,7 @@ footer a:active {
     color: #fff;
   }
 
-  #sidebar ul li.open > a.has-submenu .submenu-caret {
+  #sidebar ul li.open>a.has-submenu .submenu-caret {
     color: #fff;
   }
 
