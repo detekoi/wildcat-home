@@ -142,6 +142,13 @@ h6 {
   box-shadow: none;
 }
 
+.wildcat-svg {
+  width: 5rem;
+  height: 5rem;
+  fill: var(--color-text);
+  flex-shrink: 0;
+}
+
 .site-navbar-menu {
   display: flex;
   gap: var(--spacing-medium);
@@ -454,9 +461,6 @@ footer a:active {
    Post-Industrial: Always dark, no media query needed
    ===================================================== */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* Already set to dark mode by default */
-  }
 
   /* Navigation */
   .site-navbar {
