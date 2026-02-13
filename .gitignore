@@ -5,6 +5,9 @@ firebase-debug.*.log
 .firebaserc.local
 *.local
 
+# Build output
+public/
+
 # Node
 node_modules/
 npm-debug.log

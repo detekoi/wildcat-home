@@ -1,67 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Wildcat.chat - AI-powered Twitch bot platform featuring WildcatSage chatbot, WildcatTTS, and customizable chat overlays for streamers.">
-    <title>Wildcat.chat - AI Tools for Twitch Streamers</title>
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="/styles/reset.css">
-    <link rel="stylesheet" href="/styles/unified.css">
-    <link rel="stylesheet" href="/styles/components.css">
-    
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Analytics -->
-    <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
-</head>
-
-<body class="has-navbar">
-
-    <!-- Navigation Bar -->
-    <nav class="site-navbar">
-        <a href="/" class="site-navbar-brand">
-            <svg class="wildcat-svg" viewBox="0 0 600 200" xmlns="https://www.w3.org/2000/svg" role="img"
-                aria-label="Kaomoji reading '- ˕ •マ'">
-                <style>
-                    .kaomoji {
-                        font-size: 250px;
-                        font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Noto Sans CJK JP', sans-serif;
-                        fill: currentColor;
-                        text-anchor: middle;
-                        dominant-baseline: central;
-                    }
-                </style>
-                <text x="50%" y="50%" class="kaomoji">- ˕ •マ</text>
-            </svg>
-        </a>
-        <button class="navbar-toggle" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
-        <ul class="site-navbar-menu">
-            <li><a href="/" class="active">Home</a></li>
-            <li><a href="/blog/" >Blog</a></li>
-            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
-            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
-            <li><a href="https://detekoi.github.io/compact-chat-overlay/">Chat Overlay</a></li>
-            <li><a href="https://docs.wildcat.chat">Docs</a></li>
-            <li><a href="https://detekoi.github.io/#contact-me">Contact</a></li>
-        </ul>
-    </nav>
-
-    <!-- Main Content -->
-    <main>
-        <link rel="stylesheet" href="/styles/home.css">
+---
+layout: base.njk
+title: "Wildcat.chat - AI Tools for Twitch Streamers"
+description: "Wildcat.chat - AI-powered Twitch bot platform featuring WildcatSage chatbot, WildcatTTS, and customizable chat overlays for streamers."
+---
+<link rel="stylesheet" href="/styles/home.css">
 
 <!-- Hero Section -->
 <section class="hero-section">
@@ -191,17 +133,3 @@
         <a href="https://github.com/detekoi"><i data-lucide="github"></i> GitHub</a>
     </div>
 </section>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 Wildcat.chat. All rights reserved.</p>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="/scripts/static-background.js"></script>
-    <script src="/scripts/navigation.js"></script>
-    <script>lucide.createIcons();</script>
-</body>
-
-</html>

@@ -7,12 +7,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
     "headers": [
       {
         "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
@@ -35,4 +29,3 @@
     ]
   }
 }
-

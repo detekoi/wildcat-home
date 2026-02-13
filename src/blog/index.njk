@@ -1,0 +1,30 @@
+---
+layout: base.njk
+title: "Blog - Wildcat.chat"
+description: "Updates, announcements, and development notes from the Wildcat.chat platform."
+---
+<link rel="stylesheet" href="/styles/blog.css">
+
+<section class="blog-listing">
+    <h1 class="blog-listing-title">Blog</h1>
+    <p class="blog-listing-subtitle">Updates, announcements, and development notes</p>
+
+    <div class="blog-posts-grid">
+        {% for post in collections.posts %}
+        <a href="{{ post.url }}" class="blog-post-card">
+            <article>
+                <time class="post-card-date" datetime="{{ post.date | isoDate }}">{{ post.date | readableDate }}</time>
+                <h2 class="post-card-title">{{ post.data.title }}</h2>
+                {% if post.data.description %}
+                <p class="post-card-description">{{ post.data.description }}</p>
+                {% endif %}
+                <span class="post-card-read-more">Read more →</span>
+            </article>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if collections.posts.length == 0 %}
+    <p class="blog-empty">No posts yet. Check back soon!</p>
+    {% endif %}
+</section>

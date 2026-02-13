@@ -1,0 +1,17 @@
+---
+layout: base.njk
+---
+<link rel="stylesheet" href="/styles/blog.css">
+
+<article class="blog-post">
+    <header class="post-header">
+        <h1 class="post-title">{{ title }}</h1>
+        <time class="post-date" datetime="{{ date | isoDate }}">{{ date | readableDate }}</time>
+        {% if description %}
+        <p class="post-description">{{ description }}</p>
+        {% endif %}
+    </header>
+    <div class="post-content">
+        {{ content | safe }}
+    </div>
+</article>

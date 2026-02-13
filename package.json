@@ -1,0 +1,23 @@
+{
+  "name": "wildcat-home",
+  "version": "1.0.0",
+  "description": "The unified landing page for the Wildcat.chat platform, featuring all Wildcat tools (Sage, WildcatTTS, and Chat Overlay) with consistent branding and modern design.",
+  "scripts": {
+    "dev": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/detekoi/wildcat-home.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/detekoi/wildcat-home/issues"
+  },
+  "homepage": "https://github.com/detekoi/wildcat-home#readme",
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2"
+  }
+}
