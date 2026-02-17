@@ -59,7 +59,7 @@
 
 .hero-tagline {
   font-size: var(--font-size-regular);
-  color: var(--color-text);
+  color: var(--color-accent);
   margin: 0 0 var(--spacing-large) 0;
   font-weight: 400;
   max-width: 800px;
@@ -84,9 +84,9 @@
 /* Post-Industrial Button Styling - Preserve Lift/Shadow */
 .twitch-button {
   background-color: transparent;
-  color: var(--color-text);
-  border: 2px solid var(--color-text);
-  box-shadow: 4px 4px 0 var(--shadow-color);
+  color: var(--color-accent);
+  border: 2px solid var(--color-accent);
+  box-shadow: 4px 4px 0 rgba(255, 253, 217, 0.3);
   text-decoration: none !important;
   text-transform: uppercase;
   font-weight: 600;
@@ -133,12 +133,13 @@
 
 .invite-notice {
   background: var(--color-card-bg);
-  border: 1px solid var(--color-grid-line);
+  border: 1px solid var(--color-accent);
   padding: var(--spacing-medium);
   border-radius: 0;
   margin-top: var(--spacing-medium);
   font-size: 0.95em;
   text-transform: uppercase;
+  color: var(--color-accent);
 }
 
 .invite-notice a {
@@ -206,6 +207,7 @@
   font-size: 3rem;
   margin-bottom: var(--spacing-medium);
   text-align: left;
+  color: var(--color-accent);
 }
 
 .feature-card h3 {
@@ -349,9 +351,9 @@
 
   .twitch-button {
     background-color: transparent;
-    color: var(--color-text);
-    border-color: var(--color-text);
-    box-shadow: 4px 4px 0 var(--shadow-color);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    box-shadow: 4px 4px 0 rgba(255, 253, 217, 0.3);
   }
 
   .twitch-button:hover,
