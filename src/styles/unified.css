@@ -22,6 +22,7 @@
   --color-card-bg: #0a0a0a;
   --color-active-light: #1a1a1a;
   --color-active-dark: #ffffff;
+  --color-accent: #fffdd9;
   --color-accent-grey: #666666;
   --color-grid-line: #333333;
 
@@ -420,12 +421,12 @@ a {
 
 a:hover,
 a:focus {
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
   text-decoration: underline;
 }
 
 a:active {
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
 }
 
 /* Footer links (simple style) */
@@ -572,11 +573,11 @@ footer a:active {
 
   a:hover,
   a:focus {
-    color: var(--color-accent-grey);
+    color: var(--color-accent);
   }
 
   a:active {
-    color: var(--color-accent-grey);
+    color: var(--color-accent);
   }
 
   /* Footer links */

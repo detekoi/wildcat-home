@@ -153,7 +153,7 @@
 }
 
 .invite-notice a:hover {
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
   transform: none;
   box-shadow: none;
 }
@@ -258,13 +258,13 @@
 .secondary-link:hover {
   transform: none;
   box-shadow: none;
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
 }
 
 .secondary-link:active {
   transform: none;
   box-shadow: none;
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
 }
 
 /* =====================================================
@@ -330,7 +330,7 @@
   }
 
   .invite-notice a:hover {
-    color: var(--color-accent-grey);
+    color: var(--color-accent);
   }
 
   .feature-card {
@@ -368,11 +368,11 @@
   }
 
   .secondary-link:hover {
-    color: var(--color-accent-grey);
+    color: var(--color-accent);
   }
 
   .secondary-link:active {
-    color: var(--color-accent-grey);
+    color: var(--color-accent);
   }
 }
 

@@ -76,7 +76,7 @@
   font-size: var(--font-size-regular);
   line-height: 1.6;
   margin: 0 0 var(--spacing-medium) 0;
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
 }
 
 .post-card-read-more {
@@ -126,7 +126,7 @@
 
 .post-description {
   font-size: var(--font-size-regular);
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
   line-height: 1.6;
   margin: 0;
 }
@@ -173,14 +173,14 @@
 }
 
 .post-content a:hover {
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
 }
 
 .post-content blockquote {
   border-left: 3px solid var(--color-grid-line);
   margin: var(--spacing-medium) 0;
   padding: var(--spacing-medium) var(--spacing-large);
-  color: var(--color-accent-grey);
+  color: var(--color-accent);
   font-style: italic;
 }
 
