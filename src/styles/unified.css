@@ -138,7 +138,7 @@ h6 {
 }
 
 .site-navbar-brand:hover {
-  color: #666666;
+  color: var(--color-accent);
   transform: none;
   box-shadow: none;
 }
@@ -474,7 +474,7 @@ footer a:active {
   }
 
   .site-navbar-brand:hover {
-    color: #cccccc;
+    color: var(--color-accent);
   }
 
   .site-navbar-menu a {
