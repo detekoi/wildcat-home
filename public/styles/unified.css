@@ -72,6 +72,7 @@ body {
   transition: background-color 0.3s ease;
   /* Post-Industrial: Sharp corners everywhere */
   border-radius: 0;
+  overflow-x: hidden;
 }
 
 /* Body padding when navigation is present */
@@ -175,6 +176,7 @@ h6 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: 0;
+  white-space: nowrap;
 }
 
 .site-navbar-menu a:hover,
@@ -607,7 +609,7 @@ footer a:active {
 /* =====================================================
    RESPONSIVE ADJUSTMENTS
    ===================================================== */
-@media (max-width: 768px) {
+@media (max-width: 1060px) {
   :root {
     --font-size-huge: 3.5rem;
     --font-size-large: 2rem;
