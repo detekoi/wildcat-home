@@ -36,8 +36,5 @@ Use `$(user)`, `$(checkin_count)`, and `$(channel)` in your template or AI promp
 
 - **Twitch Affiliate or Partner** status (required for Channel Point Rewards)
 - You may need to **re-authenticate** once to grant the new `channel:manage:redemptions` permission
-```markdown
 
-Full docs:  
-[https://docs.wildcat.chat/botcommands.html#daily-check-in](https://docs.wildcat.chat/botcommands.html#daily-check-in)
-```
+[Full docs →](https://docs.wildcat.chat/botcommands.html#daily-check-in)
