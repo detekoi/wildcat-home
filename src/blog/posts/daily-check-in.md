@@ -8,7 +8,7 @@ WildcatSage now supports **Daily Check-In** — a Channel Point Reward that lets
 
 ### How It Works
 
-Open the [web dashboard](https://app.wildcat.chat/), scroll to **Daily Check-In**, and flip the toggle. Set a title, a Channel Point cost, and a response template. The reward is automatically created on Twitch — no need to copy any IDs.
+Open the [web dashboard](https://app.wildcat.chat/), scroll to **Daily Check-In**, and flip the toggle. Set a title, a Channel Point cost, and a response template. The reward is automatically created on your Twitch channel.
 
 ![WildcatSage dashboard showing the Daily Check-In configuration card. The enable toggle is on, the reward title is set to "Daily Check-In" with a cost of 1 Channel Point. AI Mode is enabled with a prompt that reads "Write a cute, humorous message for $(user) checking in #$(checkin_count) times." Below the prompt are clickable variable chips for $(user), $(checkin_count), and $(channel), followed by Save and Delete Reward buttons.](/assets/images/ai-daily-check-in.png)
 
