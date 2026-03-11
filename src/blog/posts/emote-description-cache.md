@@ -15,11 +15,11 @@ Previously, emote descriptions were only cached in memory and lost on restart. N
 
 ### New Command: `!tts emote`
 
-Moderators can now manage emote descriptions directly from chat:
+Moderators can view and regenerate descriptions, and broadcasters can manually set them:
 
 - **`!tts emote LUL`** — view the current cached description for an emote.
 - **`!tts emote regenerate LUL`** — clear the cached description so it gets re-generated next time.
-- **`!tts emote set LUL = a person laughing`** — manually set a custom description for an emote.
+- **`!tts emote set LUL = a person laughing`** — manually set a custom description *(broadcaster only)*.
 
 This is useful when a generated description doesn't quite capture what an emote looks like, or when you want a specific phrasing for your channel.
 
