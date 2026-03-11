@@ -15,13 +15,13 @@ Previously, emote descriptions were only cached in memory and lost on restart. N
 
 ### New Command: `!tts emote`
 
-Moderators can view and regenerate descriptions, and broadcasters can manually set them:
+Moderators and broadcasters can manage emote descriptions for their channel's emotes:
 
 - **`!tts emote LUL`** — view the current cached description for an emote.
-- **`!tts emote regenerate LUL`** — clear the cached description so it gets re-generated next time.
-- **`!tts emote set LUL = a person laughing`** — manually set a custom description *(broadcaster only)*.
+- **`!tts emote regenerate LUL`** — clear the cached description so it gets re-generated next time *(channel emotes only)*.
+- **`!tts emote set LUL = a person laughing`** — manually set a custom description *(channel emotes only)*.
 
-This is useful when a generated description doesn't quite capture what an emote looks like, or when you want a specific phrasing for your channel.
+Setting and regenerating is scoped to the channel's own emotes — global Twitch emotes (like LUL, Kappa) are managed automatically and can't be manually overridden.
 
 ### Documentation
 
