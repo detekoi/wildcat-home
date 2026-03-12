@@ -3,22 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compact Chat Overlay</title>
+    <meta name="description" content="Wildcat Chat Overlay – a customizable Twitch chat overlay for OBS with AI-generated themes. No login required.">
+    <title>Wildcat Chat Overlay</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/logo192.png">
+
+    <!-- Fonts (matches base.njk) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/wildcat-theme.css">
+
+    <!-- Analytics -->
+    <script src="https://app.rybbit.io/api/script.js" data-site-id="102" defer></script>
 </head>
-<body>
+<body class="has-navbar">
+
+    <!-- Site Navbar -->
+    <nav class="wildcat-navbar">
+        <a href="/" class="wildcat-navbar-brand">
+            <span class="wildcat-navbar-kaomoji">- ˕ •マ</span>
+        </a>
+        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation" onclick="this.nextElementSibling.classList.toggle('active')">☰</button>
+        <ul class="wildcat-navbar-menu">
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog/">Blog</a></li>
+            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
+            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
+            <li><a href="/chat-overlay/" class="active">Chat Overlay</a></li>
+            <li><a href="https://docs.wildcat.chat">Docs</a></li>
+            <li><a href="https://detekoi.github.io/#contact-me">Contact</a></li>
+        </ul>
+    </nav>
+
     <div class="card">
-        <h1>Chat Overlay for Twitch and OBS</h1>
-        <p>Welcome to Parfaitfair's Chat Overlay for Twitch and OBS! Choose an option below to get started:</p>
+        <h1>Chat Overlay for Twitch & OBS</h1>
+        <p>A customizable chat overlay with AI-generated themes. No login required — just plug into OBS.</p>
         <div class="buttons">
             <a href="chat-scene-creator.html" class="button secondary">Chat Scene Creator</a>
             <a href="chat.html" class="button">Just Take Me to Chat</a>
         </div>
-        <p style="margin-top: 20px; font-size: 14px;">
-            <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank" style="color: var(--link-color); text-decoration: none;">
+        <p style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
+            <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank" style="color: inherit; text-decoration: underline;">
                 View Documentation on GitHub →
             </a>
         </p>
     </div>
+
+    <footer class="wildcat-footer" style="text-align: center;">
+        <p>© 2026 <a href="/" style="color: inherit; text-decoration: underline;">Wildcat.chat</a></p>
+    </footer>
+
 </body>
 </html>

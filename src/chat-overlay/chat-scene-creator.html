@@ -3,27 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Twitch Chat Overlay - Chat Scene Creator</title>
+    <meta name="description" content="Wildcat Chat Scene Creator – create and manage named chat overlay scenes for use in OBS browser sources.">
+    <title>Chat Scene Creator – Wildcat Chat Overlay</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/logo192.png">
+
+    <!-- Fonts (matches base.njk) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
-    <script
-    src="https://app.rybbit.io/api/script.js"
-    data-site-id="102"
-    defer
-></script>
+    <link rel="stylesheet" href="css/wildcat-theme.css">
+
+    <!-- Analytics -->
+    <script src="https://app.rybbit.io/api/script.js" data-site-id="102" defer></script>
 </head>
-<body>
+<body class="has-navbar">
+
+    <!-- Site Navbar -->
+    <nav class="wildcat-navbar">
+        <a href="/" class="wildcat-navbar-brand">
+            <span class="wildcat-navbar-kaomoji">- ˕ •マ</span>
+        </a>
+        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation" onclick="this.nextElementSibling.classList.toggle('active')">☰</button>
+        <ul class="wildcat-navbar-menu">
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog/">Blog</a></li>
+            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
+            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
+            <li><a href="/chat-overlay/" class="active">Chat Overlay</a></li>
+            <li><a href="https://docs.wildcat.chat">Docs</a></li>
+            <li><a href="https://detekoi.github.io/#contact-me">Contact</a></li>
+        </ul>
+    </nav>
+
     <div class="container">
         <header>
-            <h1>Twitch Chat Overlay - Chat Scene Creator</h1>
+            <h1>Chat Scene Creator</h1>
             <p>Create and manage chat scenes for different parts of your stream</p>
             <p style="margin-top: 10px; font-size: 14px;">
-                <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank" style="color: var(--link-color); text-decoration: none;">
-                    Docs
-                </a>
-                <span style="margin: 0 8px;">•</span>
-                <a href="chat.html" style="color: var(--link-color); text-decoration: none;">
-                    Skip to Chat →
-                </a>
+                <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank">Docs</a>
+                <span style="margin: 0 8px; opacity: 0.4;">•</span>
+                <a href="/chat-overlay/">← Back to Overlay Hub</a>
+                <span style="margin: 0 8px; opacity: 0.4;">•</span>
+                <a href="chat.html">Skip to Chat →</a>
             </p>
         </header>
         
@@ -256,6 +283,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="wildcat-footer" style="text-align: center;">
+        <p>© 2026 <a href="/" style="color: inherit; text-decoration: underline;">Wildcat.chat</a></p>
+    </footer>
 
     <!-- Notification container -->
     <div id="notification-container"></div>
