@@ -391,6 +391,11 @@ header a:hover {
     transition: all 0.2s ease !important;
 }
 
+/* <a class="btn"> defaults to display:inline — transform won't apply */
+a.btn {
+    display: inline-block;
+}
+
 /* Primary: cream/dark text in dark, dark/white text in light */
 .btn-primary {
     background-color: transparent !important;
@@ -704,7 +709,7 @@ input:disabled {
 
 .card .button:not(.secondary):hover {
     background-color: var(--primary-color);
-    color: var(--button-text-color);
+    color: var(--button-text-color) !important;
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0 rgba(255, 253, 217, 0.35);
     text-decoration: none;
@@ -719,7 +724,7 @@ input:disabled {
 
     .card .button:not(.secondary):hover {
         background-color: var(--primary-color);
-        color: #ffffff;
+        color: #ffffff !important;
         box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.25);
     }
 }
@@ -734,7 +739,7 @@ input:disabled {
 
 .card .button.secondary:hover {
     background-color: var(--text-color);
-    color: var(--background-color);
+    color: var(--background-color) !important;
     transform: translate(-2px, -2px);
     box-shadow: 5px 5px 0 rgba(255, 255, 255, 0.15);
     text-decoration: none;
@@ -746,6 +751,7 @@ input:disabled {
     }
 
     .card .button.secondary:hover {
+        color: var(--background-color) !important;
         box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.18);
     }
 }
