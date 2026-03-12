@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Twitch Chat Overlay - Chat Scene Creator</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script
+    src="https://app.rybbit.io/api/script.js"
+    data-site-id="102"
+    defer
+></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Twitch Chat Overlay - Chat Scene Creator</h1>
+            <p>Create and manage chat scenes for different parts of your stream</p>
+            <p style="margin-top: 10px; font-size: 14px;">
+                <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank" style="color: var(--link-color); text-decoration: none;">
+                    Docs
+                </a>
+                <span style="margin: 0 8px;">•</span>
+                <a href="chat.html" style="color: var(--link-color); text-decoration: none;">
+                    Skip to Chat →
+                </a>
+            </p>
+        </header>
+        
+        <main class="app-layout">
+            <!-- Chat Scene List Panel -->
+            <div class="instances-panel">
+                <div class="instances-header">
+                    <h2>Chat Scenes</h2>
+                </div>
+                
+                <div class="instance-list" id="instanceList">
+                    <!-- Chat Scene items will be dynamically generated here -->
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="createInstanceBtn">New Chat Scene</button>
+                    <button class="btn btn-secondary" id="importBtn">Import</button>
+                    <button class="btn btn-secondary" id="exportAllBtn">Export All</button>
+                </div>
+            </div>
+            
+            <!-- Main Workspace Panel -->
+            <div class="workspace-panel">
+                <div class="workspace-header">
+                    <h2 class="workspace-title" id="workspaceTitle">Select or Create a Chat Scene</h2>
+                    <div class="workspace-actions" id="workspaceActions" style="display: none;">
+                        <button class="btn btn-secondary" id="duplicateBtn">Duplicate</button>
+                        <button class="btn btn-danger" id="deleteBtn">Delete</button>
+                        <button class="btn btn-secondary" id="exportBtn">Export</button>
+                    </div>
+                </div>
+                
+                <div class="config-layout" id="configLayout" style="display: none;">
+                    <!-- Settings Column -->
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3>Basic Information</h3>
+                            <div class="settings-group">
+                                <div class="settings-row">
+                                    <label for="instanceName">Scene Name</label>
+                                    <div class="input-group">
+                                        <input type="text" id="instanceName" class="form-control">
+                                        <div class="tooltip">
+                                            <span class="tooltip-icon">?</span>
+                                            <span class="tooltip-text">A recognizable name for this instance</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="instanceId">Scene ID</label>
+                                    <div class="input-group">
+                                        <input type="text" id="instanceId" class="form-control" disabled>
+                                        <div class="tooltip">
+                                            <span class="tooltip-icon">?</span>
+                                            <span class="tooltip-text">Unique identifier used in the URL parameter</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" id="saveSettingsBtn" style="align-self: flex-start;">Save Settings</button>
+                    </div>
+                    
+                    <!-- URL and OBS Info -->
+                    <div class="preview-panel">
+                        <div class="url-generator">
+                            <h3>Chat Scene URL</h3>
+                            <p>Copy this URL to use in your OBS Browser Source:</p>
+                            <div class="url-display">
+                                <div class="url-text" id="instanceUrlConfig">file:///path/to/chat.html?scene=example</div>
+                                <button class="copy-btn" id="copyUrlBtnConfig">Copy</button>
+                            </div>
+                            <div class="obs-tips-box">
+                                <p><strong>OBS Setup Steps:</strong></p>
+                                <ol style="margin-left: 20px; margin-top: 5px;">
+                                    <li>In OBS, add a <strong>Browser Source</strong>.</li>
+                                    <li>Paste the URL above into the URL field.</li>
+                                    <li><strong>IF YOU CAN'T PASTE:</strong> Uncheck "Local file" option.</li>
+                                    <li>Set Width: 320px and Height: 600px (recommended).</li>
+                                    <li>Click "OK".</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="obs-info-box">
+                                <p><strong>⚙️ Configuring in OBS:</strong> This creator only manages the scene's URL. All chat settings (channel, theme, colors, fonts, etc.) are configured <strong>inside OBS</strong>:</p>
+                                <ol style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Right-click -> interact, or click the Interact button with the browser source selected in the monitor/preview.</li>
+                                    <li>In the interaction window:
+                                        <ul>
+                                            <li>Enter your Twitch channel name and click "Connect".</li>
+                                            <li>Hover over the chat and click the settings gear (⚙️) to customize appearance (themes, colors, fonts, etc.).</li>
+                                        </ul>
+                                    </li>
+                                    <li>Settings are saved automatically within OBS for that specific source.</li>
+                                </ol>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview functionality removed as it needs to be tested directly in OBS -->
+                        <div class="preview-info-box">
+                            <p>To preview your chat scene, add it to OBS as a browser source.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="text-align: center; padding: 40px 0;">
+                    <p style="margin-bottom: 20px;">No chat scene selected. Create a new chat scene or select one from the list.</p>
+                    <button class="btn btn-primary" id="emptyStateCreateBtn">Create First Chat Scene</button>
+                    <p style="margin-top: 10px; font-size: 14px;">
+                        <a href="chat.html" target="_blank" style="color: var(--link-color); text-decoration: none;">
+                            Skip the Chat Scene Creator →
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Show OBS Setup Button -->
+                <div style="margin: 20px 0; text-align: center;">
+                    <button id="toggleObsSetupBtn" class="btn btn-secondary">Detailed OBS Setup Instructions</button>
+                </div>
+                
+                <!-- OBS Setup Section -->
+                <div class="obs-setup" id="obsSetup" style="display: none;">
+                    <h2>OBS Setup & Configuration</h2>
+                    
+                    <div class="url-generator">
+                        <h3>Chat Scene URL</h3>
+                        <p>Copy this URL to use in your OBS Browser Source:</p>
+                        <div class="url-display">
+                            <div class="url-text" id="instanceUrlSetup">file:///path/to/chat.html?scene=example</div>
+                            <button class="copy-btn" id="copyUrlBtnSetup">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setup-steps">
+                        <h3>Steps to Add in OBS:</h3>
+                        <ol>
+                            <li>In OBS Studio, right-click in the Sources panel and select <strong>Add</strong> → <strong>Browser</strong>.</li>
+                            <li>Name your source (e.g., "Twitch Chat - Gaming").</li>
+                            <li>Paste the URL copied above into the URL field.</li>
+                            <li><strong>IF YOU CAN'T PASTE:</strong> Uncheck "Local file" option.</li>
+                            <li>If running locally, adjust the file path in the URL to match where you saved this overlay on your computer.</li>
+                            <li>Set Width: 320 and Height: 600 (recommended, adjust as needed).</li>
+                            <li>Click "OK" to add the browser source.</li>
+                            <li>Position and resize the chat overlay as needed in your scene.</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="setup-steps">
+                        <h3>Configuring Your Chat Overlay in OBS:</h3>
+                        <ol>
+                            <li>To connect and customize the overlay: Right-click the Browser Source in OBS and select <strong>Interact</strong>.</li>
+                            <li>In the interaction window:
+                                <ul>
+                                    <li>Enter your Twitch channel name and click "Connect".</li>
+                                    <li>Hover over the chat area and click the settings gear icon (⚙️) in the top-right corner.</li>
+                                    <li>Use the settings panel to select themes, customize colors, fonts, opacity, display mode (window/popup), and other options.</li>
+                                </ul>
+                            </li>
+                            <li>Settings are saved automatically within OBS for that specific browser source.</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="accordion">
+                        <div class="accordion-header">
+                            <h3>Troubleshooting Tips</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <ul>
+                                <li><strong>Chat not connecting:</strong> In the OBS "Interact" window, double-check the channel name and ensure you have an internet connection.</li>
+                                <li><strong>Settings not saving:</strong> Settings are saved in OBS's browser cache. Ensure OBS has permissions to write cache files. Clearing OBS cache might reset settings.</li>
+                                <li><strong>Text too small/large:</strong> Adjust the font size in the overlay's settings (via "Interact") or scale the Browser Source itself in OBS.</li>
+                                <li><strong>Empty overlay:</strong> Right-click the Browser Source in OBS, select "Interact", and enter your channel name to connect.</li>
+                                <li><strong>Chat not refreshing:</strong> Try right-clicking the Browser Source in OBS and selecting "Refresh". If issues persist, try recreating the source.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion">
+                        <div class="accordion-header">
+                            <h3>Advanced OBS Settings</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p>For optimal performance, configure these additional settings in your OBS Browser Source:</p>
+                            <ul>
+                                <li>Check "Shutdown source when not visible" to save resources.</li>
+                                <li>Check "Refresh browser when scene becomes active" for the most up-to-date chat.</li>
+                                <li>Set "Custom CSS" to remove scrollbars if needed:<br>
+                                <code>body { overflow: hidden; }</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion">
+                        <div class="accordion-header">
+                            <h3>Customization Tips</h3>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <ul>
+                                <li><strong>Overlaying on content:</strong> Use the Tranparent theme, or adjust the opacity slider features while setting the "none" border option for seamless integration with your gameplay.</li>
+                                <li><strong>Font size:</strong> Keep at least 12px for best readability.</li>
+                                <li><strong>Positioning:</strong> Place chat where it won't overlap important game elements, or use popup mode for temporary chat message appearance.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for creating/editing chat scenes -->
+    <div id="instanceModal" class="modal-container">
+        <div class="modal-content">
+            <h2 id="modalTitle">Create New Chat Scene</h2>
+            <div style="margin: 20px 0;">
+                <div>
+                    <label for="modalInstanceName" class="modal-label">Descriptive Name:</label>
+                    <input type="text" id="modalInstanceName" style="width: 100%;" placeholder="e.g., Gaming, Just Chatting, Intro Screen">
+                    <p class="modal-description">A friendly name to identify this chat overlay in your scenes list</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <a href="chat.html" class="btn btn-secondary" style="margin-right: 10px;">Skip</a>
+                <button id="modalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
+                <button id="modalCreateBtn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notification-container"></div>
+
+    <script src="js/chat-scene-creator.js"></script>
+</body>
+</html>

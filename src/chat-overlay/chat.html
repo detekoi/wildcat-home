@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" class="chat-page">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Overlay for Twitch</title>
+    <meta name="description"
+        content="Twitch chat overlay with support for multiple chat scenes via URL parameters (e.g., ?scene=gaming)">
+    <link rel="stylesheet" href="css/chat-styles.css">
+    <link rel="stylesheet" href="css/theme-carousel.css">
+    <script src="https://app.rybbit.io/api/script.js" data-site-id="102" defer></script>
+</head>
+
+<body class="chat-page">
+    <div id="initial-connection-prompt">
+        <div class="prompt-content">
+            <h2>Enter a Channel</h2>
+
+            <input type="text" id="initial-channel-input" placeholder="Twitch Channel Name">
+            <button id="initial-connect-btn">Connect</button>
+
+            <button id="open-settings-from-prompt" class="secondary-button">Settings ⚙️</button>
+        </div>
+    </div>
+
+    <div id="popup-container">
+        <div class="popup-settings-area">
+            <button id="popup-settings-btn">⚙️</button>
+        </div>
+        <div id="popup-messages"></div>
+    </div>
+
+    <div id="chat-wrapper">
+        <div id="chat-container">
+            <button id="settings-btn">⚙️</button>
+            <div id="chat-scroll-area">
+                <div id="chat-messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="config-panel">
+        <h3>Chat Settings</h3>
+
+        <div class="section-divider">Connection</div>
+        <div class="config-row" id="connection-management" style="margin-top: 10px; padding-top: 10px;">
+            <div id="channel-form" style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                <label for="channel-input" style="flex-shrink: 0;">Channel:</label>
+                <input type="text" id="channel-input" placeholder="Enter Twitch channel" style="flex-grow: 1;">
+                <button id="connect-btn" style="flex-shrink: 0;">Connect</button>
+            </div>
+            <button id="disconnect-btn"
+                style="background-color: #aa5555; display: none; width: 100%; margin-top: 5px;">Disconnect</button>
+        </div>
+
+        <div class="config-row theme-section">
+            <div class="theme-selector-label" id="theme-selector-label">Theme:</div>
+            <div class="theme-carousel-container" role="group" aria-labelledby="theme-selector-label">
+                <div class="theme-cards-wrapper">
+                </div>
+            </div>
+            <div class="theme-preview-container">
+                <div class="theme-preview" id="theme-preview">
+                </div>
+            </div>
+            <div id="theme-info-and-nav">
+                <button type="button" id="prev-theme" class="theme-nav-btn">◀</button>
+                <div id="theme-details">
+                    <span id="selected-theme-name">Theme Name</span>
+                    <details class="theme-description-details">
+                        <summary>Description</summary>
+                        <span id="selected-theme-description">Theme description goes here.</span>
+                    </details>
+                </div>
+                <button type="button" id="next-theme" class="theme-nav-btn">▶</button>
+            </div>
+        </div>
+
+        <div class="section-divider">AI Theme Generator</div>
+
+        <div class="config-row">
+            <label for="theme-prompt">Game or Vibe:</label>
+            <input type="text" id="theme-prompt" placeholder="e.g., Minecraft, Cozy Vibes">
+        </div>
+
+        <div class="config-row">
+            <button id="generate-theme-btn">Generate Theme</button>
+            <div id="theme-loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <div id="loading-status">Generating...</div>
+            </div>
+        </div>
+
+        <div class="config-row">
+            <label for="generate-bg-image"
+                style="display: flex; align-items: center; gap: 5px; font-weight: normal; font-size: 0.9em;">
+                <input type="checkbox" id="generate-bg-image" checked>
+                Generate background image
+            </label>
+        </div>
+
+        <div class="config-row" id="generated-theme-result" style="display: none;">
+            <div>Generated: <span id="generated-theme-name"></span></div>
+        </div>
+
+        <div style="font-size: 12px; margin-top: 10px; color: #888; text-align: center;">
+            Generated themes will appear in your main theme collection above
+        </div>
+
+        <div class="section-divider">Display Mode</div>
+
+        <div class="config-row">
+            <div id="chat-mode-label">Chat Mode:</div>
+            <div style="display: flex; flex-direction: column; gap: 5px;" role="radiogroup"
+                aria-labelledby="chat-mode-label">
+                <label>
+                    <input type="radio" name="chat-mode" value="window" checked>
+                    Window
+                </label>
+                <label>
+                    <input type="radio" name="chat-mode" value="popup">
+                    Popup
+                </label>
+            </div>
+        </div>
+
+        <div class="config-row popup-setting">
+            <div id="animation-direction-label">Animation Direction:</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;" role="radiogroup"
+                aria-labelledby="animation-direction-label">
+                <label>
+                    <input type="radio" name="popup-direction" value="from-top">
+                    From Top
+                </label>
+                <label>
+                    <input type="radio" name="popup-direction" value="from-left">
+                    From Left
+                </label>
+                <label>
+                    <input type="radio" name="popup-direction" value="from-bottom" checked>
+                    From Bottom
+                </label>
+                <label>
+                    <input type="radio" name="popup-direction" value="from-right">
+                    From Right
+                </label>
+            </div>
+        </div>
+
+        <div class="config-row popup-setting">
+            <label for="popup-duration">Duration (seconds):</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="range" id="popup-duration" min="2" max="10" value="5">
+                <span id="popup-duration-value">5s</span>
+            </div>
+        </div>
+
+        <div class="config-row popup-setting">
+            <label for="popup-max-messages">Max Messages:</label>
+            <input type="number" id="popup-max-messages" value="3" min="1" max="10">
+        </div>
+
+        <div class="section-divider">Colors</div>
+
+        <div class="config-row">
+            <label for="bg-color">Background Color</label>
+            <div class="color-picker">
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 5px;">
+                    <span>Opacity:</span>
+                    <input type="range" id="bg-opacity" min="0" max="100" value="85" style="flex-grow: 1;">
+                    <span id="bg-opacity-value">85%</span>
+                </div>
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="#121212" data-target="bg">Dark</button>
+                    <button type="button" class="color-btn" data-color="#ffffff" data-target="bg">Light</button>
+                    <button type="button" class="color-btn" data-color="#f5f2e6" data-target="bg">Natural</button>
+                    <button type="button" class="color-btn" data-color="transparent" data-target="bg">None</button>
+                    <button type="button" class="color-btn" data-color="#ffdeec" data-target="bg">Pink</button>
+                    <button type="button" class="color-btn" data-color="#0c0c28" data-target="bg">Cyber</button>
+                </div>
+                <input type="color" id="bg-color" value="#121212" style="visibility: hidden; width: 0; height: 0;">
+            </div>
+        </div>
+
+        <div class="config-row">
+            <label for="bg-image-opacity">Background Image</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 5px;">
+                <span>Opacity:</span>
+                <input type="range" id="bg-image-opacity" min="0" max="100" value="55" style="flex-grow: 1;">
+                <span id="bg-image-opacity-value">55%</span>
+            </div>
+        </div>
+        <div class="config-row">
+            <label for="border-color">Border:</label>
+            <div class="color-picker">
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="#444444" data-target="border">Dark</button>
+                    <button type="button" class="color-btn" data-color="#cccccc" data-target="border">Light</button>
+                    <button type="button" class="color-btn" data-color="#7e6852" data-target="border">Wood</button>
+                    <button type="button" class="color-btn" data-color="#ff6bcb" data-target="border">Rose</button>
+                    <button type="button" class="color-btn" data-color="#00ffb3" data-target="border">Mint</button>
+                    <button type="button" class="color-btn" data-color="transparent" data-target="border">None</button>
+                </div>
+                <input type="color" id="border-color" value="#9147ff" style="visibility: hidden; width: 0; height: 0;">
+            </div>
+        </div>
+        <div class="config-row">
+            <label for="text-color">Text:</label>
+            <div class="color-picker">
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="#efeff1" data-target="text">Light</button>
+                    <button type="button" class="color-btn" data-color="#1a1a1a" data-target="text">Dark</button>
+                    <button type="button" class="color-btn" data-color="#4e3629" data-target="text">Brown</button>
+                    <button type="button" class="color-btn" data-color="#8e2651" data-target="text">Berry</button>
+                    <button type="button" class="color-btn" data-color="#00ffea" data-target="text">Teal</button>
+                </div>
+                <input type="color" id="text-color" value="#efeff1" style="visibility: hidden; width: 0; height: 0;">
+            </div>
+        </div>
+        <div class="config-row">
+            <div class="username-color-header">
+                <input type="checkbox" id="override-username-colors">
+                <label for="username-color">Username Color Override:</label>
+            </div>
+            <div class="color-picker">
+                <div style="font-size: 12px; color: #888; margin-bottom: 8px;">
+                    Use custom color instead of Twitch's colors for all usernames
+                </div>
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="#9147ff"
+                        data-target="username">Purple.tv</button>
+                    <button type="button" class="color-btn" data-color="#508d69" data-target="username">Forest</button>
+                    <button type="button" class="color-btn" data-color="#ff9800" data-target="username">Amber</button>
+                    <button type="button" class="color-btn" data-color="#b81670" data-target="username">Magenta</button>
+                    <button type="button" class="color-btn" data-color="#ff2e97" data-target="username">Neon</button>
+                </div>
+                <input type="color" id="username-color" value="#9147ff"
+                    style="visibility: hidden; width: 0; height: 0;">
+            </div>
+        </div>
+
+
+        <div class="section-divider">Appearance</div>
+
+        <div class="config-row">
+            <label for="border-radius">Corner Roundness:</label>
+            <div class="preset-buttons-container" id="border-radius-presets">
+                <button type="button" class="preset-btn" data-value="0px">Sharp</button>
+                <button type="button" class="preset-btn" data-value="8px">Subtle</button>
+                <button type="button" class="preset-btn" data-value="16px">Rounded</button>
+                <button type="button" class="preset-btn" data-value="24px">Pill</button>
+            </div>
+        </div>
+
+        <div class="config-row">
+            <label for="box-shadow">Window Shadow:</label>
+            <div class="preset-buttons-container" id="box-shadow-presets">
+                <button type="button" class="preset-btn" data-value="none">None</button>
+                <button type="button" class="preset-btn" data-value="soft">Soft</button>
+                <button type="button" class="preset-btn" data-value="simple3d">Simple 3D</button>
+                <button type="button" class="preset-btn" data-value="intense3d">Intense 3D</button>
+                <button type="button" class="preset-btn" data-value="sharp">Sharp</button>
+            </div>
+        </div>
+
+        <div class="config-row">
+            <label for="text-shadow">Text Shadow:</label>
+            <div class="preset-buttons-container" id="text-shadow-presets">
+                <button type="button" class="preset-btn" data-value="none">None</button>
+                <button type="button" class="preset-btn" data-value="soft">Soft</button>
+                <button type="button" class="preset-btn" data-value="sharp">Sharp</button>
+                <button type="button" class="preset-btn" data-value="outline">Outline</button>
+                <button type="button" class="preset-btn" data-value="strong">Strong</button>
+                <button type="button" class="preset-btn" data-value="glow">Glow</button>
+            </div>
+        </div>
+
+        <div class="section-divider">Message Elements</div>
+        <div class="config-row">
+            <label for="show-badges-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-badges-toggle" checked>
+                Show Badges
+            </label>
+        </div>
+
+        <div class="config-row">
+            <label for="show-pronouns-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-pronouns-toggle" checked>
+                Show Pronouns
+            </label>
+            <div class="help-text" style="margin-left: 20px; font-size: 0.8em; opacity: 0.7;">Users can set theirs at <a
+                    href="https://pr.alejo.io/" target="_blank"
+                    style="color: inherit; text-decoration: underline;">pr.alejo.io</a></div>
+        </div>
+
+        <div class="config-row">
+            <label for="show-timestamps" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-timestamps" checked>
+                Show Timestamps
+            </label>
+        </div>
+
+        <div class="config-row">
+            <label for="enlarge-single-emotes-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="enlarge-single-emotes-toggle">
+                Enlarge Single Emote Messages
+            </label>
+        </div>
+
+        <div class="section-divider">Typography</div>
+
+        <div class="config-row font-section">
+            <div class="font-selector-label" id="font-selector-label">Font:</div>
+            <div id="font-buttons" class="font-buttons-container" role="group" aria-labelledby="font-selector-label">
+                <div class="font-navigation">
+                    <button type="button" id="prev-font" class="font-nav-btn">◀</button>
+                    <button type="button" id="next-font" class="font-nav-btn">▶</button>
+                </div>
+                <div class="current-font-display" id="current-font">Default</div>
+            </div>
+        </div>
+        <div class="config-row">
+            <label for="font-size">Font Size:</label>
+            <input type="range" id="font-size" min="10" max="36" value="14">
+            <span id="font-size-value">14px</span>
+        </div>
+        <div class="config-row">
+            <label>Font Weight:</label>
+            <div class="preset-buttons-container" id="font-weight-presets">
+                <button type="button" class="preset-btn" data-value="300">Light</button>
+                <button type="button" class="preset-btn" data-value="normal">Normal</button>
+                <button type="button" class="preset-btn" data-value="bold">Bold</button>
+                <button type="button" class="preset-btn" data-value="900">Black</button>
+            </div>
+        </div>
+
+        <div class="section-divider">Layout</div>
+
+        <div class="config-row">
+            <label for="chat-width">Width:</label>
+            <input type="range" id="chat-width" min="3" max="100" value="95">
+            <span id="chat-width-value">95%</span>
+        </div>
+        <div class="config-row window-only-setting">
+            <label for="chat-height">Height:</label>
+            <input type="range" id="chat-height" min="10" max="100" value="95">
+            <span id="chat-height-value">95%</span>
+        </div>
+        <div class="config-row window-only-setting">
+            <label for="max-messages">Max Messages:</label>
+            <input type="number" id="max-messages" min="5" max="100" value="50">
+        </div>
+
+        <div id="config-panel-actions">
+            <div>
+                <button id="save-config">Save Settings</button>
+                <button id="cancel-config" style="background-color: #555;">Cancel</button>
+                <button id="reset-config" style="background-color: #aa5555;">Reset to Default</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme-carousel.js"></script>
+    <script type="module" src="js/chat.js"></script>
+    <script src="js/theme-generator.js"></script>
+    <script src="js/bg-opacity-handler.js"></script>
+</body>
+
+</html>

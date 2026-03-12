@@ -3,6 +3,10 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/styles");
     eleventyConfig.addPassthroughCopy("src/scripts");
     eleventyConfig.addPassthroughCopy("src/assets");
+    eleventyConfig.addPassthroughCopy("src/chat-overlay");
+
+    // Exclude chat-overlay from template processing — it's a standalone static app
+    eleventyConfig.ignores.add("src/chat-overlay/**");
 
     // Date formatting filter
     eleventyConfig.addFilter("readableDate", (dateObj) => {

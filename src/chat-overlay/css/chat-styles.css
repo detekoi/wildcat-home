@@ -1,0 +1,1207 @@
+/* Font Face Declarations */
+ @font-face {
+    font-family: 'Press Start 2P';
+    src: url('../assets/fonts/PressStart2P-Regular.txt.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    src: url('../assets/fonts/AtkinsonHyperlegible-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    src: url('../assets/fonts/AtkinsonHyperlegible-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    src: url('../assets/fonts/AtkinsonHyperlegible-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    src: url('../assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Jacquard';
+    src: url('../assets/fonts/Jacquard12-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'EB Garamond';
+    src: url('../assets/fonts/EBGaramond-VariableFont_wght.ttf') format('truetype-variations');
+    font-weight: 400 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'EB Garamond';
+    src: url('../assets/fonts/EBGaramond-Italic-VariableFont_wght.ttf') format('truetype-variations');
+    font-weight: 400 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'MedievalSharp';
+    src: url('../assets/fonts/MedievalSharp-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+ @font-face {
+    font-family: 'Tektur';
+    src: url('../assets/fonts/Tektur-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-stretch: 75% 100%;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Core Layout - Adjusted Defaults */
+    --chat-width: 95%;
+    --chat-height: 95%;
+    --chat-max-messages: 50; /* Example default, controlled by JS */
+    --chat-bg-color: rgba(18, 18, 18, 0.85); /* Dark BG with opacity */
+    --chat-border-color: #9147ff; /* Twitch purple */
+    --chat-border-width: 1px;
+    --chat-border-radius: 8px; /* Subtle rounding */
+    --chat-box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; /* Soft shadow */
+
+    /* Typography */
+    --chat-text-color: #efeff1; /* Light grey text */
+    --chat-font-size: 14px;
+    --chat-font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --username-color-override: none; /* Default: use Twitch colors */
+    --show-timestamps: 1; /* 1 for true, 0 for false */
+    --chat-text-shadow: none; /* Default text shadow */
+
+    /* Popup Specifics */
+    --popup-animation-direction: from-bottom; /* from-top, from-left, from-bottom, from-right */
+    --popup-animation-duration: 0.5s; /* Base animation speed */
+    --popup-message-display-duration: 5s; /* How long each message stays visible */
+    --popup-max-messages: 3;
+    
+    /* Internal Spacing */
+    --chat-padding: 10px;
+    --message-spacing: 5px;
+    
+    /* Background Image */
+    --chat-bg-image: none; /* Default to no image */
+    --chat-bg-image-opacity: 0.55; /* Default opacity */
+    
+    /* Accent Colors (for themes) */
+    --accent-color-1: #9147ff;
+    --accent-color-2: #ff7f50;
+    --accent-color-3: #32cd32;
+    --accent-color-4: #1e90ff;
+    --accent-color-5: #ff69b4;
+
+    /* Default Theme (Dark) */
+    --chat-bg-opacity: 0.85; /* Separate opacity control for background color */
+    --chat-bg-image-opacity: 0.55; /* Separate opacity control for background image */
+    --username-color: #9147ff; /* Default if no color is specified */
+    --timestamp-color: #adadb8;
+    --font-size: 14px;
+    --font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --override-username-colors: 0; /* 0 = use Twitch colors, 1 = override */
+    --chat-bg-image: none; /* Default: no background image */
+    
+    /* Animation colors */
+    --spinner-color: var(--primary-color); /* Primary color for the spinner */
+    --spinner-accent: var(--primary-dark); /* Darker variant of primary color for accent */
+   
+    /* Popup Theme (same as chat by default) */
+    --popup-bg-color: var(--chat-bg-color, #1e1e1e);
+    --popup-bg-opacity: var(--chat-bg-opacity, 0.85);
+    --popup-bg-image-opacity: var(--chat-bg-image-opacity, 0.55);
+    --popup-border-color: var(--chat-border-color);
+    --popup-text-color: var(--chat-text-color);
+    --popup-username-color: var(--username-color);
+    --popup-bg-image: var(--chat-bg-image, none);
+    
+    /* Config Panel specific styles - not affected by chat themes */
+    --config-bg-color: rgba(35, 35, 35, 0.85);
+    --config-text-color: #ffffff;
+    --config-border-color: #6c757d; /* A neutral gray color */
+    --config-font-family: 'Atkinson Hyperlegible', sans-serif;
+    
+    /* Base colors for light mode */
+    --primary-color: #9147ff;
+    --primary-dark: #772ce8;
+    --primary-light: #a970ff;
+    --secondary-color: #f0f0f0;
+    --text-color: #18181b;
+    --background-color: #f7f7f8;
+    --panel-color: #ffffff;
+    --border-color: #e5e5e5;
+    --success-color: #00b300;
+    --danger-color: #ff3e3e;
+    --warning-color: #ffb300;
+    --info-color: #3ea6ff;
+    --card-bg-color: #ffffff;
+    --card-text-color: #18181b;
+    --header-color: #18181b;
+    --link-color: #9147ff;
+    --button-text-color: #ffffff;
+}
+
+/* Common Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.chat-page {
+    background-color: transparent;
+    color: var(--chat-text-color);
+    font-family: var(--font-family);
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    
+    /* Better font rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#config-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    max-width: 95vw;
+    height: 100vh;
+    background-color: var(--config-bg-color);
+    padding: 20px 10px 0 10px; /* Keep top padding, add 10px sides padding */
+    box-sizing: border-box;
+    color: var(--config-text-color);
+    font-family: var(--config-font-family);
+    z-index: 1000;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#config-panel.visible {
+    transform: translateX(0);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#config-panel h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    border-bottom: 1px solid var(--config-border-color);
+    padding-bottom: 10px;
+}
+
+.config-row {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.section-divider {
+    border-bottom: 1px solid rgba(145, 71, 255, 0.4);
+    margin: 15px 0 10px 0;
+    padding-bottom: 5px;
+    color: var(--primary-color);
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+input[type="text"], input[type="number"] {
+    padding: 5px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #772ce8;
+    filter: brightness(1.1);
+}
+
+#config-panel .config-row label {
+    color: var(--config-text-color);
+}
+
+/* New Wrapper Styles */
+#chat-wrapper {
+    width: var(--chat-width);
+    height: var(--chat-height);
+    position: relative; /* For positioning #chat-container */
+    border-radius: var(--chat-border-radius);
+    overflow: hidden; /* Clip contents like #chat-container */
+    box-shadow: var(--chat-box-shadow, none);
+    background-color: var(--chat-bg-color); /* Directly use the variable with RGBA */
+    /* Background image with opacity - using a pseudo-element is still best for layering opacity */
+    /* background-image: var(--chat-bg-image, none); <-- Let's use ::before/::after on the wrapper */
+    z-index: 0; /* Establish stacking context */
+}
+
+#chat-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--chat-bg-image, none);
+    background-repeat: repeat;
+    background-size: contain;
+    opacity: var(--chat-bg-image-opacity, 0.55);
+    z-index: 1; /* Above background color, below container */
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Modified Chat Container Styles */
+#chat-container {
+    position: absolute; /* Position relative to wrapper */
+    inset: 0; /* Fill the wrapper */
+    border-radius: inherit; /* Match wrapper radius */
+    border: 2px solid;
+    border-color: var(--chat-border-color);
+    overflow: hidden; /* Still needed for scroll area clipping */
+    background: transparent; /* Make container transparent */
+    z-index: 2; /* Above wrapper's ::before pseudo-element */
+}
+
+/* Styles for the scrolling inner container - Adjust z-index relative to container */
+#chat-scroll-area {
+    height: 100%;
+    overflow-y: scroll;
+    padding: 10px;
+    position: relative; /* Keep relative */
+    z-index: 1; /* z-index relative to #chat-container now */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-sizing: border-box;
+    color: var(--chat-text-color); /* Apply text color here */
+    font-family: var(--font-family); /* Apply font family here */
+    font-size: var(--font-size); /* Apply font size here */
+    font-weight: var(--font-weight, normal); /* Apply font weight here */
+    /* Disable browser scroll anchoring; we manage scroll manually */
+    overflow-anchor: none;
+}
+
+#chat-scroll-area::-webkit-scrollbar {
+    display: none;
+}
+
+/* Add specific styles for #chat-messages container */
+#chat-messages {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100%;
+    margin-top: auto;
+    justify-content: flex-end;
+}
+
+.chat-message {
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease-in-out;
+    font-family: inherit;
+    text-shadow: var(--chat-text-shadow);
+}
+
+ @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message .timestamp {
+    color: var(--timestamp-color);
+    font-size: 0.85em;
+    margin-right: 5px;
+}
+
+.chat-message .username {
+    color: var(--username-color);
+    font-weight: bold;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.emote {
+    height: calc(var(--font-size) * 1.5);
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.pronoun-badge {
+    color: var(--timestamp-color);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Enlarged emotes for single-emote messages */
+.single-emote-message .emote {
+    height: calc(var(--font-size) * 4);
+    margin: 5px;
+}
+
+#channel-form {
+    margin-bottom: 15px;
+    order: -1;
+}
+
+#channel-input {
+    padding: 5px;
+    border: 1px solid var(--chat-border-color);
+    border-radius: 4px;
+    width: 69%;
+}
+
+#settings-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(0, 0, 0, 0.25);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+#chat-container:hover #settings-btn {
+    opacity: 0.7;
+}
+
+#settings-btn:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Popup mode styles */
+#popup-container {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    top: 0;
+    left: 0;
+    width: var(--chat-width);
+    height: 100vh;
+    box-sizing: border-box;
+    font-size: var(--font-size);
+}
+
+#popup-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    position: absolute;
+    bottom: auto;
+    top: auto;
+    left: auto;
+    right: auto;
+    max-height: calc(100vh - 20px);
+    overflow: hidden;
+}
+
+
+#popup-container #channel-form,
+#popup-container input,
+#popup-container button {
+    pointer-events: auto;
+}
+
+#popup-container #channel-form {
+    background-color: var(--popup-bg-color);
+    border: 2px solid var(--popup-border-color);
+    border-radius: var(--chat-border-radius);
+    padding: 10px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 240px;
+}
+
+#popup-container {
+    display: none;
+}
+
+.popup-message {
+    position: relative;
+    border-radius: var(--chat-border-radius);
+    box-shadow: var(--chat-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.2));
+    padding: 8px 12px;
+    width: 100%;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    pointer-events: none;
+    border: 2px solid var(--popup-border-color);
+    color: var(--popup-text-color);
+    font-family: inherit;
+    max-width: 100%;
+    box-sizing: border-box;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.4s ease-out;
+    text-shadow: var(--chat-text-shadow);
+    font-weight: var(--font-weight, normal);
+}
+
+/* Note: Gliding animation now handled via inline styles for precise positioning */
+
+.popup-message::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in srgb, var(--popup-bg-color, #1e1e1e) calc(var(--popup-bg-opacity, 0.85) * 100%), transparent);
+    border-radius: calc(var(--chat-border-radius) - 2px);
+    z-index: -2;
+    pointer-events: none;
+}
+
+.popup-message::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--popup-bg-image, none);
+    background-repeat: repeat;
+    background-size: 320px;
+    opacity: var(--popup-bg-image-opacity, 0.55);
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.popup-message.exiting {
+    animation-delay: 0s;
+}
+
+.popup-settings-area {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    pointer-events: auto;
+    z-index: 1001;
+}
+
+#popup-settings-btn {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/* Add rule to show popup settings button when hovering anywhere on the body */
+body.chat-page:hover #popup-settings-btn {
+    opacity: 1;
+    /* Add a small background change on hover for better feedback */
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Set INITIAL transform based on direction */
+.popup-message.from-top {
+    transform: translateY(-100%);
+}
+
+.popup-message.from-bottom {
+    transform: translateY(100%);
+}
+
+.popup-message.from-left {
+    transform: translateX(-100%);
+}
+
+.popup-message.from-right {
+    transform: translateX(100%);
+}
+
+/* Class to trigger the visible state (slide in) */
+.popup-message.visible {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+/* Apply slide-out state when .removing class is added */
+.popup-message.removing {
+    opacity: 0;
+    /* The transform will transition back to the initial state defined by .from-* */
+}
+
+.popup-message .timestamp {
+    color: var(--timestamp-color);
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.popup-message .username {
+    font-weight: bold;
+    color: var(--username-color);
+}
+
+.popup-message .message {
+    flex: 1;
+    min-width: 0;
+    word-wrap: break-word;
+}
+
+.theme-navigation, .font-navigation {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0; /* Prevent navigation from shrinking */
+}
+
+.theme-nav-btn, .font-nav-btn {
+    margin-top: 0;
+    background-color: #2a2a2a;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 0;
+}
+
+.current-theme-display, .current-font-display {
+    flex-grow: 1; /* Allow display to take up space */
+    text-align: center;
+    font-weight: 500;
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for long names */
+    min-width: 80px; /* Ensure minimum width */
+}
+
+.theme-buttons-container, .font-buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-selector-label, .font-selector-label {
+    margin-bottom: 8px;
+}
+
+.popup-setting, .window-only-setting {
+    display: none;
+}
+
+.theme-section, .font-section {
+    margin: 10px 0;
+}
+
+.color-btn {
+    width: 60px;
+    height: 25px;
+    margin: 2px;
+    border: 1px solid #444;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.color-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 5px;
+    gap: 4px;
+}
+
+/* Config Panel Theme Preview */
+.theme-preview {
+    background-color: var(--preview-bg-color, var(--chat-bg-color));
+    border: 1px solid var(--preview-border-color, var(--chat-border-color));
+    padding: 10px;
+    border-radius: var(--preview-border-radius, var(--chat-border-radius));
+    box-shadow: var(--preview-box-shadow, var(--chat-box-shadow));
+    font-family: var(--preview-font-family, var(--font-family));
+    color: var(--preview-text-color, var(--chat-text-color));
+    margin: 5px auto 0; /* Center and add top margin */
+    width: 90%; /* Control width */
+    max-width: 280px; /* Limit max width */
+    min-height: 60px; /* Ensure some minimum height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden; /* Prevent long lines from breaking layout */
+    position: relative; /* For background image positioning */
+    z-index: 0; /* Ensure preview content is above potential background layers */
+}
+
+.theme-preview::before { /* For Background IMAGE */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--preview-bg-image, none);
+    background-size: cover; /* Apply size here */
+    background-position: center; /* Apply position here */
+    background-repeat: no-repeat; /* Ensure no repeat */
+    opacity: var(--preview-bg-image-opacity, 0.55); /* Adjusted default */
+    z-index: 0; /* Behind content */
+    border-radius: inherit; /* Inherit radius from parent */
+    pointer-events: none;
+}
+
+/* REMOVED problematic .theme-preview::after rule */
+
+.preview-chat-message {
+    margin-bottom: 4px;
+    line-height: 1.3;
+    word-wrap: break-word;
+    position: relative; /* Ensure text is above background pseudo-element */
+    z-index: 1;
+    text-shadow: var(--preview-text-shadow);
+}
+
+/* Renamed from .preview-message to avoid confusion */
+.preview-chat-message .timestamp {
+    color: var(--preview-timestamp-color, #adadb8); /* Use preview variable */
+    font-size: 0.85em;
+    margin-right: 5px;
+    opacity: 0.8;
+}
+
+/* Renamed from .preview-message to avoid confusion */
+.preview-chat-message .username {
+    color: var(--preview-username-color, #9147ff); /* Use preview variable */
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.preset-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.preset-btn {
+    background-color: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin: 0;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.preset-btn.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+#generated-theme-result {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+#generated-theme-name {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+#theme-loading-indicator {
+    display: none;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-top-color: var(--spinner-color);
+    animation: spin 1s infinite linear;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.spinner.retrying {
+    animation: spin 1s infinite linear, pulse 1.5s infinite ease-in-out;
+}
+
+ @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(145, 71, 255, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(145, 71, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(145, 71, 255, 0); }
+}
+
+ @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.system-message {
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    color: var(--timestamp-color);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.font-preview {
+    margin-top: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--chat-text-color);
+}
+
+.theme-preview-container {
+    /* Ensure consistent spacing */
+    margin-top: 5px; /* Reduced from 10px */
+    margin-bottom: 5px; /* Added some bottom margin */
+}
+
+.generated-themes-carousel {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-top: 10px !important;
+    border: 1px solid var(--chat-border-color);
+    padding: 10px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.carousel-title {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.carousel-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.carousel-themes {
+    flex-grow: 1;
+    height: 70px;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--chat-border-color);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.carousel-btn {
+    background-color: #2a2a2a;
+    border: 1px solid var(--chat-border-color);
+    color: #ffffff;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px 8px;
+    font-size: 12px;
+    height: 30px;
+}
+
+.carousel-btn:hover {
+    background-color: #404040;
+}
+
+.carousel-indicator {
+    font-size: 12px;
+    color: #cccccc;
+    margin-top: 5px;
+    text-align: center;
+    width: 100%;
+}
+
+.theme-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    background-size: cover;
+    background-position: center;
+    color: #ffffff;
+    text-shadow: 0 0 6px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.6);
+    font-weight: 500;
+    cursor: pointer;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    padding: 5px;
+}
+
+.theme-name {
+    margin-bottom: 5px;
+    font-size: 14px;
+    text-align: center;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.theme-color-palette {
+    display: flex;
+    gap: 3px;
+    margin-top: 2px;
+}
+
+.color-chip {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.theme-card:hover {
+    outline-color: var(--spinner-color, #9147ff);
+}
+
+.theme-card.active {
+    transform: translateX(0);
+    outline-color: var(--spinner-color, #9147ff);
+}
+
+.theme-card.prev {
+    transform: translateX(-100%);
+}
+
+.theme-card.next {
+    transform: translateX(100%);
+}
+
+
+#connection-management {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#config-panel #channel-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+#config-panel #channel-form label {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+#config-panel #channel-form input[type="text"] {
+    flex-grow: 1;
+    min-width: 100px;
+}
+
+#config-panel #channel-form button {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    margin-top: 0;
+}
+
+#config-panel #disconnect-btn {
+    width: 100%;
+    margin-top: 5px;
+    padding: 8px 15px;
+}
+
+/* Tooltip Styling for Theme Description */
+.info-tooltip {
+    display: none; /* Hidden by default */
+    margin-left: 5px;
+    cursor: help;
+    font-style: normal;
+    font-weight: bold;
+    color: #aaa;
+    border: 1px solid #aaa;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    line-height: 14px; /* Adjust for vertical centering */
+    text-align: center;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.info-tooltip:hover {
+    color: #eee;
+    border-color: #eee;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure the checkbox row looks okay */
+#config-panel .config-row label[for="generate-bg-image"] {
+    font-style: italic;
+    color: #bbb;
+}
+
+.username-color-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.username-color-header input[type="checkbox"] {
+    margin: 0;
+}
+
+.username-color-header label {
+    margin: 0;
+    flex-grow: 1;
+}
+
+/* Styles for Initial Connection Prompt */
+#initial-connection-prompt {
+    display: none; /* Hidden by default */
+    position: absolute; /* Position relative to viewport/body */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Precise centering */
+    z-index: 1000; /* Ensure it's above other content */
+    justify-content: center;
+    align-items: center;
+    padding: 0; /* Remove outer padding */
+    box-sizing: border-box;
+}
+
+#initial-connection-prompt .prompt-content {
+    background-color: var(--panel-bg-color, #2a2a2e);
+    padding: 10px 8px; /* Reduced horizontal padding */
+    border-radius: var(--panel-border-radius, 4px); /* Smaller radius */
+    box-shadow: var(--panel-box-shadow, 0 1px 4px rgba(0,0,0,0.3)); /* Minimal shadow */
+    text-align: center;
+    color: var(--panel-text-color, #efeff1);
+    max-width: 250px;
+    width: 98%;
+    border: 1px solid var(--panel-border-color, #444);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#initial-connection-prompt h2 {
+    margin-top: 0;
+    margin-bottom: 8px; /* Reduced margin */
+    color: var(--panel-header-color, #fff);
+    font-size: 0.9em; /* Smaller heading */
+}
+
+#initial-connection-prompt input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    margin-bottom: 6px; /* Reduced margin */
+    border: 1px solid var(--panel-input-border-color, #555);
+    border-radius: 3px;
+    background-color: var(--panel-input-bg-color, #333);
+    color: var(--panel-input-text-color, #fff);
+    font-size: 0.8em;
+}
+
+#initial-connection-prompt button {
+    padding: 5px 8px; /* Reduced padding */
+    background-color: var(--button-primary-bg, #9147ff);
+    color: var(--button-primary-text, white);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    margin-bottom: 6px; /* Reduced margin */
+}
+
+#initial-connection-prompt .secondary-button {
+    background-color: transparent;
+    color: var(--button-secondary-text, #aaa);
+    border: 1px solid var(--button-secondary-border, #555);
+    padding: 3px 6px; /* Reduced padding */
+    font-size: 0.65em; /* Smaller */
+    width: auto;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+#initial-connection-prompt .secondary-button:hover {
+    background-color: #444;
+}
+
+/* Styles for Fixed Config Panel Actions */
+#config-panel-actions {
+    position: sticky; /* Use sticky positioning */
+    bottom: 0;
+    left: 0; /* Ensures it spans width within the panel */
+    right: 0;
+    background-color: var(--config-bg-color, rgba(35, 35, 35, 0.95)); /* Match panel background */
+    padding: 0; /* Remove padding from sticky container */
+    box-sizing: border-box;
+    z-index: 10; /* Ensure it's above scrolling content */
+    border-left: 1px solid var(--config-border-color, #6c757d); /* Left border */
+    border-right: 1px solid var(--config-border-color, #6c757d); /* Right border */
+    border-top: 1px solid var(--config-border-color, #6c757d); /* Top border */
+    border-radius: 3px; /* Added corner radius */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+/* Style the inner div holding the buttons */
+#config-panel-actions > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    margin: 0; /* Remove all margins from inner div */
+    padding: 5px 10px; /* Add padding INSIDE the button container */
+}
+
+/* Make action buttons smaller */
+#config-panel-actions button {
+    padding: 4px 8px; /* Reduced padding */
+    font-size: 0.85em; /* Slightly smaller font */
+    margin-top: 0; /* Remove default top margin */
+}
+
+/* Container for badges */
+.badges {
+    display: inline-flex; /* Changed from inline-block for better flex alignment */
+    align-items: center; /* Vertically align badges if they have different heights */
+    margin-right: 4px; /* Space between badges and username */
+    vertical-align: middle; /* Align the whole badge group with the text line */
+}
+
+/* Individual badge image */
+.chat-badge {
+    height: 18px; /* Consistent height as per spec */
+    width: auto;  /* Maintain aspect ratio */
+    margin-right: 3px; /* Space between multiple badges */
+    vertical-align: middle; /* Align with text/other badges, though parent flex align-items helps */
+}
+/* Remove margin from the last badge in a sequence */
+.chat-badge:last-child {
+    margin-right: 0;
+}
+
+/* Placeholder for badges if image fails or for testing */
+.chat-badge-placeholder {
+    display: inline-block;
+    padding: 0px 4px;
+    margin-right: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--chat-text-color);
+    background-color: rgba(128, 128, 128, 0.3);
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 3px;
+    vertical-align: middle;
+}
+.chat-badge-placeholder:last-child {
+    margin-right: 0;
+}

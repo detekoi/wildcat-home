@@ -1,0 +1,273 @@
+/* Theme Generator Loading Animation Styles */
+
+/* Loading spinner animation */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid var(--spinner-color);
+    border-top-color: var(--spinner-accent);
+    animation: spin 1s infinite linear;
+    margin-right: 8px;
+}
+
+/* Add pulse effect during retries */
+.spinner.retrying {
+    animation: spin 1s infinite linear, pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(145, 71, 255, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(145, 71, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(145, 71, 255, 0); }
+}
+
+#theme-loading-indicator {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Highlight animation for newly added themes */
+@keyframes highlight {
+    0% { outline-color: transparent; }
+    25% { outline-color: var(--spinner-color, #9147ff); }
+    75% { outline-color: var(--spinner-color, #9147ff); }
+    100% { outline-color: transparent; }
+}
+
+/* Style for theme items in main carousel */
+.theme-highlight {
+    animation: highlight 2s ease-in-out;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+}
+
+/* Main container for the theme carousel (replacing theme-buttons-container if needed) */
+.theme-carousel-container {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Wrapper for the scrollable theme cards */
+.theme-cards-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 5px;
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    opacity: 0; /* Hide wrapper itself */
+}
+
+.theme-cards-wrapper::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* Navigation buttons positioning (might need adjustments based on layout) */
+.theme-navigation {
+    display: flex;
+    flex-direction: column; /* Stack vertically if needed */
+    gap: 5px;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.theme-nav-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: opacity 0.2s;
+}
+
+.theme-nav-btn:hover {
+    opacity: 0.7;
+}
+
+.theme-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Generated themes are now integrated into the main theme carousel */
+
+.theme-card {
+    flex: 0 0 150px;
+    height: 90px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.theme-card:hover {
+    transform: none; /* Removed hover effect */
+    /* Optionally add a subtle border or background change on hover if desired */
+    /* box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2); */ 
+}
+
+.theme-card-text {
+    position: relative; /* Keep text above background layers */
+    z-index: 2;
+    background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
+    padding: 4px 6px; /* Reduced padding */
+    border-radius: 3px; /* Slightly smaller radius */
+    width: 95%; /* Allow slightly more width */
+    max-height: 90%; /* Ensure text fits */
+    overflow: hidden; /* Hide overflowing text */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.theme-name {
+    font-weight: bold;
+    font-size: 0.9em; /* Slightly smaller name */
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6);
+    margin-bottom: 3px; /* Reduced space */
+    display: block; /* Ensure it takes its own line */
+    white-space: nowrap; /* Prevent name wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add ellipsis if name too long */
+    max-width: 100%;
+}
+
+.theme-description {
+    font-size: 0.75em; /* Smaller description */
+    color: #ccc; /* Lighter gray */
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.6);
+    display: -webkit-box;
+    line-clamp: 2; /* Add standard property */
+    -webkit-line-clamp: 2; /* Limit description to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2; /* Reduced line height */
+    max-height: calc(1.2em * 2); /* Calculate max height based on line clamp and line height */
+}
+
+/* Style for active theme card */
+.theme-card.active {
+    outline: 2px solid #9147ff;
+    box-shadow: 0 0 8px rgba(145, 71, 255, 0.5);
+}
+
+#theme-info-and-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+    padding: 0 10px;
+}
+
+#theme-details {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0; /* Enable text truncation */
+}
+
+#selected-theme-name {
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#selected-theme-description {
+    font-size: 12px;
+    color: #888;
+    display: -webkit-box;
+    line-clamp: 2; /* Add standard property */
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+/* Styling for the new details/summary structure */
+.theme-description-details { /* Style the <details> element */
+    margin-top: 4px; 
+    font-size: 12px;
+    color: #888;
+    line-height: 1.3;
+    max-width: 100%;
+    position: relative; /* Needed if summary arrow is absolutely positioned */
+}
+
+.theme-description-details > summary { /* Style the <summary> element */
+    cursor: pointer;
+    display: inline-block; 
+    outline: none; 
+    position: relative; 
+    padding-right: 15px; /* Space for arrow */
+    color: #aaa; /* Slightly lighter color for summary text */
+    font-style: italic;
+}
+
+/* Hide default marker */
+.theme-description-details > summary::marker, 
+.theme-description-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Custom arrow for the summary */
+.theme-description-details > summary::after {
+    content: '▼'; 
+    font-size: 0.8em;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease-in-out;
+}
+
+.theme-description-details[open] > summary::after {
+    transform: translateY(-50%) rotate(180deg); /* Point up when open */
+}
+
+/* Style the description span *inside* the details */
+.theme-description-details #selected-theme-description {
+    display: block; /* Make it block to apply margin/padding */
+    margin-top: 5px;
+    padding-left: 10px;
+    border-left: 2px solid #555;
+    max-height: 100px; /* Limit height */
+    overflow-y: auto; /* Allow scrolling */
+    scrollbar-width: thin; 
+    color: #bbb; /* Restore slightly brighter color for full text */
+}
+
+/* Optional: Style scrollbar for the span */
+.theme-description-details #selected-theme-description::-webkit-scrollbar {
+    width: 5px;
+}
+
+.theme-description-details #selected-theme-description::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.theme-description-details #selected-theme-description::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
