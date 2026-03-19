@@ -185,8 +185,8 @@ a .lucide-inline {
 /* Lucide icons inside nav and carousel buttons */
 .theme-nav-btn i[data-lucide],
 .font-nav-btn i[data-lucide] {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     display: block;
 }
 
