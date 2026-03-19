@@ -9,6 +9,10 @@
         content="Twitch chat overlay with support for multiple chat scenes via URL parameters (e.g., ?scene=gaming)">
     <link rel="stylesheet" href="css/chat-styles.css">
     <link rel="stylesheet" href="css/theme-carousel.css">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <script src="https://app.rybbit.io/api/script.js" data-site-id="102" defer></script>
 </head>
 
@@ -20,20 +24,20 @@
             <input type="text" id="initial-channel-input" placeholder="Twitch Channel Name">
             <button id="initial-connect-btn">Connect</button>
 
-            <button id="open-settings-from-prompt" class="secondary-button">Settings ⚙️</button>
+            <button id="open-settings-from-prompt" class="secondary-button"><i data-lucide="settings" class="lucide-inline"></i> Settings</button>
         </div>
     </div>
 
     <div id="popup-container">
         <div class="popup-settings-area">
-            <button id="popup-settings-btn">⚙️</button>
+            <button id="popup-settings-btn"><i data-lucide="settings"></i></button>
         </div>
         <div id="popup-messages"></div>
     </div>
 
     <div id="chat-wrapper">
         <div id="chat-container">
-            <button id="settings-btn">⚙️</button>
+            <button id="settings-btn"><i data-lucide="settings"></i></button>
             <div id="chat-scroll-area">
                 <div id="chat-messages"></div>
             </div>
@@ -48,7 +52,7 @@
             <div id="channel-form" style="display: flex; gap: 10px; align-items: center; width: 100%;">
                 <label for="channel-input" style="flex-shrink: 0;">Channel:</label>
                 <input type="text" id="channel-input" placeholder="Enter Twitch channel" style="flex-grow: 1;">
-                <button id="connect-btn" style="flex-shrink: 0;">Connect</button>
+                <button id="connect-btn" style="flex-shrink: 0;"><i data-lucide="plug" class="lucide-inline"></i> Connect</button>
             </div>
             <button id="disconnect-btn"
                 style="background-color: #aa5555; display: none; width: 100%; margin-top: 5px;">Disconnect</button>
@@ -65,7 +69,7 @@
                 </div>
             </div>
             <div id="theme-info-and-nav">
-                <button type="button" id="prev-theme" class="theme-nav-btn">◀</button>
+                <button type="button" id="prev-theme" class="theme-nav-btn"><i data-lucide="chevron-left"></i></button>
                 <div id="theme-details">
                     <span id="selected-theme-name">Theme Name</span>
                     <details class="theme-description-details">
@@ -73,7 +77,7 @@
                         <span id="selected-theme-description">Theme description goes here.</span>
                     </details>
                 </div>
-                <button type="button" id="next-theme" class="theme-nav-btn">▶</button>
+                <button type="button" id="next-theme" class="theme-nav-btn"><i data-lucide="chevron-right"></i></button>
             </div>
         </div>
 
@@ -85,7 +89,7 @@
         </div>
 
         <div class="config-row">
-            <button id="generate-theme-btn">Generate Theme</button>
+            <button id="generate-theme-btn"><i data-lucide="sparkles" class="lucide-inline"></i> Generate Theme</button>
             <div id="theme-loading-indicator" style="display: none;">
                 <div class="spinner"></div>
                 <div id="loading-status">Generating...</div>
@@ -314,8 +318,8 @@
             <div class="font-selector-label" id="font-selector-label">Font:</div>
             <div id="font-buttons" class="font-buttons-container" role="group" aria-labelledby="font-selector-label">
                 <div class="font-navigation">
-                    <button type="button" id="prev-font" class="font-nav-btn">◀</button>
-                    <button type="button" id="next-font" class="font-nav-btn">▶</button>
+                    <button type="button" id="prev-font" class="font-nav-btn"><i data-lucide="chevron-left"></i></button>
+                    <button type="button" id="next-font" class="font-nav-btn"><i data-lucide="chevron-right"></i></button>
                 </div>
                 <div class="current-font-display" id="current-font">Default</div>
             </div>
@@ -354,9 +358,9 @@
 
         <div id="config-panel-actions">
             <div>
-                <button id="save-config">Save Settings</button>
-                <button id="cancel-config" style="background-color: #555;">Cancel</button>
-                <button id="reset-config" style="background-color: #aa5555;">Reset to Default</button>
+                <button id="save-config"><i data-lucide="save" class="lucide-inline"></i> Save</button>
+                <button id="cancel-config" style="background-color: #555;"><i data-lucide="x" class="lucide-inline"></i> Cancel</button>
+                <button id="reset-config" style="background-color: #aa5555;"><i data-lucide="rotate-ccw" class="lucide-inline"></i> Reset</button>
             </div>
         </div>
     </div>
@@ -365,6 +369,7 @@
     <script type="module" src="js/chat.js"></script>
     <script src="js/theme-generator.js"></script>
     <script src="js/bg-opacity-handler.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>

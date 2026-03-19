@@ -857,9 +857,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const isVisible = obsSetup.style.display !== 'none';
 
         obsSetup.style.display = isVisible ? 'none' : 'block';
-        toggleObsSetupBtn.textContent = isVisible ?
-            'Show OBS Setup Instructions' :
-            'Hide OBS Setup Instructions';
+        toggleObsSetupBtn.innerHTML = isVisible ?
+            '<i data-lucide="monitor" class="lucide-inline"></i> Detailed OBS Setup Instructions' :
+            '<i data-lucide="monitor" class="lucide-inline"></i> Hide OBS Setup Instructions';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 
     // Toggle Browser Settings Accordion

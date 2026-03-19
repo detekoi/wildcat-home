@@ -43,6 +43,29 @@
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Lucide Icon Utilities */
+.lucide-inline {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+button .lucide-inline,
+a .lucide-inline,
+.btn .lucide-inline {
+    margin-right: 4px;
+}
+
+/* Accordion icon sizing */
+.accordion-icon i[data-lucide] {
+    width: 16px;
+    height: 16px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
 /* Info boxes and notices (Base Styles) */
 .settings-note {
     margin-bottom: 20px;

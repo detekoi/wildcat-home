@@ -168,6 +168,47 @@
     --link-color: #9147ff;
     --button-text-color: #ffffff;
 }
+/* Lucide Icon Utilities */
+.lucide-inline {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+button .lucide-inline,
+a .lucide-inline {
+    margin-right: 4px;
+}
+
+/* Lucide icons inside nav and carousel buttons */
+.theme-nav-btn i[data-lucide],
+.font-nav-btn i[data-lucide] {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+/* Settings gear button icon sizing */
+#settings-btn i[data-lucide],
+#popup-settings-btn i[data-lucide] {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/* Accordion icon sizing */
+.accordion-icon i[data-lucide] {
+    width: 16px;
+    height: 16px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.accordion.active .accordion-icon i[data-lucide] {
+    transform: rotate(180deg);
+}
 
 /* Common Styles */
 html, body {

@@ -233,8 +233,13 @@
 
 /* Custom arrow for the summary */
 .theme-description-details > summary::after {
-    content: '▼'; 
-    font-size: 0.8em;
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
     position: absolute;
     right: 0;
     top: 50%;
