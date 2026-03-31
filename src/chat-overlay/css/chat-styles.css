@@ -717,6 +717,83 @@ body.chat-page:hover #popup-settings-btn {
     gap: 10px;
 }
 
+/* Font search container */
+.font-search-container {
+    flex-grow: 1;
+    position: relative;
+    min-width: 0;
+}
+
+#font-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 13px;
+    text-align: center;
+    font-weight: 500;
+    text-overflow: ellipsis;
+}
+
+#font-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    text-align: left;
+}
+
+.font-search-results {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #2a2a2a;
+    border: 1px solid var(--primary-color);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 1100;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #2a2a2a;
+}
+
+.font-search-results.visible {
+    display: block;
+}
+
+.font-search-result {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #ccc;
+    border-bottom: 1px solid #3a3a3a;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.font-search-result:last-child {
+    border-bottom: none;
+}
+
+.font-search-result:hover,
+.font-search-result.highlighted {
+    background-color: rgba(145, 71, 255, 0.25);
+    color: #fff;
+}
+
+.font-search-result .font-category {
+    font-size: 10px;
+    color: #888;
+    margin-left: 6px;
+    font-family: var(--config-font-family);
+}
+
 .theme-selector-label, .font-selector-label {
     margin-bottom: 8px;
 }

@@ -318,12 +318,15 @@
 
         <div class="config-row font-section">
             <div class="font-selector-label" id="font-selector-label">Font:</div>
-            <div id="font-buttons" class="font-buttons-container" role="group" aria-labelledby="font-selector-label">
+            <div id="font-buttons" class="font-buttons-container" role="combobox" aria-expanded="false" aria-labelledby="font-selector-label">
                 <div class="font-navigation">
                     <button type="button" id="prev-font" class="font-nav-btn"><i data-lucide="chevron-left"></i></button>
                     <button type="button" id="next-font" class="font-nav-btn"><i data-lucide="chevron-right"></i></button>
                 </div>
-                <div class="current-font-display" id="current-font">Default</div>
+                <div class="font-search-container">
+                    <input type="text" id="font-search-input" placeholder="Search fonts..." autocomplete="off" aria-autocomplete="list" aria-controls="font-search-results">
+                    <div id="font-search-results" class="font-search-results" role="listbox"></div>
+                </div>
             </div>
         </div>
         <div class="config-row">

@@ -59,7 +59,8 @@ import { ChatConnection } from './modules/chat-connection.js';
         const fontWeightPresets = document.getElementById('font-weight-presets');
         const prevFontBtn = document.getElementById('prev-font');
         const nextFontBtn = document.getElementById('next-font');
-        const currentFontDisplay = document.getElementById('current-font');
+        const fontSearchInput = document.getElementById('font-search-input');
+        const fontSearchResults = document.getElementById('font-search-results');
         const themePreview = document.getElementById('theme-preview');
         const channelForm = document.getElementById('channel-form');
         const showBadgesToggle = document.getElementById('show-badges-toggle');
@@ -215,7 +216,7 @@ import { ChatConnection } from './modules/chat-connection.js';
         function updateFontDisplay() {
             if (!window.availableFonts?.length) {
                 console.error('Available fonts not initialized yet.');
-                if (currentFontDisplay) currentFontDisplay.textContent = 'Error';
+                if (fontSearchInput) fontSearchInput.value = 'Error';
                 return;
             }
             if (currentFontIndex < 0 || currentFontIndex >= window.availableFonts.length) {
@@ -225,11 +226,11 @@ import { ChatConnection } from './modules/chat-connection.js';
             const currentFont = window.availableFonts[currentFontIndex];
             if (!currentFont) {
                 console.error(`Could not find font at index ${currentFontIndex}`);
-                if (currentFontDisplay) currentFontDisplay.textContent = 'Error';
+                if (fontSearchInput) fontSearchInput.value = 'Error';
                 return;
             }
 
-            if (currentFontDisplay) currentFontDisplay.textContent = currentFont.name;
+            if (fontSearchInput) fontSearchInput.value = currentFont.name;
             configManager.updateConfig('fontFamily', currentFont.value);
             document.documentElement.style.setProperty('--font-family', currentFont.value);
 
@@ -238,7 +239,103 @@ import { ChatConnection } from './modules/chat-connection.js';
                 window.loadGoogleFont(currentFont.googleFontFamily);
             }
 
+            // Close dropdown when cycling
+            closeFontDropdown();
             updateThemePreview();
+        }
+
+        /**
+         * Font search dropdown helpers
+         */
+        let fontDropdownHighlightIndex = -1;
+
+        function openFontDropdown(query) {
+            if (!fontSearchResults || !window.availableFonts?.length) return;
+            const q = query.toLowerCase().trim();
+            const matches = q
+                ? window.availableFonts.filter(f => f.name.toLowerCase().includes(q))
+                : window.availableFonts;
+
+            fontSearchResults.innerHTML = '';
+            fontDropdownHighlightIndex = -1;
+
+            if (matches.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.className = 'font-search-result';
+                noResult.textContent = 'No fonts found';
+                noResult.style.color = '#888';
+                noResult.style.cursor = 'default';
+                fontSearchResults.appendChild(noResult);
+            } else {
+                matches.forEach((font) => {
+                    const item = document.createElement('div');
+                    item.className = 'font-search-result';
+                    item.setAttribute('role', 'option');
+                    item.dataset.fontValue = font.value;
+
+                    // Render font name in its own typeface for preview
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = font.name;
+                    nameSpan.style.fontFamily = font.value;
+                    // Load the font for preview if it's a Google Font
+                    if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
+                        window.loadGoogleFont(font.googleFontFamily);
+                    }
+                    item.appendChild(nameSpan);
+
+                    if (font.custom || font.isGoogleFont) {
+                        const catSpan = document.createElement('span');
+                        catSpan.className = 'font-category';
+                        catSpan.textContent = font.isGoogleFont ? '(Google)' : '(Custom)';
+                        item.appendChild(catSpan);
+                    }
+
+                    item.addEventListener('mousedown', (e) => {
+                        e.preventDefault(); // Prevent input blur
+                        selectFontFromDropdown(font);
+                    });
+                    fontSearchResults.appendChild(item);
+                });
+            }
+
+            fontSearchResults.classList.add('visible');
+        }
+
+        function closeFontDropdown() {
+            if (fontSearchResults) {
+                fontSearchResults.classList.remove('visible');
+                fontSearchResults.innerHTML = '';
+            }
+            fontDropdownHighlightIndex = -1;
+        }
+
+        function selectFontFromDropdown(font) {
+            const idx = window.availableFonts.findIndex(f => f.value === font.value);
+            if (idx !== -1) {
+                currentFontIndex = idx;
+                updateFontDisplay();
+            }
+            closeFontDropdown();
+            fontSearchInput?.blur();
+        }
+
+        function highlightDropdownItem(direction) {
+            const items = fontSearchResults?.querySelectorAll('.font-search-result[role="option"]');
+            if (!items?.length) return;
+
+            // Remove old highlight
+            if (fontDropdownHighlightIndex >= 0 && fontDropdownHighlightIndex < items.length) {
+                items[fontDropdownHighlightIndex].classList.remove('highlighted');
+            }
+
+            if (direction === 'down') {
+                fontDropdownHighlightIndex = (fontDropdownHighlightIndex + 1) % items.length;
+            } else {
+                fontDropdownHighlightIndex = (fontDropdownHighlightIndex - 1 + items.length) % items.length;
+            }
+
+            items[fontDropdownHighlightIndex].classList.add('highlighted');
+            items[fontDropdownHighlightIndex].scrollIntoView({ block: 'nearest' });
         }
 
         /**
@@ -583,7 +680,7 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--chat-height', `${value}%`);
         });
 
-        // Font selection carousel
+        // Font selection carousel (prev/next buttons)
         if (prevFontBtn && !prevFontBtn.dataset.listenerAttached) {
             prevFontBtn.addEventListener('click', () => {
                 currentFontIndex = (currentFontIndex - 1 + (window.availableFonts?.length || 1)) % (window.availableFonts?.length || 1);
@@ -596,17 +693,73 @@ import { ChatConnection } from './modules/chat-connection.js';
                 currentFontIndex = (currentFontIndex + 1) % (window.availableFonts?.length || 1);
                 updateFontDisplay();
             });
-
-            document.addEventListener('fonts-updated', () => {
-                console.log('Fonts updated event received in chat.js');
-                const fontIndex = window.availableFonts?.findIndex(f => f.value === configManager.config.fontFamily) ?? -1;
-                if (fontIndex !== -1) {
-                    currentFontIndex = fontIndex;
-                }
-                updateFontDisplay();
-            });
             nextFontBtn.dataset.listenerAttached = 'true';
         }
+
+        // Font search input
+        if (fontSearchInput) {
+            fontSearchInput.addEventListener('focus', () => {
+                fontSearchInput.select();
+                openFontDropdown(fontSearchInput.value);
+            });
+            fontSearchInput.addEventListener('input', () => {
+                openFontDropdown(fontSearchInput.value);
+            });
+            fontSearchInput.addEventListener('blur', () => {
+                // Delay close so mousedown on result can fire first
+                setTimeout(() => closeFontDropdown(), 150);
+            });
+            fontSearchInput.addEventListener('keydown', (e) => {
+                if (!fontSearchResults?.classList.contains('visible')) {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        openFontDropdown(fontSearchInput.value);
+                        e.preventDefault();
+                    }
+                    return;
+                }
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        highlightDropdownItem('down');
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        highlightDropdownItem('up');
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        const items = fontSearchResults.querySelectorAll('.font-search-result[role="option"]');
+                        if (fontDropdownHighlightIndex >= 0 && fontDropdownHighlightIndex < items.length) {
+                            const fontValue = items[fontDropdownHighlightIndex].dataset.fontValue;
+                            const font = window.availableFonts.find(f => f.value === fontValue);
+                            if (font) selectFontFromDropdown(font);
+                        } else if (items.length === 1) {
+                            // Auto-select if only one result
+                            const fontValue = items[0].dataset.fontValue;
+                            const font = window.availableFonts.find(f => f.value === fontValue);
+                            if (font) selectFontFromDropdown(font);
+                        }
+                        break;
+                    case 'Escape':
+                        closeFontDropdown();
+                        // Restore current font name in input
+                        const currentFont = window.availableFonts?.[currentFontIndex];
+                        if (currentFont) fontSearchInput.value = currentFont.name;
+                        fontSearchInput.blur();
+                        break;
+                }
+            });
+        }
+
+        // React to font list updates from proxy
+        document.addEventListener('fonts-updated', () => {
+            console.log('Fonts updated event received in chat.js');
+            const fontIndex = window.availableFonts?.findIndex(f => f.value === configManager.config.fontFamily) ?? -1;
+            if (fontIndex !== -1) {
+                currentFontIndex = fontIndex;
+            }
+            updateFontDisplay();
+        });
 
         // Border radius presets
         function applyBorderRadius(value) {

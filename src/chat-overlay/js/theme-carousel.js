@@ -728,6 +728,9 @@
     let fontFetchRetried = false;
 
     async function fetchAvailableFonts() {
+        // Capture locally-defined custom fonts before fetch overwrites the list
+        const localCustomFonts = (window.availableFonts || []).filter(f => f.custom);
+
         try {
             // Determine API URL
             const isLocalhost = window.location.hostname === 'localhost' ||
@@ -740,8 +743,11 @@
             if (response.ok) {
                 const fonts = await response.json();
                 if (Array.isArray(fonts) && fonts.length > 0) {
-                    window.availableFonts = fonts;
-                    console.log(`Updated available fonts list with ${fonts.length} fonts from proxy.`);
+                    // Merge: keep local custom fonts that aren't already in the proxy list
+                    const proxyFontNames = new Set(fonts.map(f => f.name));
+                    const missingLocalFonts = localCustomFonts.filter(f => !proxyFontNames.has(f.name));
+                    window.availableFonts = [...missingLocalFonts, ...fonts];
+                    console.log(`Updated available fonts list with ${window.availableFonts.length} fonts (${missingLocalFonts.length} local + ${fonts.length} from proxy).`);
 
                     // Dispatch event to notify that fonts have changed
                     document.dispatchEvent(new CustomEvent('fonts-updated'));
