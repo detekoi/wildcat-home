@@ -89,6 +89,15 @@ export class ThemeManager {
         this._configManager.updateConfig('bgImage', theme.backgroundImage || null);
         this._configManager.updateConfig('bgImageOpacity', theme.bgImageOpacity ?? 0.55);
 
+        // Enable top-fade automatically only when background is fully transparent
+        if (theme.topFade !== undefined) {
+            this._configManager.updateConfig('topFade', theme.topFade);
+        } else {
+            const isTransparentBg = theme.bgColorOpacity === 0;
+            this._configManager.updateConfig('topFade', isTransparentBg);
+        }
+        document.body.classList.toggle('top-fade', !!this._configManager.config.topFade);
+
         // Update font family from theme
         if (theme.fontFamily) {
             let fontIndex = window.availableFonts?.findIndex(f => {

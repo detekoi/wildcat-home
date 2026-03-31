@@ -57,7 +57,8 @@ export class ConfigManager {
             badgeFallbackHide: true,
             enlargeSingleEmotes: false,
             bgColorOpacity: 0.8,
-            bgImageOpacity: 0.55
+            bgImageOpacity: 0.55,
+            topFade: false
         };
     }
 
@@ -125,6 +126,9 @@ export class ConfigManager {
         if (cfg.theme && cfg.theme !== 'default') rootClassList.add(cfg.theme);
         rootClassList.toggle('override-username-colors', !!cfg.overrideUsernameColors);
         rootClassList.toggle('hide-timestamps', !cfg.showTimestamps);
+
+        // Toggle top-fade class on body
+        document.body.classList.toggle('top-fade', !!cfg.topFade);
 
         // Apply chat mode if callback is set
         if (this.switchChatModeCallback && typeof this.switchChatModeCallback === 'function') {

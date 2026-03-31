@@ -129,6 +129,8 @@ export class SettingsPanelManager {
                 enlargeSingleEmotesToggle, bgImageOpacityInput
             } = this._dom;
 
+            const topFadeToggle = document.getElementById('top-fade-toggle');
+
             const currentFontValue = this._fontManager.getCurrentFontValue();
             const currentThemeValue = this._themeManager.lastAppliedThemeValue;
             const bgImageOpacityValue = getOpacity(bgImageOpacityInput, this._configManager.config.bgImageOpacity ?? 0.55);
@@ -171,6 +173,7 @@ export class SettingsPanelManager {
                 badgeCacheChannelTTL: this._configManager.config.badgeCacheChannelTTL,
                 badgeFallbackHide: true,
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
+                topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
             };
 
             this._configManager.config = newConfig;
@@ -293,6 +296,9 @@ export class SettingsPanelManager {
 
         if (showBadgesToggle) showBadgesToggle.checked = this._configManager.config.showBadges;
         if (enlargeSingleEmotesToggle) enlargeSingleEmotesToggle.checked = this._configManager.config.enlargeSingleEmotes;
+
+        const topFadeToggle = document.getElementById('top-fade-toggle');
+        if (topFadeToggle) topFadeToggle.checked = this._configManager.config.topFade ?? false;
 
         this._themeManager.updateThemePreview();
     }

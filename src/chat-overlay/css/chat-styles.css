@@ -351,8 +351,8 @@ button:hover {
     overflow-anchor: none;
 }
 
-/* Top fade-out effect in windowed mode */
-body.window-mode #chat-scroll-area {
+/* Top fade-out effect in windowed mode - toggled via .top-fade class on body */
+body.window-mode.top-fade #chat-scroll-area {
     -webkit-mask-image: linear-gradient(
         to bottom,
         transparent 0%,
