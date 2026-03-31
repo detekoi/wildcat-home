@@ -82,7 +82,7 @@ export class UIHelpers {
         const textShadowMap = {
             'none': 'none',
             'soft': '1px 1px 2px rgba(0, 0, 0, 0.4), 0 0 3px rgba(0, 0, 0, 0.2)',
-            'sharp': '3px 3px 0 rgba(0,0,0,0.9)',
+            'sharp': '1px 1px 0 rgba(0,0,0,0.9)',
             'outline': '1px 1px 0 rgba(0, 0, 0, 0.9), -1px -1px 0 rgba(0, 0, 0, 0.9), 1px -1px 0 rgba(0, 0, 0, 0.9), -1px 1px 0 rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.7)',
             'strong': '0 0 2px rgba(0,0,0,1), 0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.85)',
             'glow': '0 0 8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 0, 0, 0.4)'
