@@ -383,6 +383,22 @@ button:hover {
     overflow-anchor: none;
 }
 
+/* Top fade-out effect in windowed mode */
+body.window-mode #chat-scroll-area {
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.4) 6%,
+        black 15%
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.4) 6%,
+        black 15%
+    );
+}
+
 #chat-scroll-area::-webkit-scrollbar {
     display: none;
 }
