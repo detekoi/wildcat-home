@@ -97,6 +97,8 @@ export class ThemeManager {
             this._configManager.updateConfig('topFade', isTransparentBg);
         }
         document.body.classList.toggle('top-fade', !!this._configManager.config.topFade);
+        const topFadeToggle = document.getElementById('top-fade-toggle');
+        if (topFadeToggle) topFadeToggle.checked = !!this._configManager.config.topFade;
 
         // Update font family from theme
         if (theme.fontFamily) {
