@@ -306,7 +306,17 @@ export class FontManager {
                 tryItem.className = 'font-search-result';
                 tryItem.setAttribute('role', 'option');
                 tryItem.dataset.fontValue = `'${originalQuery}', sans-serif`;
-                tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${originalQuery}</strong>" from Google Fonts</span>`;
+
+                // Build with DOM nodes to avoid XSS (CodeQL js/xss-through-dom)
+                const span = document.createElement('span');
+                span.style.color = 'var(--primary-light)';
+                span.appendChild(document.createTextNode('Try "'));
+                const strong = document.createElement('strong');
+                strong.textContent = originalQuery;
+                span.appendChild(strong);
+                span.appendChild(document.createTextNode('" from Google Fonts'));
+                tryItem.appendChild(span);
+
                 tryItem.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     this._addAndSelectGoogleFont(originalQuery);
