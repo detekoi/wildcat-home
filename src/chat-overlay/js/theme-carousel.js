@@ -20,6 +20,7 @@
         { name: 'MedievalSharp', value: "'MedievalSharp', cursive", description: 'Evokes a medieval/fantasy atmosphere with calligraphic details.', custom: true },
         { name: 'Press Start 2P', value: "'Press Start 2P', monospace", description: 'Pixelated retro gaming font that resembles 8-bit text.', custom: true },
         { name: 'Jacquard', value: "'Jacquard', monospace", description: 'Clean monospaced font inspired by classic computer terminals.', custom: true },
+        { name: 'Chicle', value: "'Chicle', serif", description: 'Playful display font with a fun, hand-drawn character.', custom: true, isGoogleFont: true, googleFontFamily: 'Chicle' },
 
         // System fonts organized by categories
         // Sans-serif fonts
