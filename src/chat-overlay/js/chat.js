@@ -248,6 +248,51 @@ import { ChatConnection } from './modules/chat-connection.js';
          * Font search dropdown helpers
          */
         let fontDropdownHighlightIndex = -1;
+        let fontSearchDebounceTimer = null;
+        let fontSearchAbortController = null;
+
+        /**
+         * Get the proxy API base URL
+         */
+        function getFontSearchApiUrl() {
+            const isLocalhost = window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                window.location.hostname === '';
+            return isLocalhost ? 'http://localhost:8091' : 'https://theme-proxy-361545143046.us-central1.run.app';
+        }
+
+        /**
+         * Create a font result item element
+         */
+        function createFontResultItem(font) {
+            const item = document.createElement('div');
+            item.className = 'font-search-result';
+            item.setAttribute('role', 'option');
+            item.dataset.fontValue = font.value;
+
+            // Render font name in its own typeface for preview
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = font.name;
+            nameSpan.style.fontFamily = font.value;
+            // Load the font for preview if it's a Google Font
+            if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
+                window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
+            }
+            item.appendChild(nameSpan);
+
+            if (font.custom || font.isGoogleFont) {
+                const catSpan = document.createElement('span');
+                catSpan.className = 'font-category';
+                catSpan.textContent = font.isGoogleFont ? '(Google)' : '(Custom)';
+                item.appendChild(catSpan);
+            }
+
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Prevent input blur
+                selectFontFromDropdown(font);
+            });
+            return item;
+        }
 
         function openFontDropdown(query) {
             if (!fontSearchResults || !window.availableFonts?.length) return;
@@ -259,19 +304,14 @@ import { ChatConnection } from './modules/chat-connection.js';
             fontSearchResults.innerHTML = '';
             fontDropdownHighlightIndex = -1;
 
-            if (matches.length === 0 && q) {
-                // No match — offer to try it as a Google Font
-                const tryItem = document.createElement('div');
-                tryItem.className = 'font-search-result';
-                tryItem.setAttribute('role', 'option');
-                tryItem.dataset.fontValue = `'${query.trim()}', sans-serif`;
-                tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${query.trim()}</strong>" from Google Fonts</span>`;
-                tryItem.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    addAndSelectGoogleFont(query.trim());
-                });
-                fontSearchResults.appendChild(tryItem);
-            } else if (matches.length === 0) {
+            // Cancel any in-flight remote search
+            if (fontSearchAbortController) {
+                fontSearchAbortController.abort();
+                fontSearchAbortController = null;
+            }
+            clearTimeout(fontSearchDebounceTimer);
+
+            if (matches.length === 0 && !q) {
                 const noResult = document.createElement('div');
                 noResult.className = 'font-search-result';
                 noResult.textContent = 'No fonts found';
@@ -279,76 +319,152 @@ import { ChatConnection } from './modules/chat-connection.js';
                 noResult.style.cursor = 'default';
                 fontSearchResults.appendChild(noResult);
             } else {
+                // Render local matches
                 matches.forEach((font) => {
-                    const item = document.createElement('div');
-                    item.className = 'font-search-result';
-                    item.setAttribute('role', 'option');
-                    item.dataset.fontValue = font.value;
-
-                    // Render font name in its own typeface for preview
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = font.name;
-                    nameSpan.style.fontFamily = font.value;
-                    // Load the font for preview if it's a Google Font
-                    if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-                        window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
-                    }
-                    item.appendChild(nameSpan);
-
-                    if (font.custom || font.isGoogleFont) {
-                        const catSpan = document.createElement('span');
-                        catSpan.className = 'font-category';
-                        catSpan.textContent = font.isGoogleFont ? '(Google)' : '(Custom)';
-                        item.appendChild(catSpan);
-                    }
-
-                    item.addEventListener('mousedown', (e) => {
-                        e.preventDefault(); // Prevent input blur
-                        selectFontFromDropdown(font);
-                    });
-                    fontSearchResults.appendChild(item);
+                    fontSearchResults.appendChild(createFontResultItem(font));
                 });
+            }
 
-                // Also offer Google Font option if query doesn't exactly match any font name
-                if (q && !matches.some(f => f.name.toLowerCase() === q)) {
-                    const tryItem = document.createElement('div');
-                    tryItem.className = 'font-search-result';
-                    tryItem.setAttribute('role', 'option');
-                    tryItem.dataset.fontValue = `'${query.trim()}', sans-serif`;
-                    tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${query.trim()}</strong>" from Google Fonts</span>`;
-                    tryItem.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        addAndSelectGoogleFont(query.trim());
-                    });
-                    fontSearchResults.appendChild(tryItem);
-                }
+            // If there's a search query ≥ 2 chars, also search remotely
+            if (q && q.length >= 2) {
+                // Add loading indicator
+                const loadingEl = document.createElement('div');
+                loadingEl.className = 'font-search-loading';
+                loadingEl.id = 'font-remote-loading';
+                loadingEl.innerHTML = '<div class="mini-spinner"></div>Searching Google Fonts…';
+                fontSearchResults.appendChild(loadingEl);
+
+                fontSearchDebounceTimer = setTimeout(() => {
+                    fetchRemoteFonts(q, query.trim());
+                }, 300);
             }
 
             fontSearchResults.classList.add('visible');
         }
 
         /**
-         * Dynamically add a Google Font by name and select it
+         * Fetch fonts from the proxy search endpoint and append results
          */
-        function addAndSelectGoogleFont(fontName) {
-            const fontValue = `'${fontName}', sans-serif`;
-            const newFont = {
-                name: fontName,
-                value: fontValue,
-                description: `${fontName} from Google Fonts`,
-                isGoogleFont: true,
-                googleFontFamily: fontName
-            };
+        async function fetchRemoteFonts(q, originalQuery) {
+            fontSearchAbortController = new AbortController();
+            const apiBase = getFontSearchApiUrl();
+
+            try {
+                const response = await fetch(
+                    `${apiBase}/api/fonts/search?q=${encodeURIComponent(originalQuery)}`,
+                    { signal: fontSearchAbortController.signal }
+                );
+
+                // Remove loading indicator
+                const loadingEl = document.getElementById('font-remote-loading');
+                if (loadingEl) loadingEl.remove();
+
+                if (!response.ok) return;
+
+                const remoteFonts = await response.json();
+                if (!Array.isArray(remoteFonts) || remoteFonts.length === 0) return;
+
+                // Filter out fonts we already have locally
+                const localNames = new Set(window.availableFonts.map(f => f.name.toLowerCase()));
+                const newResults = remoteFonts.filter(f => !localNames.has(f.name.toLowerCase()));
+
+                if (newResults.length === 0) return;
+
+                // Check if dropdown is still visible
+                if (!fontSearchResults?.classList.contains('visible')) return;
+
+                // Add section label
+                const sectionLabel = document.createElement('div');
+                sectionLabel.className = 'font-search-section-label';
+                sectionLabel.textContent = 'More from Google Fonts';
+                fontSearchResults.appendChild(sectionLabel);
+
+                // Add remote results
+                newResults.forEach((font) => {
+                    const item = document.createElement('div');
+                    item.className = 'font-search-result';
+                    item.setAttribute('role', 'option');
+                    item.dataset.fontValue = font.value;
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = font.name;
+                    nameSpan.style.fontFamily = font.value;
+                    if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
+                        window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
+                    }
+                    item.appendChild(nameSpan);
+
+                    const catSpan = document.createElement('span');
+                    catSpan.className = 'font-category';
+                    catSpan.textContent = `(${font.category || 'Google'})`;
+                    item.appendChild(catSpan);
+
+                    item.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        addAndSelectGoogleFont(font);
+                    });
+                    fontSearchResults.appendChild(item);
+                });
+
+            } catch (err) {
+                if (err.name === 'AbortError') return; // User typed again, ignore
+                console.warn('Remote font search failed:', err);
+                // Remove loading indicator on error
+                const loadingEl = document.getElementById('font-remote-loading');
+                if (loadingEl) loadingEl.remove();
+
+                // Fallback: offer the blind "Try" option if proxy is unreachable
+                if (fontSearchResults?.classList.contains('visible')) {
+                    const tryItem = document.createElement('div');
+                    tryItem.className = 'font-search-result';
+                    tryItem.setAttribute('role', 'option');
+                    tryItem.dataset.fontValue = `'${originalQuery}', sans-serif`;
+                    tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${originalQuery}</strong>" from Google Fonts</span>`;
+                    tryItem.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        addAndSelectGoogleFont(originalQuery);
+                    });
+                    fontSearchResults.appendChild(tryItem);
+                }
+            } finally {
+                fontSearchAbortController = null;
+            }
+        }
+
+        /**
+         * Dynamically add a Google Font and select it.
+         * @param {Object|string} fontOrName - A font object from search results, or a font name string (fallback)
+         */
+        function addAndSelectGoogleFont(fontOrName) {
+            let fontName, fontValue, fontObj;
+
+            if (typeof fontOrName === 'object' && fontOrName.name) {
+                // Received a validated font object from remote search
+                fontObj = fontOrName;
+                fontName = fontObj.name;
+                fontValue = fontObj.value;
+            } else {
+                // Fallback: received a plain name string
+                fontName = String(fontOrName);
+                fontValue = `'${fontName}', sans-serif`;
+                fontObj = {
+                    name: fontName,
+                    value: fontValue,
+                    description: `${fontName} from Google Fonts`,
+                    isGoogleFont: true,
+                    googleFontFamily: fontName
+                };
+            }
 
             // Load the font
             if (window.loadGoogleFont) {
-                window.loadGoogleFont(fontName);
+                window.loadGoogleFont(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
             }
 
             // Add to available fonts if not already there
             const existingIdx = window.availableFonts.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
             if (existingIdx === -1) {
-                window.availableFonts.unshift(newFont);
+                window.availableFonts.unshift(fontObj);
                 currentFontIndex = 0;
             } else {
                 currentFontIndex = existingIdx;
@@ -365,6 +481,11 @@ import { ChatConnection } from './modules/chat-connection.js';
                 fontSearchResults.innerHTML = '';
             }
             fontDropdownHighlightIndex = -1;
+            clearTimeout(fontSearchDebounceTimer);
+            if (fontSearchAbortController) {
+                fontSearchAbortController.abort();
+                fontSearchAbortController = null;
+            }
         }
 
         function selectFontFromDropdown(font) {
@@ -787,15 +908,15 @@ import { ChatConnection } from './modules/chat-connection.js';
                     case 'Enter':
                         e.preventDefault();
                         const items = fontSearchResults.querySelectorAll('.font-search-result[role="option"]');
+                        let targetItem = null;
                         if (fontDropdownHighlightIndex >= 0 && fontDropdownHighlightIndex < items.length) {
-                            const fontValue = items[fontDropdownHighlightIndex].dataset.fontValue;
-                            const font = window.availableFonts.find(f => f.value === fontValue);
-                            if (font) selectFontFromDropdown(font);
+                            targetItem = items[fontDropdownHighlightIndex];
                         } else if (items.length === 1) {
-                            // Auto-select if only one result
-                            const fontValue = items[0].dataset.fontValue;
-                            const font = window.availableFonts.find(f => f.value === fontValue);
-                            if (font) selectFontFromDropdown(font);
+                            targetItem = items[0];
+                        }
+                        if (targetItem) {
+                            // Trigger the mousedown handler (works for both local and remote results)
+                            targetItem.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
                         }
                         break;
                     case 'Escape':
