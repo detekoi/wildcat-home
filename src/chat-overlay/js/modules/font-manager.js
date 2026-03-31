@@ -111,6 +111,15 @@ export class FontManager {
         }
     }
 
+    /**
+     * Dynamically add a Google Font and select it.
+     * Public wrapper for use by ThemeManager when applying generated themes.
+     * @param {Object|string} fontOrName - A font object or font name string
+     */
+    addAndSelectGoogleFont(fontOrName) {
+        this._addAndSelectGoogleFont(fontOrName);
+    }
+
     // --- Private Methods ---
 
     static _PROD_PROXY = 'https://theme-proxy-361545143046.us-central1.run.app';
