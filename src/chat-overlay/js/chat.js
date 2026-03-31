@@ -6,30 +6,35 @@ import { PronounManager } from './modules/pronoun-manager.js';
 import { ConfigManager } from './modules/config-manager.js';
 import { ChatRenderer } from './modules/chat-renderer.js';
 import { ChatConnection } from './modules/chat-connection.js';
+import { FontManager } from './modules/font-manager.js';
+import { ThemeManager } from './modules/theme-manager.js';
+import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
 // Wait for DOM ready to run this code
 (function () {
-    // Check if DOM is already loaded
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initApp);
     } else {
-        // DOM already loaded, run immediately
         initApp();
     }
 
     function initApp() {
+        // --- DOM ELEMENT LOOKUPS ---
+
         // Initial Connection Prompt Elements
         const initialConnectionPrompt = document.getElementById('initial-connection-prompt');
         const initialChannelInput = document.getElementById('initial-channel-input');
         const initialConnectBtn = document.getElementById('initial-connect-btn');
         const openSettingsFromPromptBtn = document.getElementById('open-settings-from-prompt');
 
-        // DOM elements
+        // Chat containers
         const chatContainer = document.getElementById('chat-container');
         const chatWrapper = document.getElementById('chat-wrapper');
         const popupContainer = document.getElementById('popup-container');
         const chatMessages = document.getElementById('chat-messages');
         const scrollArea = document.getElementById('chat-scroll-area');
+
+        // Settings panel controls
         const connectBtn = document.getElementById('connect-btn');
         const disconnectBtn = document.getElementById('disconnect-btn');
         const channelInput = document.getElementById('channel-input');
@@ -69,457 +74,53 @@ import { ChatConnection } from './modules/chat-connection.js';
         const bgImageOpacityInput = document.getElementById('bg-image-opacity');
         const bgImageOpacityValue = document.getElementById('bg-image-opacity-value');
 
-        // Store config state when panel opens
-        let initialConfigBeforeEdit = null;
+        // --- SHARED DOM REFS BAG ---
+        const domRefs = {
+            bgColorInput, bgOpacityInput, bgOpacityValue, borderColorInput,
+            textColorInput, usernameColorInput, overrideUsernameColorsInput,
+            bgImageOpacityInput, bgImageOpacityValue, borderRadiusPresets,
+            boxShadowPresets, textShadowPresets, fontWeightPresets,
+            fontSizeSlider, fontSizeValue, chatWidthInput, chatWidthValue,
+            chatHeightInput, chatHeightValue, maxMessagesInput, showTimestampsInput,
+            themePreview, chatWrapper, showBadgesToggle, showPronounsToggle,
+            enlargeSingleEmotesToggle, configPanel, channelForm, disconnectBtn,
+            channelInput
+        };
 
-        // Font selection
-        let currentFontIndex = 0;
+        // --- MODULE INITIALIZATION ---
 
-        // Theme selection
-        let lastAppliedThemeValue = 'default';
-
-        // Initialize modules
         const configManager = new ConfigManager();
         const scrollManager = new ScrollManager(scrollArea, chatMessages);
         const badgeManager = new BadgeManager(configManager.config);
         const pronounManager = new PronounManager();
-        pronounManager.loadDefinitions(); // Start loading definitions immediately
+        pronounManager.loadDefinitions();
 
         const chatRenderer = new ChatRenderer(configManager.config, scrollManager, badgeManager, pronounManager);
         const chatConnection = new ChatConnection(configManager, chatRenderer, badgeManager);
 
-        // Wire up switchChatMode callback to ConfigManager (defined later)
-        // This will be set after switchChatMode function is defined
-
-        // Update connection state UI handler
-        chatConnection.onConnectionChange((isConnected, channelName) => {
-            updateConnectionStateUI(isConnected);
-            if (disconnectBtn) {
-                disconnectBtn.style.display = isConnected ? 'block' : 'none';
-                if (isConnected) disconnectBtn.textContent = `Disconnect from ${channelName}`;
-            }
-            if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
+        const fontManager = new FontManager({
+            fontSearchInput, fontSearchResults, prevFontBtn, nextFontBtn,
+            configManager,
+            onFontChange: () => themeManager.updateThemePreview()
         });
 
-        // --- THEME-RELATED FUNCTIONS ---
+        const themeManager = new ThemeManager({
+            configManager, badgeManager, chatRenderer, fontManager, domRefs
+        });
 
-        /**
-         * Apply a selected theme
-         */
-        function applyTheme(themeName) {
-            if (!window.availableThemes?.length) {
-                console.error('Available themes not initialized yet.');
-                return;
-            }
-            let theme = window.availableThemes.find(t => t.value === themeName || t.name === themeName);
-            if (!theme) {
-                console.warn(`Theme "${themeName}" not found. Applying default.`);
-                theme = window.availableThemes.find(t => t.value === 'default') || window.availableThemes[0];
-                if (!theme) return;
-            }
+        const settingsPanel = new SettingsPanelManager({
+            configManager, chatRenderer, chatConnection, badgeManager,
+            fontManager, themeManager, domRefs
+        });
 
-            // Parse theme background color and opacity
-            let themeBgHex = '#121212';
-            let themeBgOpacity = 0.85;
-            if (theme.bgColor && typeof theme.bgColor === 'string') {
-                const bgColorLower = theme.bgColor.trim().toLowerCase();
-                if (bgColorLower.startsWith('rgba')) {
-                    try {
-                        const parts = bgColorLower.substring(5, bgColorLower.indexOf(')')).split(',');
-                        if (parts.length === 4) {
-                            const r = parseInt(parts[0].trim(), 10);
-                            const g = parseInt(parts[1].trim(), 10);
-                            const b = parseInt(parts[2].trim(), 10);
-                            const a = parseFloat(parts[3].trim());
-                            themeBgHex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).padStart(6, '0')}`;
-                            themeBgOpacity = !isNaN(a) ? Math.max(0, Math.min(1, a)) : 0.85;
-                        }
-                    } catch (e) {
-                        console.error(`[applyTheme] Error parsing rgba string "${theme.bgColor}":`, e);
-                    }
-                } else if (bgColorLower.startsWith('#')) {
-                    themeBgHex = theme.bgColor;
-                    themeBgOpacity = theme.bgColorOpacity ?? 0.85;
-                }
-            } else {
-                themeBgOpacity = theme.bgColorOpacity ?? 0.85;
-            }
+        // --- GLOBAL BRIDGES ---
+        // theme-carousel.js and theme-generator.js are non-module scripts
+        // that call these via window.*
+        window.applyTheme = (themeName) => themeManager.applyTheme(themeName);
+        window.updateThemePreview = () => themeManager.updateThemePreview();
 
-            // Update config with theme settings
-            configManager.updateConfig('theme', theme.value);
-            configManager.updateConfig('bgColor', themeBgHex);
-            configManager.updateConfig('bgColorOpacity', themeBgOpacity);
-            configManager.updateConfig('borderColor', theme.borderColor === 'transparent' ? 'transparent' : (theme.borderColor || '#9147ff'));
-            configManager.updateConfig('textColor', theme.textColor || '#efeff1');
-            configManager.updateConfig('usernameColor', theme.usernameColor || '#9147ff');
-            configManager.updateConfig('borderRadius', theme.borderRadius || theme.borderRadiusValue || '8px');
-            configManager.updateConfig('boxShadow', theme.boxShadow || theme.boxShadowValue || 'none');
-            configManager.updateConfig('textShadow', theme.textShadow || 'none');
-            configManager.updateConfig('bgImage', theme.backgroundImage || null);
-            configManager.updateConfig('bgImageOpacity', theme.bgImageOpacity ?? 0.55);
+        // --- CHAT MODE SWITCHING ---
 
-            // Update font family from theme
-            if (theme.fontFamily) {
-                let fontIndex = window.availableFonts?.findIndex(f => {
-                    const themeFont = typeof theme.fontFamily === 'string' ? theme.fontFamily.trim() : '';
-                    return (f.name?.trim().toLowerCase() === themeFont.toLowerCase()) || (f.value?.trim() === themeFont);
-                }) ?? -1;
-
-                if (fontIndex === -1) {
-                    console.warn(`[applyTheme] Theme font "${theme.fontFamily}" not found. Using default.`);
-                    fontIndex = window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
-                }
-                currentFontIndex = fontIndex;
-                configManager.updateConfig('fontFamily', window.availableFonts[currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
-                updateFontDisplay();
-            } else {
-                configManager.updateConfig('fontFamily', window.availableFonts?.[currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
-            }
-
-            // Apply the merged configuration visually
-            configManager.applyConfiguration(configManager.config);
-
-            // Update badge manager config reference
-            badgeManager.config = configManager.config;
-            chatRenderer.config = configManager.config;
-
-            // Update UI controls
-            if (bgColorInput) bgColorInput.value = configManager.config.bgColor;
-            if (bgOpacityInput && bgOpacityValue) {
-                const opacityPercent = Math.round(configManager.config.bgColorOpacity * 100);
-                bgOpacityInput.value = opacityPercent;
-                bgOpacityValue.textContent = `${opacityPercent}%`;
-            }
-            if (borderColorInput) borderColorInput.value = configManager.config.borderColor === 'transparent' ? '#000000' : configManager.config.borderColor;
-            if (textColorInput) textColorInput.value = configManager.config.textColor;
-            if (usernameColorInput) usernameColorInput.value = configManager.config.usernameColor;
-            if (bgImageOpacityInput && bgImageOpacityValue) {
-                const imageOpacityPercent = Math.round(configManager.config.bgImageOpacity * 100);
-                bgImageOpacityInput.value = imageOpacityPercent;
-                bgImageOpacityValue.textContent = `${imageOpacityPercent}%`;
-            }
-
-            // Update preset button highlights
-            UIHelpers.highlightBorderRadiusButton(UIHelpers.getBorderRadiusValue(configManager.config.borderRadius), borderRadiusPresets);
-            UIHelpers.highlightBoxShadowButton(configManager.config.boxShadow, boxShadowPresets);
-            UIHelpers.highlightTextShadowButton(configManager.config.textShadow, textShadowPresets);
-            highlightActiveColorButtons();
-
-            updateThemePreview();
-            lastAppliedThemeValue = theme.value;
-        }
-        window.applyTheme = applyTheme; // Expose globally for theme-carousel.js
-
-        /**
-         * Update font display in settings panel
-         */
-        function updateFontDisplay() {
-            if (!window.availableFonts?.length) {
-                console.error('Available fonts not initialized yet.');
-                if (fontSearchInput) fontSearchInput.value = 'Error';
-                return;
-            }
-            if (currentFontIndex < 0 || currentFontIndex >= window.availableFonts.length) {
-                console.warn(`Invalid currentFontIndex (${currentFontIndex}), resetting to 0.`);
-                currentFontIndex = 0;
-            }
-            const currentFont = window.availableFonts[currentFontIndex];
-            if (!currentFont) {
-                console.error(`Could not find font at index ${currentFontIndex}`);
-                if (fontSearchInput) fontSearchInput.value = 'Error';
-                return;
-            }
-
-            if (fontSearchInput) fontSearchInput.value = currentFont.name;
-            configManager.updateConfig('fontFamily', currentFont.value);
-            document.documentElement.style.setProperty('--font-family', currentFont.value);
-
-            // Load Google Font if applicable
-            if (currentFont.isGoogleFont && currentFont.googleFontFamily && window.loadGoogleFont) {
-                window.loadGoogleFont(currentFont.googleFontFamily, currentFont.googleFontUrl);
-            }
-
-            // Close dropdown when cycling
-            closeFontDropdown();
-            updateThemePreview();
-        }
-
-        /**
-         * Font search dropdown helpers
-         */
-        let fontDropdownHighlightIndex = -1;
-        let fontSearchDebounceTimer = null;
-        let fontSearchAbortController = null;
-
-        /**
-         * Get the proxy API base URL
-         */
-        function getFontSearchApiUrl() {
-            const isLocalhost = window.location.hostname === 'localhost' ||
-                window.location.hostname === '127.0.0.1' ||
-                window.location.hostname === '';
-            return isLocalhost ? 'http://localhost:8091' : 'https://theme-proxy-361545143046.us-central1.run.app';
-        }
-
-        /**
-         * Create a font result item element
-         */
-        function createFontResultItem(font) {
-            const item = document.createElement('div');
-            item.className = 'font-search-result';
-            item.setAttribute('role', 'option');
-            item.dataset.fontValue = font.value;
-
-            // Render font name in its own typeface for preview
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = font.name;
-            nameSpan.style.fontFamily = font.value;
-            // Load the font for preview if it's a Google Font
-            if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-                window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
-            }
-            item.appendChild(nameSpan);
-
-            if (font.custom || font.isGoogleFont) {
-                const catSpan = document.createElement('span');
-                catSpan.className = 'font-category';
-                catSpan.textContent = font.isGoogleFont ? '(Google)' : '(Custom)';
-                item.appendChild(catSpan);
-            }
-
-            item.addEventListener('mousedown', (e) => {
-                e.preventDefault(); // Prevent input blur
-                selectFontFromDropdown(font);
-            });
-            return item;
-        }
-
-        function openFontDropdown(query) {
-            if (!fontSearchResults || !window.availableFonts?.length) return;
-            const q = query.toLowerCase().trim();
-            const matches = q
-                ? window.availableFonts.filter(f => f.name.toLowerCase().includes(q))
-                : window.availableFonts;
-
-            fontSearchResults.innerHTML = '';
-            fontDropdownHighlightIndex = -1;
-
-            // Cancel any in-flight remote search
-            if (fontSearchAbortController) {
-                fontSearchAbortController.abort();
-                fontSearchAbortController = null;
-            }
-            clearTimeout(fontSearchDebounceTimer);
-
-            if (matches.length === 0 && !q) {
-                const noResult = document.createElement('div');
-                noResult.className = 'font-search-result';
-                noResult.textContent = 'No fonts found';
-                noResult.style.color = '#888';
-                noResult.style.cursor = 'default';
-                fontSearchResults.appendChild(noResult);
-            } else {
-                // Render local matches
-                matches.forEach((font) => {
-                    fontSearchResults.appendChild(createFontResultItem(font));
-                });
-            }
-
-            // If there's a search query ≥ 2 chars, also search remotely
-            if (q && q.length >= 2) {
-                // Add loading indicator
-                const loadingEl = document.createElement('div');
-                loadingEl.className = 'font-search-loading';
-                loadingEl.id = 'font-remote-loading';
-                loadingEl.innerHTML = '<div class="mini-spinner"></div>Searching Google Fonts…';
-                fontSearchResults.appendChild(loadingEl);
-
-                fontSearchDebounceTimer = setTimeout(() => {
-                    fetchRemoteFonts(q, query.trim());
-                }, 300);
-            }
-
-            fontSearchResults.classList.add('visible');
-        }
-
-        /**
-         * Fetch fonts from the proxy search endpoint and append results
-         */
-        async function fetchRemoteFonts(q, originalQuery) {
-            fontSearchAbortController = new AbortController();
-            const apiBase = getFontSearchApiUrl();
-
-            try {
-                const response = await fetch(
-                    `${apiBase}/api/fonts/search?q=${encodeURIComponent(originalQuery)}`,
-                    { signal: fontSearchAbortController.signal }
-                );
-
-                // Remove loading indicator
-                const loadingEl = document.getElementById('font-remote-loading');
-                if (loadingEl) loadingEl.remove();
-
-                if (!response.ok) return;
-
-                const remoteFonts = await response.json();
-                if (!Array.isArray(remoteFonts) || remoteFonts.length === 0) return;
-
-                // Filter out fonts we already have locally
-                const localNames = new Set(window.availableFonts.map(f => f.name.toLowerCase()));
-                const newResults = remoteFonts.filter(f => !localNames.has(f.name.toLowerCase()));
-
-                if (newResults.length === 0) return;
-
-                // Check if dropdown is still visible
-                if (!fontSearchResults?.classList.contains('visible')) return;
-
-                // Add section label
-                const sectionLabel = document.createElement('div');
-                sectionLabel.className = 'font-search-section-label';
-                sectionLabel.textContent = 'More from Google Fonts';
-                fontSearchResults.appendChild(sectionLabel);
-
-                // Add remote results
-                newResults.forEach((font) => {
-                    const item = document.createElement('div');
-                    item.className = 'font-search-result';
-                    item.setAttribute('role', 'option');
-                    item.dataset.fontValue = font.value;
-
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = font.name;
-                    nameSpan.style.fontFamily = font.value;
-                    if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-                        window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
-                    }
-                    item.appendChild(nameSpan);
-
-                    const catSpan = document.createElement('span');
-                    catSpan.className = 'font-category';
-                    catSpan.textContent = `(${font.category || 'Google'})`;
-                    item.appendChild(catSpan);
-
-                    item.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        addAndSelectGoogleFont(font);
-                    });
-                    fontSearchResults.appendChild(item);
-                });
-
-            } catch (err) {
-                if (err.name === 'AbortError') return; // User typed again, ignore
-                console.warn('Remote font search failed:', err);
-                // Remove loading indicator on error
-                const loadingEl = document.getElementById('font-remote-loading');
-                if (loadingEl) loadingEl.remove();
-
-                // Fallback: offer the blind "Try" option if proxy is unreachable
-                if (fontSearchResults?.classList.contains('visible')) {
-                    const tryItem = document.createElement('div');
-                    tryItem.className = 'font-search-result';
-                    tryItem.setAttribute('role', 'option');
-                    tryItem.dataset.fontValue = `'${originalQuery}', sans-serif`;
-                    tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${originalQuery}</strong>" from Google Fonts</span>`;
-                    tryItem.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        addAndSelectGoogleFont(originalQuery);
-                    });
-                    fontSearchResults.appendChild(tryItem);
-                }
-            } finally {
-                fontSearchAbortController = null;
-            }
-        }
-
-        /**
-         * Dynamically add a Google Font and select it.
-         * @param {Object|string} fontOrName - A font object from search results, or a font name string (fallback)
-         */
-        function addAndSelectGoogleFont(fontOrName) {
-            let fontName, fontValue, fontObj;
-
-            if (typeof fontOrName === 'object' && fontOrName.name) {
-                // Received a validated font object from remote search
-                fontObj = fontOrName;
-                fontName = fontObj.name;
-                fontValue = fontObj.value;
-            } else {
-                // Fallback: received a plain name string
-                fontName = String(fontOrName);
-                fontValue = `'${fontName}', sans-serif`;
-                fontObj = {
-                    name: fontName,
-                    value: fontValue,
-                    description: `${fontName} from Google Fonts`,
-                    isGoogleFont: true,
-                    googleFontFamily: fontName
-                };
-            }
-
-            // Load the font
-            if (window.loadGoogleFont) {
-                window.loadGoogleFont(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
-            }
-
-            // Add to available fonts if not already there
-            const existingIdx = window.availableFonts.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
-            if (existingIdx === -1) {
-                window.availableFonts.unshift(fontObj);
-                currentFontIndex = 0;
-            } else {
-                currentFontIndex = existingIdx;
-            }
-
-            updateFontDisplay();
-            closeFontDropdown();
-            fontSearchInput?.blur();
-        }
-
-        function closeFontDropdown() {
-            if (fontSearchResults) {
-                fontSearchResults.classList.remove('visible');
-                fontSearchResults.innerHTML = '';
-            }
-            fontDropdownHighlightIndex = -1;
-            clearTimeout(fontSearchDebounceTimer);
-            if (fontSearchAbortController) {
-                fontSearchAbortController.abort();
-                fontSearchAbortController = null;
-            }
-        }
-
-        function selectFontFromDropdown(font) {
-            const idx = window.availableFonts.findIndex(f => f.value === font.value);
-            if (idx !== -1) {
-                currentFontIndex = idx;
-                updateFontDisplay();
-            }
-            closeFontDropdown();
-            fontSearchInput?.blur();
-        }
-
-        function highlightDropdownItem(direction) {
-            const items = fontSearchResults?.querySelectorAll('.font-search-result[role="option"]');
-            if (!items?.length) return;
-
-            // Remove old highlight
-            if (fontDropdownHighlightIndex >= 0 && fontDropdownHighlightIndex < items.length) {
-                items[fontDropdownHighlightIndex].classList.remove('highlighted');
-            }
-
-            if (direction === 'down') {
-                fontDropdownHighlightIndex = (fontDropdownHighlightIndex + 1) % items.length;
-            } else {
-                fontDropdownHighlightIndex = (fontDropdownHighlightIndex - 1 + items.length) % items.length;
-            }
-
-            items[fontDropdownHighlightIndex].classList.add('highlighted');
-            items[fontDropdownHighlightIndex].scrollIntoView({ block: 'nearest' });
-        }
-
-        /**
-         * Toggle between window and popup modes
-         */
         function switchChatMode(mode, applyVisualsOnly = false) {
             try {
                 configManager.updateConfig('chatMode', mode);
@@ -563,176 +164,36 @@ import { ChatConnection } from './modules/chat-connection.js';
             }
         }
 
-        /**
-         * Helper function to show/hide mode-specific settings
-         */
         function updateModeSpecificSettingsVisibility(mode) {
             const isPopup = mode === 'popup';
             document.querySelectorAll('.popup-setting').forEach(el => el.style.display = isPopup ? 'flex' : 'none');
             document.querySelectorAll('.window-only-setting').forEach(el => el.style.display = isPopup ? 'none' : 'flex');
         }
 
-        // Register switchChatMode callback with ConfigManager
         configManager.setSwitchChatModeCallback(switchChatMode);
 
-        /**
-         * Update the theme preview display
-         */
-        function updateThemePreview() {
-            if (!themePreview) return;
+        // --- CONNECTION STATE UI ---
 
-            const showTimestamps = showTimestampsInput?.checked ?? configManager.config?.showTimestamps ?? true;
-            const bgColor = bgColorInput?.value || '#1e1e1e';
-            const bgColorOpacity = (bgOpacityInput ? parseInt(bgOpacityInput.value) : (configManager.config?.bgColorOpacity ?? 0.85) * 100) / 100.0;
-            const borderColor = borderColorInput?.value || '#444444';
-            const textColor = textColorInput?.value || '#efeff1';
-            const usernameColor = usernameColorInput?.value || '#9147ff';
-            const timestampColor = configManager.config?.timestampColor || '#adadb8';
-            const fontFamily = window.availableFonts?.[currentFontIndex]?.value || configManager.config?.fontFamily || "'Atkinson Hyperlegible Next', sans-serif";
-            const activeBorderRadiusBtn = borderRadiusPresets?.querySelector('.preset-btn.active');
-            const borderRadiusValue = activeBorderRadiusBtn?.dataset.value ?? configManager.config?.borderRadius ?? '8px';
-            const borderRadius = UIHelpers.getBorderRadiusValue(borderRadiusValue);
-            const activeBoxShadowBtn = boxShadowPresets?.querySelector('.preset-btn.active');
-            const boxShadowValue = activeBoxShadowBtn?.dataset.value ?? configManager.config?.boxShadow ?? 'none';
-            const boxShadow = UIHelpers.getBoxShadowValue(boxShadowValue);
-            const activeTextShadowBtn = textShadowPresets?.querySelector('.preset-btn.active');
-            const textShadowValue = activeTextShadowBtn?.dataset.value ?? configManager.config?.textShadow ?? 'none';
-            const textShadow = UIHelpers.getTextShadowValue(textShadowValue);
-            const bgImage = configManager.config?.bgImage || 'none';
-
-            // Update chat wrapper background image
-            if (chatWrapper) {
-                const bgImageValue = bgImage === 'none' ? 'none' : (bgImage.startsWith('url') ? bgImage : `url("${bgImage}")`);
-                document.documentElement.style.setProperty('--chat-bg-image', bgImageValue);
-                document.documentElement.style.setProperty('--popup-bg-image', bgImageValue);
+        chatConnection.onConnectionChange((isConnected, channelName) => {
+            updateConnectionStateUI(isConnected);
+            if (disconnectBtn) {
+                disconnectBtn.style.display = isConnected ? 'block' : 'none';
+                if (isConnected) disconnectBtn.textContent = `Disconnect from ${channelName}`;
             }
+            if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
+        });
 
-            // Background image opacity logic
-            let currentPreviewOpacity = themePreview.style.getPropertyValue('--preview-bg-image-opacity');
-            let bgImageOpacity;
-            if (currentPreviewOpacity !== '' && !isNaN(parseFloat(currentPreviewOpacity))) {
-                bgImageOpacity = parseFloat(currentPreviewOpacity);
-            } else {
-                const bgImageOpacityValueFromConfig = configManager.config?.bgImageOpacity;
-                bgImageOpacity = bgImageOpacityValueFromConfig !== undefined && bgImageOpacityValueFromConfig !== null
-                    ? bgImageOpacityValueFromConfig
-                    : (bgImageOpacityInput ? parseInt(bgImageOpacityInput.value, 10) / 100.0 : 0.55);
-            }
-            themePreview.style.setProperty('--preview-bg-image-opacity', bgImageOpacity.toFixed(2));
-
-            const borderTransparentButton = document.querySelector('.color-btn[data-target="border"][data-color="transparent"]');
-            const finalBorderColor = (borderTransparentButton?.classList.contains('active')) ? 'transparent' : borderColor;
-
-            let finalBgColor;
-            const bgTransparentButton = document.querySelector('.color-btn[data-target="bg"][data-color="transparent"]');
-            if (bgTransparentButton?.classList.contains('active')) {
-                finalBgColor = 'transparent';
-            } else {
-                try {
-                    finalBgColor = UIHelpers.hexToRgba(bgColor, bgColorOpacity);
-                } catch (e) {
-                    console.error(`Error converting hex ${bgColor} for preview:`, e);
-                    finalBgColor = `rgba(30, 30, 30, ${bgColorOpacity.toFixed(2)})`;
-                }
-            }
-
-            const previewStyle = themePreview.style;
-            previewStyle.setProperty('--preview-bg-color', finalBgColor);
-            previewStyle.setProperty('--preview-border-color', finalBorderColor);
-            previewStyle.setProperty('--preview-text-color', textColor);
-            previewStyle.setProperty('--preview-username-color', usernameColor);
-            previewStyle.setProperty('--preview-timestamp-color', timestampColor);
-            previewStyle.setProperty('--preview-font-family', fontFamily);
-            previewStyle.fontFamily = fontFamily;
-            previewStyle.setProperty('--preview-border-radius', borderRadius);
-            previewStyle.setProperty('--preview-box-shadow', boxShadow);
-            previewStyle.setProperty('--preview-text-shadow', textShadow);
-            previewStyle.setProperty('--preview-bg-image', bgImage === 'none' ? 'none' : `url("${bgImage}")`);
-
-            const fontSize = fontSizeSlider?.value || configManager.config?.fontSize || 14;
-            previewStyle.fontSize = `${fontSize}px`;
-
-            const ts1 = showTimestamps ? '<span class="timestamp">12:34 </span>' : '';
-            const ts2 = showTimestamps ? '<span class="timestamp">12:35 </span>' : '';
-
-            let previewBadgesHtml = '';
-            const shouldShowBadgesInPreview = showBadgesToggle?.checked ?? configManager.config.showBadges;
-
-            if (shouldShowBadgesInPreview) {
-                let firstGlobalBadgeInfo = null;
-                if (badgeManager.globalBadges?.data) {
-                    const firstSetId = Object.keys(badgeManager.globalBadges.data)[0];
-                    if (firstSetId && badgeManager.globalBadges.data[firstSetId]) {
-                        const firstVersionId = Object.keys(badgeManager.globalBadges.data[firstSetId])[0];
-                        if (firstVersionId) {
-                            firstGlobalBadgeInfo = badgeManager.globalBadges.data[firstSetId][firstVersionId];
-                        }
-                    }
-                }
-                if (firstGlobalBadgeInfo?.imageUrl) {
-                    previewBadgesHtml = `<img class="chat-badge" src="${firstGlobalBadgeInfo.imageUrl}" alt="${firstGlobalBadgeInfo.title || 'badge'}" title="${firstGlobalBadgeInfo.title || 'badge'}" style="height: calc(var(--font-size) * 0.9); vertical-align: middle; margin-right: 3px;">`;
-                }
-            }
-
-            themePreview.innerHTML = `
-                <div class="preview-chat-message">
-                    ${ts1}${previewBadgesHtml}<span class="username" style="color: var(--preview-username-color);">Username:</span> <span>Example chat message</span>
-                </div>
-                <div class="preview-chat-message">
-                    ${ts2}${previewBadgesHtml}<span class="username" style="color: var(--preview-username-color);">AnotherUser:</span> <span>This is how your chat will look</span>
-                </div>
-            `.trim();
-        }
-        window.updateThemePreview = updateThemePreview; // Expose globally for theme-carousel.js
-
-        /**
-         * Update color previews and highlights
-         */
-        function updateColorPreviews() {
-            highlightActiveColorButtons();
-            updateThemePreview();
-        }
-
-        /**
-         * Highlight active color buttons
-         */
-        function highlightActiveColorButtons() {
-            // Background color
-            const bgColorValue = bgColorInput?.value || '#121212';
-            const bgOpacityValue = bgOpacityInput ? parseInt(bgOpacityInput.value) : 85;
-            document.querySelectorAll('.color-btn[data-target="bg"]').forEach(btn => {
-                const btnColor = btn.getAttribute('data-color');
-                let isActive = (btnColor === 'transparent')
-                    ? (bgColorValue === '#000000' && bgOpacityValue === 0)
-                    : (btnColor === bgColorValue && bgOpacityValue > 0);
-                btn.classList.toggle('active', isActive);
-            });
-
-            // Border color
-            const currentBorderCSS = document.documentElement.style.getPropertyValue('--chat-border-color').trim();
-            const borderColorInputValue = borderColorInput?.value || '#9147ff';
-            document.querySelectorAll('.color-btn[data-target="border"]').forEach(btn => {
-                const btnColor = btn.getAttribute('data-color');
-                let isActive = (btnColor === 'transparent')
-                    ? (currentBorderCSS === 'transparent')
-                    : (currentBorderCSS !== 'transparent' && btnColor === borderColorInputValue);
-                btn.classList.toggle('active', isActive);
-            });
-
-            // Text color
-            const textColorValue = textColorInput?.value || '#efeff1';
-            document.querySelectorAll('.color-btn[data-target="text"]')
-                .forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-color') === textColorValue));
-
-            // Username color
-            const usernameColorValue = usernameColorInput?.value || '#9147ff';
-            document.querySelectorAll('.color-btn[data-target="username"]')
-                .forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-color') === usernameColorValue));
+        function updateConnectionStateUI(isConnected) {
+            const isPopupMode = configManager.config.chatMode === 'popup';
+            if (initialConnectionPrompt) initialConnectionPrompt.style.display = isConnected ? 'none' : 'flex';
+            if (popupContainer) popupContainer.style.display = isConnected && isPopupMode ? 'block' : 'none';
+            if (chatWrapper) chatWrapper.style.display = isConnected && !isPopupMode ? 'block' : 'none';
+            document.body.classList.toggle('disconnected', !isConnected);
         }
 
         // --- UI EVENT HANDLERS ---
 
-        // Background color + opacity handling
+        // Background color + opacity
         function updateBgColor() {
             if (!bgColorInput || !bgOpacityInput) return;
             const hexColor = bgColorInput.value;
@@ -741,19 +202,19 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--chat-bg-color', rgbaColorForCSS);
             document.documentElement.style.setProperty('--popup-bg-color', rgbaColorForCSS);
             if (bgOpacityValue) bgOpacityValue.textContent = `${Math.round(opacity * 100)}%`;
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         bgColorInput?.addEventListener('input', updateBgColor);
         bgOpacityInput?.addEventListener('input', updateBgColor);
 
-        // Background image opacity handling
+        // Background image opacity
         function updateBgImageOpacity() {
             if (!bgImageOpacityInput) return;
             const opacity = parseInt(bgImageOpacityInput.value) / 100;
             document.documentElement.style.setProperty('--chat-bg-image-opacity', opacity);
             document.documentElement.style.setProperty('--popup-bg-image-opacity', opacity);
             if (bgImageOpacityValue) bgImageOpacityValue.textContent = `${bgImageOpacityInput.value}%`;
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         if (bgImageOpacityInput) bgImageOpacityInput.addEventListener('input', updateBgImageOpacity);
 
@@ -810,30 +271,30 @@ import { ChatConnection } from './modules/chat-connection.js';
                         document.documentElement.style.setProperty('--popup-username-color', color);
                         break;
                 }
-                updateColorPreviews();
+                themeManager.updateColorPreviews();
             });
         });
 
-        // Update colors directly from input fields
+        // Direct color input handlers
         borderColorInput?.addEventListener('input', () => {
             const value = borderColorInput.value;
             const finalColor = value === 'transparent' ? 'transparent' : value;
             document.documentElement.style.setProperty('--chat-border-color', finalColor);
             document.documentElement.style.setProperty('--popup-border-color', finalColor);
-            updateColorPreviews();
-            updateThemePreview();
+            themeManager.updateColorPreviews();
+            themeManager.updateThemePreview();
         });
         textColorInput?.addEventListener('input', () => {
             document.documentElement.style.setProperty('--chat-text-color', textColorInput.value);
             document.documentElement.style.setProperty('--popup-text-color', textColorInput.value);
-            updateColorPreviews();
-            updateThemePreview();
+            themeManager.updateColorPreviews();
+            themeManager.updateThemePreview();
         });
         usernameColorInput?.addEventListener('input', () => {
             document.documentElement.style.setProperty('--username-color', usernameColorInput.value);
             document.documentElement.style.setProperty('--popup-username-color', usernameColorInput.value);
-            updateColorPreviews();
-            updateThemePreview();
+            themeManager.updateColorPreviews();
+            themeManager.updateThemePreview();
         });
 
         // Font size slider
@@ -842,102 +303,19 @@ import { ChatConnection } from './modules/chat-connection.js';
             if (fontSizeValue) fontSizeValue.textContent = `${value}px`;
             document.documentElement.style.setProperty('--font-size', `${value}px`);
             configManager.updateConfig('fontSize', parseInt(value, 10));
-            updateThemePreview();
+            themeManager.updateThemePreview();
         });
 
-        // Chat width slider
+        // Chat width/height sliders
         chatWidthInput?.addEventListener('input', () => {
             const value = chatWidthInput.value;
             if (chatWidthValue) chatWidthValue.textContent = `${value}%`;
             document.documentElement.style.setProperty('--chat-width', `${value}%`);
         });
-
-        // Chat height slider
         chatHeightInput?.addEventListener('input', () => {
             const value = chatHeightInput.value;
             if (chatHeightValue) chatHeightValue.textContent = `${value}%`;
             document.documentElement.style.setProperty('--chat-height', `${value}%`);
-        });
-
-        // Font selection carousel (prev/next buttons)
-        if (prevFontBtn && !prevFontBtn.dataset.listenerAttached) {
-            prevFontBtn.addEventListener('click', () => {
-                currentFontIndex = (currentFontIndex - 1 + (window.availableFonts?.length || 1)) % (window.availableFonts?.length || 1);
-                updateFontDisplay();
-            });
-            prevFontBtn.dataset.listenerAttached = 'true';
-        }
-        if (nextFontBtn && !nextFontBtn.dataset.listenerAttached) {
-            nextFontBtn.addEventListener('click', () => {
-                currentFontIndex = (currentFontIndex + 1) % (window.availableFonts?.length || 1);
-                updateFontDisplay();
-            });
-            nextFontBtn.dataset.listenerAttached = 'true';
-        }
-
-        // Font search input
-        if (fontSearchInput) {
-            fontSearchInput.addEventListener('focus', () => {
-                fontSearchInput.select();
-                openFontDropdown(fontSearchInput.value);
-            });
-            fontSearchInput.addEventListener('input', () => {
-                openFontDropdown(fontSearchInput.value);
-            });
-            fontSearchInput.addEventListener('blur', () => {
-                // Delay close so mousedown on result can fire first
-                setTimeout(() => closeFontDropdown(), 150);
-            });
-            fontSearchInput.addEventListener('keydown', (e) => {
-                if (!fontSearchResults?.classList.contains('visible')) {
-                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                        openFontDropdown(fontSearchInput.value);
-                        e.preventDefault();
-                    }
-                    return;
-                }
-                switch (e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        highlightDropdownItem('down');
-                        break;
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        highlightDropdownItem('up');
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        const items = fontSearchResults.querySelectorAll('.font-search-result[role="option"]');
-                        let targetItem = null;
-                        if (fontDropdownHighlightIndex >= 0 && fontDropdownHighlightIndex < items.length) {
-                            targetItem = items[fontDropdownHighlightIndex];
-                        } else if (items.length === 1) {
-                            targetItem = items[0];
-                        }
-                        if (targetItem) {
-                            // Trigger the mousedown handler (works for both local and remote results)
-                            targetItem.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                        }
-                        break;
-                    case 'Escape':
-                        closeFontDropdown();
-                        // Restore current font name in input
-                        const currentFont = window.availableFonts?.[currentFontIndex];
-                        if (currentFont) fontSearchInput.value = currentFont.name;
-                        fontSearchInput.blur();
-                        break;
-                }
-            });
-        }
-
-        // React to font list updates from proxy
-        document.addEventListener('fonts-updated', () => {
-            console.log('Fonts updated event received in chat.js');
-            const fontIndex = window.availableFonts?.findIndex(f => f.value === configManager.config.fontFamily) ?? -1;
-            if (fontIndex !== -1) {
-                currentFontIndex = fontIndex;
-            }
-            updateFontDisplay();
         });
 
         // Border radius presets
@@ -947,7 +325,7 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--chat-border-radius', cssValue);
             configManager.updateConfig('borderRadius', value);
             UIHelpers.highlightBorderRadiusButton(cssValue, borderRadiusPresets);
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         borderRadiusPresets?.querySelectorAll('.preset-btn')
             .forEach(btn => btn.addEventListener('click', () => applyBorderRadius(btn.dataset.value)));
@@ -959,7 +337,7 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--chat-box-shadow', cssValue);
             configManager.updateConfig('boxShadow', preset);
             UIHelpers.highlightBoxShadowButton(preset, boxShadowPresets);
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         boxShadowPresets?.querySelectorAll('.preset-btn')
             .forEach(btn => btn.addEventListener('click', () => applyBoxShadow(btn.dataset.value)));
@@ -971,7 +349,7 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--chat-text-shadow', cssValue);
             configManager.updateConfig('textShadow', preset);
             UIHelpers.highlightTextShadowButton(preset, textShadowPresets);
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         textShadowPresets?.querySelectorAll('.preset-btn')
             .forEach(btn => btn.addEventListener('click', () => applyTextShadow(btn.dataset.value)));
@@ -981,12 +359,12 @@ import { ChatConnection } from './modules/chat-connection.js';
             document.documentElement.style.setProperty('--font-weight', value);
             configManager.updateConfig('fontWeight', value);
             UIHelpers.highlightFontWeightButton(value, fontWeightPresets);
-            updateThemePreview();
+            themeManager.updateThemePreview();
         }
         fontWeightPresets?.querySelectorAll('.preset-btn')
             .forEach(btn => btn.addEventListener('click', () => applyFontWeight(btn.dataset.value)));
 
-        // Chat mode radio buttons
+        // Chat mode radios
         document.querySelectorAll('input[name="chat-mode"]').forEach(input => {
             input.addEventListener('change', (e) => {
                 if (e.target.checked) {
@@ -1027,14 +405,14 @@ import { ChatConnection } from './modules/chat-connection.js';
             if (valueDisplay && configManager.config.popup) valueDisplay.textContent = `${configManager.config.popup.duration}s`;
         });
 
-        // Popup max messages input
+        // Popup max messages
         document.getElementById('popup-max-messages')?.addEventListener('change', (e) => {
             if (configManager.config.popup) {
                 configManager.updateConfig('popup', { ...configManager.config.popup, maxMessages: parseInt(e.target.value) });
             }
         });
 
-        // Window mode max messages input
+        // Window mode max messages
         maxMessagesInput?.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             if (!isNaN(value) && value >= 1) {
@@ -1052,12 +430,12 @@ import { ChatConnection } from './modules/chat-connection.js';
             configManager.updateConfig('overrideUsernameColors', isChecked);
             chatRenderer.config = configManager.config;
             document.documentElement.classList.toggle('override-username-colors', isChecked);
-            updateThemePreview();
+            themeManager.updateThemePreview();
         });
 
         // Badge toggle
         if (showBadgesToggle) {
-            showBadgesToggle.addEventListener('change', updateThemePreview);
+            showBadgesToggle.addEventListener('change', () => themeManager.updateThemePreview());
         }
 
         // Pronoun toggle
@@ -1065,302 +443,37 @@ import { ChatConnection } from './modules/chat-connection.js';
             showPronounsToggle.addEventListener('change', () => {
                 configManager.updateConfig('showPronouns', showPronounsToggle.checked);
                 chatRenderer.config = configManager.config;
-                // No need to updateThemePreview specifically for this unless we want to show it in preview, 
-                // but currently preview logic might not render real messages. 
-                // However, let's keep it consistent.
-                updateThemePreview();
+                themeManager.updateThemePreview();
             });
         }
 
-        // --- SETTINGS PANEL HANDLERS ---
+        // --- SETTINGS PANEL BUTTON HANDLERS ---
 
-        /**
-         * Open settings panel
-         */
-        function openSettingsPanel() {
-            if (!configPanel) return;
-            initialConfigBeforeEdit = null;
-            try {
-                initialConfigBeforeEdit = JSON.parse(JSON.stringify(configManager.config));
-            } catch (error) {
-                console.error("Error storing config state for revert:", error);
-                chatRenderer.addSystemMessage("Error: Could not store settings state for revert.");
-            }
-
-            const isConnected = chatConnection.isConnected();
-            if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
-            if (disconnectBtn) {
-                disconnectBtn.style.display = isConnected ? 'block' : 'none';
-                if (isConnected) disconnectBtn.textContent = `Disconnect from ${chatConnection.getCurrentChannel()}`;
-            }
-
-            updateConfigPanelFromConfig();
-            configPanel.classList.add('visible');
-            configPanel.style.display = 'block';
-        }
-
-        /**
-         * Close settings panel
-         */
-        function closeConfigPanel(shouldRevert = false) {
-            if (shouldRevert && initialConfigBeforeEdit) {
-                try {
-                    configManager.config = JSON.parse(JSON.stringify(initialConfigBeforeEdit));
-                    configManager.applyConfiguration(configManager.config);
-                    badgeManager.config = configManager.config;
-                    chatRenderer.config = configManager.config;
-                    updateConfigPanelFromConfig();
-                } catch (error) {
-                    console.error("Error during revert:", error);
-                    chatRenderer.addSystemMessage("Error: Could not revert settings.");
-                }
-            }
-            initialConfigBeforeEdit = null;
-            if (configPanel) {
-                configPanel.classList.remove('visible');
-                configPanel.style.display = 'none';
-            }
-        }
-
-        /**
-         * Save configuration
-         */
-        function saveConfiguration() {
-            try {
-                const getValue = (element, defaultValue, isNumber = false, isBool = false, isOpacity = false) => {
-                    if (!element) return defaultValue;
-                    if (isBool) return element.checked;
-                    let value = element.value;
-                    if (isNumber) return parseInt(value, 10) || defaultValue;
-                    if (isOpacity) return !isNaN(parseFloat(value)) ? parseFloat(value) / 100.0 : defaultValue;
-                    return value || defaultValue;
-                };
-                const getColor = (inputElement, buttonSelector, defaultColor) => {
-                    const targetType = buttonSelector.includes('bg') ? 'bg' : buttonSelector.includes('border') ? 'border' : buttonSelector.includes('text') ? 'text' : 'username';
-                    const activeButton = document.querySelector(`${buttonSelector}.active`);
-                    const activeColor = activeButton?.dataset.color;
-
-                    if (targetType === 'bg') {
-                        const hexFromInput = inputElement?.value;
-                        const isTransparentActive = document.querySelector('.color-btn[data-target="bg"][data-color="transparent"]')?.classList.contains('active');
-                        const currentOpacity = getOpacity(bgOpacityInput, -1);
-                        if (isTransparentActive && currentOpacity === 0) return '#000000';
-                        if (hexFromInput) return hexFromInput;
-                        return defaultColor;
-                    } else {
-                        if (activeButton) {
-                            if (targetType === 'border' && activeColor === 'transparent') return 'transparent';
-                            return activeColor;
-                        }
-                        return inputElement?.value || defaultColor;
-                    }
-                };
-                const getOpacity = (element, defaultValue) => {
-                    if (!element) return defaultValue;
-                    const parsedValue = parseFloat(element.value);
-                    return !isNaN(parsedValue) ? parsedValue / 100.0 : defaultValue;
-                };
-
-                const currentFontValue = window.availableFonts?.[currentFontIndex]?.value || configManager.config.fontFamily;
-                const currentThemeValue = lastAppliedThemeValue;
-                const bgImageOpacityValue = getOpacity(bgImageOpacityInput, configManager.config.bgImageOpacity ?? 0.55);
-                const currentBgColorHex = getColor(bgColorInput, '.color-buttons [data-target="bg"]', configManager.config.bgColor || '#121212');
-                const currentBgOpacity = getOpacity(bgOpacityInput, configManager.config.bgColorOpacity ?? 0.85);
-                const currentFullTheme = window.availableThemes?.find(t => t.value === currentThemeValue) || {};
-
-                const newConfig = {
-                    theme: currentThemeValue,
-                    fontFamily: currentFontValue,
-                    fontSize: getValue(fontSizeSlider, configManager.config.fontSize || 14, true),
-                    bgColor: currentBgColorHex,
-                    bgColorOpacity: currentBgOpacity,
-                    borderColor: getColor(borderColorInput, '.color-buttons [data-target="border"]', configManager.config.borderColor || '#444444'),
-                    textColor: getColor(textColorInput, '.color-buttons [data-target="text"]', configManager.config.textColor || '#efeff1'),
-                    usernameColor: getColor(usernameColorInput, '.color-buttons [data-target="username"]', configManager.config.usernameColor || '#9147ff'),
-                    overrideUsernameColors: getValue(overrideUsernameColorsInput, configManager.config.overrideUsernameColors || false, false, true),
-                    bgImage: currentFullTheme.backgroundImage || configManager.config.bgImage || null,
-                    bgImageOpacity: bgImageOpacityValue,
-                    borderRadius: borderRadiusPresets?.querySelector('.preset-btn.active')?.dataset.value || configManager.config.borderRadius,
-                    boxShadow: boxShadowPresets?.querySelector('.preset-btn.active')?.dataset.value || configManager.config.boxShadow,
-                    textShadow: textShadowPresets?.querySelector('.preset-btn.active')?.dataset.value || configManager.config.textShadow,
-                    fontWeight: fontWeightPresets?.querySelector('.preset-btn.active')?.dataset.value || configManager.config.fontWeight || 'normal',
-                    chatMode: document.querySelector('input[name="chat-mode"]:checked')?.value || configManager.config.chatMode || 'window',
-                    chatWidth: getValue(chatWidthInput, configManager.config.chatWidth || 95, true),
-                    chatHeight: getValue(chatHeightInput, configManager.config.chatHeight || 95, true),
-                    maxMessages: getValue(maxMessagesInput, configManager.config.maxMessages || 50, true),
-                    showTimestamps: getValue(showTimestampsInput, configManager.config.showTimestamps ?? true, false, true),
-                    popup: {
-                        direction: document.querySelector('input[name="popup-direction"]:checked')?.value || configManager.config.popup?.direction || 'from-bottom',
-                        duration: getValue(document.getElementById('popup-duration'), configManager.config.popup?.duration || 5, true),
-                        maxMessages: getValue(document.getElementById('popup-max-messages'), configManager.config.popup?.maxMessages || 3, true)
-                    },
-                    lastChannel: configManager.config.lastChannel,
-                    showBadges: getValue(showBadgesToggle, configManager.config.showBadges, false, true),
-                    showPronouns: getValue(showPronounsToggle, configManager.config.showPronouns, false, true),
-                    badgeEndpointUrlGlobal: configManager.config.badgeEndpointUrlGlobal,
-                    badgeEndpointUrlChannel: configManager.config.badgeEndpointUrlChannel,
-                    badgeCacheGlobalTTL: configManager.config.badgeCacheGlobalTTL,
-                    badgeCacheChannelTTL: configManager.config.badgeCacheChannelTTL,
-                    badgeFallbackHide: true,
-                    enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, configManager.config.enlargeSingleEmotes, false, true),
-                };
-
-                configManager.config = newConfig;
-                configManager.applyConfiguration(configManager.config);
-                badgeManager.config = configManager.config;
-                chatRenderer.config = configManager.config;
-
-                const scene = UIHelpers.getUrlParameter('scene') || 'default';
-                configManager.saveConfig(scene);
-                closeConfigPanel(false);
-
-                if (configManager.config.chatMode === 'popup') {
-                    chatRenderer.addChatMessage({ username: 'Test', message: 'Test message', color: configManager.config.usernameColor, tags: {} });
-                }
-
-                // Re-fetch badges if settings changed
-                badgeManager.fetchGlobalBadges(updateThemePreview);
-                if (chatConnection.currentBroadcasterId) {
-                    badgeManager.fetchChannelBadges(chatConnection.currentBroadcasterId);
-                }
-
-            } catch (error) {
-                console.error("Error saving configuration:", error);
-                chatRenderer.addSystemMessage("Error saving settings. Check console.");
-            }
-        }
-
-        /**
-         * Apply default settings
-         */
-        function applyDefaultSettings() {
-            configManager.resetToDefaults();
-            badgeManager.config = configManager.config;
-            chatRenderer.config = configManager.config;
-        }
-
-        /**
-         * Update config panel controls from config
-         */
-        function updateConfigPanelFromConfig() {
-            if (!configPanel) return;
-
-            const hexColor = configManager.config.bgColor || '#121212';
-            const opacityPercent = Math.round((configManager.config.bgColorOpacity ?? 0.85) * 100);
-            if (bgColorInput) bgColorInput.value = hexColor;
-            if (bgOpacityInput && bgOpacityValue) {
-                bgOpacityInput.value = opacityPercent;
-                bgOpacityValue.textContent = `${opacityPercent}%`;
-            }
-
-            if (borderColorInput) borderColorInput.value = configManager.config.borderColor === 'transparent' ? '#000000' : configManager.config.borderColor;
-            if (textColorInput) textColorInput.value = configManager.config.textColor || '#efeff1';
-            if (usernameColorInput) usernameColorInput.value = configManager.config.usernameColor || '#9147ff';
-            highlightActiveColorButtons();
-
-            UIHelpers.highlightBorderRadiusButton(UIHelpers.getBorderRadiusValue(configManager.config.borderRadius), borderRadiusPresets);
-            UIHelpers.highlightBoxShadowButton(configManager.config.boxShadow, boxShadowPresets);
-            UIHelpers.highlightTextShadowButton(configManager.config.textShadow, textShadowPresets);
-            UIHelpers.highlightFontWeightButton(configManager.config.fontWeight || 'normal', fontWeightPresets);
-
-            if (overrideUsernameColorsInput) overrideUsernameColorsInput.checked = configManager.config.overrideUsernameColors;
-            if (fontSizeSlider) fontSizeSlider.value = configManager.config.fontSize;
-            if (fontSizeValue) fontSizeValue.textContent = `${configManager.config.fontSize}px`;
-            if (chatWidthInput) chatWidthInput.value = configManager.config.chatWidth;
-            if (chatWidthValue) chatWidthValue.textContent = `${configManager.config.chatWidth}%`;
-            if (chatHeightInput) chatHeightInput.value = configManager.config.chatHeight;
-            if (chatHeightValue) chatHeightValue.textContent = `${configManager.config.chatHeight}%`;
-            if (maxMessagesInput) maxMessagesInput.value = configManager.config.maxMessages;
-            if (showTimestampsInput) showTimestampsInput.checked = configManager.config.showTimestamps;
-
-            const showPronounsToggle = document.getElementById('show-pronouns-toggle');
-            if (showPronounsToggle) showPronounsToggle.checked = configManager.config.showPronouns;
-
-            const fontIndex = window.availableFonts?.findIndex(f => f.value === configManager.config.fontFamily) ?? -1;
-            currentFontIndex = (fontIndex !== -1) ? fontIndex : (window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0);
-            updateFontDisplay();
-
-            const themeIndex = window.availableThemes?.findIndex(t => t.value === configManager.config.theme) ?? -1;
-            const currentThemeIdx = (themeIndex !== -1) ? themeIndex : (window.availableThemes?.findIndex(t => t.value === 'default') ?? 0);
-            const currentTheme = window.availableThemes?.[currentThemeIdx];
-            if (currentTheme) {
-                if (typeof window.updateThemeDetails === 'function') window.updateThemeDetails(currentTheme);
-                if (typeof window.highlightActiveCard === 'function') window.highlightActiveCard(currentTheme.value);
-            }
-
-            if (channelInput) channelInput.value = configManager.config.lastChannel || '';
-            const isConnected = chatConnection.isConnected();
-            if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
-            if (disconnectBtn) {
-                disconnectBtn.style.display = isConnected ? 'block' : 'none';
-                if (isConnected) disconnectBtn.textContent = `Disconnect from ${chatConnection.getCurrentChannel() || configManager.config.lastChannel}`;
-            }
-
-            const currentMode = configManager.config.chatMode || 'window';
-            document.querySelectorAll('input[name="chat-mode"]').forEach(radio => radio.checked = (radio.value === currentMode));
-            updateModeSpecificSettingsVisibility(currentMode);
-
-            const currentPopupDirection = configManager.config.popup?.direction || 'from-bottom';
-            document.querySelectorAll('input[name="popup-direction"]').forEach(radio => radio.checked = (radio.value === currentPopupDirection));
-
-            const popupDurationInput = document.getElementById('popup-duration');
-            const popupDurationValue = document.getElementById('popup-duration-value');
-            const popupMaxMessagesInput = document.getElementById('popup-max-messages');
-            if (popupDurationInput && popupDurationValue) {
-                const duration = configManager.config.popup?.duration || 5;
-                popupDurationInput.value = duration;
-                popupDurationValue.textContent = `${duration}s`;
-            }
-            if (popupMaxMessagesInput) {
-                popupMaxMessagesInput.value = configManager.config.popup?.maxMessages || 3;
-            }
-
-            if (showBadgesToggle) showBadgesToggle.checked = configManager.config.showBadges;
-            if (enlargeSingleEmotesToggle) enlargeSingleEmotesToggle.checked = configManager.config.enlargeSingleEmotes;
-
-            updateThemePreview();
-        }
-
-        /**
-         * Update connection state UI
-         */
-        function updateConnectionStateUI(isConnected) {
-            const isPopupMode = configManager.config.chatMode === 'popup';
-            if (initialConnectionPrompt) initialConnectionPrompt.style.display = isConnected ? 'none' : 'flex';
-            if (popupContainer) popupContainer.style.display = isConnected && isPopupMode ? 'block' : 'none';
-            if (chatWrapper) chatWrapper.style.display = isConnected && !isPopupMode ? 'block' : 'none';
-            document.body.classList.toggle('disconnected', !isConnected);
-        }
-
-        // Settings button listeners
         if (settingsBtn && !settingsBtn.dataset.listenerAttached) {
-            settingsBtn.addEventListener('click', (e) => { e?.preventDefault(); openSettingsPanel(); });
+            settingsBtn.addEventListener('click', (e) => { e?.preventDefault(); settingsPanel.openSettingsPanel(); });
             settingsBtn.dataset.listenerAttached = 'true';
         }
         const popupSettingsBtn = document.getElementById('popup-settings-btn');
         if (popupSettingsBtn && !popupSettingsBtn.dataset.listenerAttached) {
-            popupSettingsBtn.addEventListener('click', (e) => { e?.preventDefault(); e?.stopPropagation(); openSettingsPanel(); });
+            popupSettingsBtn.addEventListener('click', (e) => { e?.preventDefault(); e?.stopPropagation(); settingsPanel.openSettingsPanel(); });
             popupSettingsBtn.dataset.listenerAttached = 'true';
         }
 
-        // Save Button
         if (saveConfigBtn && !saveConfigBtn.dataset.listenerAttached) {
-            saveConfigBtn.addEventListener('click', (e) => { e?.preventDefault(); saveConfiguration(); });
+            saveConfigBtn.addEventListener('click', (e) => { e?.preventDefault(); settingsPanel.saveConfiguration(); });
             saveConfigBtn.dataset.listenerAttached = 'true';
         }
 
-        // Cancel Button
         if (cancelConfigBtn && !cancelConfigBtn.dataset.listenerAttached) {
-            cancelConfigBtn.addEventListener('click', () => closeConfigPanel(true));
+            cancelConfigBtn.addEventListener('click', () => settingsPanel.closeConfigPanel(true));
             cancelConfigBtn.dataset.listenerAttached = 'true';
         }
 
-        // Reset Button
         if (resetConfigBtn && !resetConfigBtn.dataset.listenerAttached) {
             resetConfigBtn.addEventListener('click', () => {
-                applyDefaultSettings();
+                settingsPanel.applyDefaultSettings();
                 configManager.applyConfiguration(configManager.config);
-                updateConfigPanelFromConfig();
+                settingsPanel.updateConfigPanelFromConfig();
                 chatRenderer.addSystemMessage("Settings reset to default.");
             });
             resetConfigBtn.dataset.listenerAttached = 'true';
@@ -1368,9 +481,6 @@ import { ChatConnection } from './modules/chat-connection.js';
 
         // --- CONNECTION HANDLERS ---
 
-        /**
-         * Connect to chat
-         */
         function connectToChat() {
             const channelName = channelInput?.value || initialChannelInput?.value || '';
             if (!channelName) {
@@ -1380,9 +490,6 @@ import { ChatConnection } from './modules/chat-connection.js';
             chatConnection.connect(channelName);
         }
 
-        /**
-         * Disconnect from chat
-         */
         function disconnectChat() {
             chatConnection.disconnect();
         }
@@ -1407,7 +514,7 @@ import { ChatConnection } from './modules/chat-connection.js';
         if (openSettingsFromPromptBtn && configPanel) {
             openSettingsFromPromptBtn.addEventListener('click', () => {
                 if (initialChannelInput && channelInput) channelInput.value = initialChannelInput.value;
-                openSettingsPanel();
+                settingsPanel.openSettingsPanel();
             });
         }
 
@@ -1435,17 +542,15 @@ import { ChatConnection } from './modules/chat-connection.js';
 
         // --- INITIALIZATION ---
 
-        // Load saved config and apply
         const sceneName = UIHelpers.getUrlParameter('scene') || 'default';
         configManager.loadSavedConfig(sceneName);
         configManager.applyConfiguration(configManager.config);
         badgeManager.config = configManager.config;
         chatRenderer.config = configManager.config;
 
-        // Fix CSS variables
         UIHelpers.fixCssVariables();
 
-        updateConfigPanelFromConfig();
+        settingsPanel.updateConfigPanelFromConfig();
 
         // Auto-connect if last channel is saved
         if (configManager.config.lastChannel) {
@@ -1465,16 +570,16 @@ import { ChatConnection } from './modules/chat-connection.js';
         }
 
         // Event listeners for theme changes
-        document.addEventListener('theme-changed', () => updateThemePreview());
-        document.addEventListener('theme-carousel-ready', () => updateThemePreview());
+        document.addEventListener('theme-changed', () => themeManager.updateThemePreview());
+        document.addEventListener('theme-carousel-ready', () => themeManager.updateThemePreview());
         document.addEventListener('theme-generated-and-added', (event) => {
             if (!(event.detail && event.detail.themeValue)) {
                 console.warn("[Event Listener] Received theme-generated-and-added event without valid themeValue.");
                 return;
             }
-            applyTheme(event.detail.themeValue);
+            themeManager.applyTheme(event.detail.themeValue);
         });
 
-        updateColorPreviews();
+        themeManager.updateColorPreviews();
     }
 })();
