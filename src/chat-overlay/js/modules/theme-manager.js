@@ -108,12 +108,32 @@ export class ThemeManager {
             }) ?? -1;
 
             if (fontIndex === -1) {
-                console.warn(`[applyTheme] Theme font "${theme.fontFamily}" not found. Using default.`);
-                fontIndex = window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
+                if (theme.isGoogleFont && theme.googleFontFamily) {
+                    // Font is a Google Font outside the local top-100 list — add it dynamically
+                    const fontObj = {
+                        name: theme.fontFamily,
+                        value: `'${theme.googleFontFamily}', sans-serif`,
+                        description: `${theme.googleFontFamily} from Google Fonts`,
+                        isGoogleFont: true,
+                        googleFontFamily: theme.googleFontFamily
+                    };
+                    this._fontManager.addAndSelectGoogleFont(fontObj);
+                    // addAndSelectGoogleFont already calls updateFontDisplay; also update config
+                    const addedIdx = window.availableFonts?.findIndex(f => f.name === fontObj.name) ?? 0;
+                    this._configManager.updateConfig('fontFamily', window.availableFonts[addedIdx]?.value || fontObj.value);
+                } else {
+                    console.warn(`[applyTheme] Theme font "${theme.fontFamily}" not found in local list. Using default.`);
+                    fontIndex = window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
+                    this._fontManager.currentFontIndex = fontIndex;
+                    this._configManager.updateConfig('fontFamily', window.availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
+                    this._fontManager.updateFontDisplay();
+                }
+            } else {
+                this._fontManager.currentFontIndex = fontIndex;
+                this._configManager.updateConfig('fontFamily', window.availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
+                this._fontManager.updateFontDisplay();
             }
-            this._fontManager.currentFontIndex = fontIndex;
-            this._configManager.updateConfig('fontFamily', window.availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
-            this._fontManager.updateFontDisplay();
+
         } else {
             this._configManager.updateConfig('fontFamily', window.availableFonts?.[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
         }
