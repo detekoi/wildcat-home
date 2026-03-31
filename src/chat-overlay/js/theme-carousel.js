@@ -14,7 +14,7 @@
     // Define available fonts globally
     window.availableFonts = [
         // Custom fonts
-        { name: 'Atkinson Hyperlegible', value: "'Atkinson Hyperlegible', sans-serif", description: 'Designed for high legibility and reading clarity, especially at small sizes.', custom: true },
+        { name: 'Atkinson Hyperlegible Next', value: "'Atkinson Hyperlegible Next', sans-serif", description: 'The next generation of the acclaimed legibility-focused typeface.', custom: true, isGoogleFont: true, googleFontFamily: 'Atkinson Hyperlegible Next', googleFontUrl: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap' },
         { name: 'EB Garamond', value: "'EB Garamond', serif", description: 'Elegant serif font with classical old-style proportions, perfect for literary or historical themes.', custom: true },
         { name: 'Tektur', value: "'Tektur', sans-serif", description: 'Modern and slightly angular typeface with a technical/sci-fi aesthetic.', custom: true },
         { name: 'MedievalSharp', value: "'MedievalSharp', cursive", description: 'Evokes a medieval/fantasy atmosphere with calligraphic details.', custom: true },
@@ -85,7 +85,7 @@
                 borderColor: '#9147ff',
                 textColor: '#efeff1',
                 usernameColor: '#9147ff',
-                fontFamily: "'Atkinson Hyperlegible', sans-serif",
+                fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
                 borderRadius: 'Subtle',
                 borderRadiusValue: '8px',
                 boxShadow: 'Soft',
@@ -101,7 +101,7 @@
                 borderColor: '#cccccc',
                 textColor: '#1a1a1a',
                 usernameColor: '#9147ff',
-                fontFamily: "'Atkinson Hyperlegible', sans-serif",
+                fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
                 borderRadius: 'Subtle',
                 borderRadiusValue: '8px',
                 boxShadow: 'Soft',
@@ -133,7 +133,7 @@
                 borderColor: 'transparent',
                 textColor: '#efeff1',
                 usernameColor: '#00ffea',
-                fontFamily: "'Atkinson Hyperlegible', sans-serif",
+                fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
                 borderRadius: 'Subtle',
                 borderRadiusValue: '8px',
                 boxShadow: 'none',
@@ -149,7 +149,7 @@
                 borderColor: '#ff6bcb',
                 textColor: '#8e2651',
                 usernameColor: '#b81670',
-                fontFamily: "'Atkinson Hyperlegible', sans-serif",
+                fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
                 borderRadius: 'Rounded',
                 borderRadiusValue: '16px',
                 boxShadow: 'Soft',
@@ -768,8 +768,9 @@
     /**
      * Dynamically loads a Google Font by injecting a link tag.
      * @param {string} fontFamily - The font family name.
+     * @param {string} [customUrl] - Optional custom Google Fonts CSS URL (for variable fonts with special axes).
      */
-    function loadGoogleFont(fontFamily) {
+    function loadGoogleFont(fontFamily, customUrl) {
         if (!fontFamily) return;
 
         const fontId = `google-font-${fontFamily.replace(/\s+/g, '-').toLowerCase()}`;
@@ -778,7 +779,7 @@
         const link = document.createElement('link');
         link.id = fontId;
         link.rel = 'stylesheet';
-        link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
+        link.href = customUrl || `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
         document.head.appendChild(link);
         console.log(`Loaded Google Font: ${fontFamily}`);
     }

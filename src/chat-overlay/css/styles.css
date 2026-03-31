@@ -27,7 +27,7 @@
     --spacing-xl: 32px;
     
     /* Typography */
-    --font-family: 'Atkinson Hyperlegible', sans-serif;
+    --font-family: 'Atkinson Hyperlegible Next', sans-serif;
     --font-size-sm: 0.875rem;
     --font-size-md: 1rem;
     --font-size-lg: 1.125rem;
@@ -155,38 +155,6 @@ a .lucide-inline,
     src: url('../assets/fonts/PressStart2P-Regular.txt.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Atkinson Hyperlegible';
-    src: url('../assets/fonts/AtkinsonHyperlegible-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Atkinson Hyperlegible';
-    src: url('../assets/fonts/AtkinsonHyperlegible-Bold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Atkinson Hyperlegible';
-    src: url('../assets/fonts/AtkinsonHyperlegible-Italic.ttf') format('truetype');
-    font-weight: normal;
-    font-style: italic;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Atkinson Hyperlegible';
-    src: url('../assets/fonts/AtkinsonHyperlegible-BoldItalic.ttf') format('truetype');
-    font-weight: bold;
-    font-style: italic;
     font-display: swap;
 }
 

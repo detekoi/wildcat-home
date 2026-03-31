@@ -170,10 +170,10 @@ import { ChatConnection } from './modules/chat-connection.js';
                     fontIndex = window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
                 }
                 currentFontIndex = fontIndex;
-                configManager.updateConfig('fontFamily', window.availableFonts[currentFontIndex]?.value || "'Atkinson Hyperlegible', sans-serif");
+                configManager.updateConfig('fontFamily', window.availableFonts[currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
                 updateFontDisplay();
             } else {
-                configManager.updateConfig('fontFamily', window.availableFonts?.[currentFontIndex]?.value || "'Atkinson Hyperlegible', sans-serif");
+                configManager.updateConfig('fontFamily', window.availableFonts?.[currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
             }
 
             // Apply the merged configuration visually
@@ -236,7 +236,7 @@ import { ChatConnection } from './modules/chat-connection.js';
 
             // Load Google Font if applicable
             if (currentFont.isGoogleFont && currentFont.googleFontFamily && window.loadGoogleFont) {
-                window.loadGoogleFont(currentFont.googleFontFamily);
+                window.loadGoogleFont(currentFont.googleFontFamily, currentFont.googleFontUrl);
             }
 
             // Close dropdown when cycling
@@ -259,7 +259,19 @@ import { ChatConnection } from './modules/chat-connection.js';
             fontSearchResults.innerHTML = '';
             fontDropdownHighlightIndex = -1;
 
-            if (matches.length === 0) {
+            if (matches.length === 0 && q) {
+                // No match — offer to try it as a Google Font
+                const tryItem = document.createElement('div');
+                tryItem.className = 'font-search-result';
+                tryItem.setAttribute('role', 'option');
+                tryItem.dataset.fontValue = `'${query.trim()}', sans-serif`;
+                tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${query.trim()}</strong>" from Google Fonts</span>`;
+                tryItem.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    addAndSelectGoogleFont(query.trim());
+                });
+                fontSearchResults.appendChild(tryItem);
+            } else if (matches.length === 0) {
                 const noResult = document.createElement('div');
                 noResult.className = 'font-search-result';
                 noResult.textContent = 'No fonts found';
@@ -279,7 +291,7 @@ import { ChatConnection } from './modules/chat-connection.js';
                     nameSpan.style.fontFamily = font.value;
                     // Load the font for preview if it's a Google Font
                     if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-                        window.loadGoogleFont(font.googleFontFamily);
+                        window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
                     }
                     item.appendChild(nameSpan);
 
@@ -296,9 +308,55 @@ import { ChatConnection } from './modules/chat-connection.js';
                     });
                     fontSearchResults.appendChild(item);
                 });
+
+                // Also offer Google Font option if query doesn't exactly match any font name
+                if (q && !matches.some(f => f.name.toLowerCase() === q)) {
+                    const tryItem = document.createElement('div');
+                    tryItem.className = 'font-search-result';
+                    tryItem.setAttribute('role', 'option');
+                    tryItem.dataset.fontValue = `'${query.trim()}', sans-serif`;
+                    tryItem.innerHTML = `<span style="color: var(--primary-light);">Try "<strong>${query.trim()}</strong>" from Google Fonts</span>`;
+                    tryItem.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        addAndSelectGoogleFont(query.trim());
+                    });
+                    fontSearchResults.appendChild(tryItem);
+                }
             }
 
             fontSearchResults.classList.add('visible');
+        }
+
+        /**
+         * Dynamically add a Google Font by name and select it
+         */
+        function addAndSelectGoogleFont(fontName) {
+            const fontValue = `'${fontName}', sans-serif`;
+            const newFont = {
+                name: fontName,
+                value: fontValue,
+                description: `${fontName} from Google Fonts`,
+                isGoogleFont: true,
+                googleFontFamily: fontName
+            };
+
+            // Load the font
+            if (window.loadGoogleFont) {
+                window.loadGoogleFont(fontName);
+            }
+
+            // Add to available fonts if not already there
+            const existingIdx = window.availableFonts.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
+            if (existingIdx === -1) {
+                window.availableFonts.unshift(newFont);
+                currentFontIndex = 0;
+            } else {
+                currentFontIndex = existingIdx;
+            }
+
+            updateFontDisplay();
+            closeFontDropdown();
+            fontSearchInput?.blur();
         }
 
         function closeFontDropdown() {
@@ -409,7 +467,7 @@ import { ChatConnection } from './modules/chat-connection.js';
             const textColor = textColorInput?.value || '#efeff1';
             const usernameColor = usernameColorInput?.value || '#9147ff';
             const timestampColor = configManager.config?.timestampColor || '#adadb8';
-            const fontFamily = window.availableFonts?.[currentFontIndex]?.value || configManager.config?.fontFamily || "'Atkinson Hyperlegible', sans-serif";
+            const fontFamily = window.availableFonts?.[currentFontIndex]?.value || configManager.config?.fontFamily || "'Atkinson Hyperlegible Next', sans-serif";
             const activeBorderRadiusBtn = borderRadiusPresets?.querySelector('.preset-btn.active');
             const borderRadiusValue = activeBorderRadiusBtn?.dataset.value ?? configManager.config?.borderRadius ?? '8px';
             const borderRadius = UIHelpers.getBorderRadiusValue(borderRadiusValue);
