@@ -51,11 +51,49 @@ export class FontManager {
 
     /**
      * Sync currentFontIndex to match configManager.config.fontFamily.
+     * If the font isn't in availableFonts (e.g. an AI-generated Google Font),
+     * check saved generated themes for the metadata and dynamically add+load it.
      */
     syncToConfig() {
-        const fontIndex = window.availableFonts?.findIndex(
-            f => f.value === this._configManager.config.fontFamily
+        const configFontFamily = this._configManager.config.fontFamily;
+        let fontIndex = window.availableFonts?.findIndex(
+            f => f.value === configFontFamily
         ) ?? -1;
+
+        if (fontIndex === -1 && configFontFamily) {
+            // The saved font isn't in the available list — recover it.
+            // Primary: use googleFontFamily saved directly in the config
+            // Fallback: check saved generated themes for the metadata
+            let googleFontFamily = this._configManager.config.googleFontFamily;
+
+            if (!googleFontFamily) {
+                // Backward compat: check if a saved generated theme has the metadata
+                const savedTheme = window.availableThemes?.find(t =>
+                    t.isGoogleFont && t.googleFontFamily && (
+                        t.fontFamily === configFontFamily ||
+                        configFontFamily.includes(t.googleFontFamily)
+                    )
+                );
+                if (savedTheme) googleFontFamily = savedTheme.googleFontFamily;
+            }
+
+            if (googleFontFamily) {
+                const fontObj = {
+                    name: googleFontFamily,
+                    value: configFontFamily,
+                    description: `${googleFontFamily} from Google Fonts`,
+                    isGoogleFont: true,
+                    googleFontFamily: googleFontFamily
+                };
+                // Add to the front of the fonts list and load the stylesheet
+                window.availableFonts.unshift(fontObj);
+                if (window.loadGoogleFont) {
+                    window.loadGoogleFont(fontObj.googleFontFamily);
+                }
+                fontIndex = 0;
+            }
+        }
+
         this._currentFontIndex = (fontIndex !== -1)
             ? fontIndex
             : (window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0);
@@ -83,6 +121,9 @@ export class FontManager {
 
         if (this._fontSearchInput) this._fontSearchInput.value = currentFont.name;
         this._configManager.updateConfig('fontFamily', currentFont.value);
+        // Persist Google Font metadata so the font can be restored on page refresh
+        this._configManager.updateConfig('googleFontFamily',
+            (currentFont.isGoogleFont && currentFont.googleFontFamily) ? currentFont.googleFontFamily : null);
         document.documentElement.style.setProperty('--font-family', currentFont.value);
 
         // Load Google Font if applicable
@@ -476,12 +517,9 @@ export class FontManager {
         // React to font list updates from proxy
         document.addEventListener('fonts-updated', () => {
             console.log('Fonts updated event received in FontManager');
-            const fontIndex = window.availableFonts?.findIndex(
-                f => f.value === this._configManager.config.fontFamily
-            ) ?? -1;
-            if (fontIndex !== -1) {
-                this._currentFontIndex = fontIndex;
-            }
+            // Re-sync: the proxy may have replaced the list, dropping dynamically
+            // added Google Fonts. syncToConfig will re-add them from saved themes.
+            this.syncToConfig();
             this.updateFontDisplay();
         });
     }

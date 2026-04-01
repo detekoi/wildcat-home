@@ -141,6 +141,7 @@ export class SettingsPanelManager {
             const newConfig = {
                 theme: currentThemeValue,
                 fontFamily: currentFontValue,
+                googleFontFamily: this._configManager.config.googleFontFamily || null,
                 fontSize: getValue(fontSizeSlider, this._configManager.config.fontSize || 14, true),
                 bgColor: currentBgColorHex,
                 bgColorOpacity: currentBgOpacity,
