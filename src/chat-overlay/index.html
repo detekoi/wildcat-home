@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Wildcat Chat Overlay – a customizable Twitch chat overlay for OBS with AI-generated themes. No login required.">
+    <meta name="description"
+        content="Wildcat Chat Overlay – a customizable Twitch chat overlay for OBS with AI-generated themes. No login required.">
     <title>Wildcat Chat Overlay</title>
 
     <!-- Favicon -->
@@ -13,7 +15,9 @@
     <!-- Fonts (matches base.njk) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
@@ -25,6 +29,7 @@
     <!-- Analytics -->
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
 </head>
+
 <body class="has-navbar">
 
     <!-- Site Navbar -->
@@ -32,7 +37,8 @@
         <a href="/" class="wildcat-navbar-brand">
             <span class="wildcat-navbar-kaomoji">- ˕ •マ</span>
         </a>
-        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation" onclick="this.nextElementSibling.classList.toggle('active')"><i data-lucide="menu"></i></button>
+        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation"
+            onclick="this.nextElementSibling.classList.toggle('active')"><i data-lucide="menu"></i></button>
         <ul class="wildcat-navbar-menu">
             <li><a href="/">Home</a></li>
             <li><a href="/blog/">Blog</a></li>
@@ -46,13 +52,17 @@
 
     <div class="card">
         <h1>Chat Overlay for Twitch & OBS</h1>
-        <p>A customizable chat overlay with AI-generated themes. No login required — just plug into OBS.</p>
+        <p>A customizable chat overlay with themes generated using natural language. No login required — just plug into
+            OBS.</p>
         <div class="buttons">
-            <a href="chat-scene-creator.html" class="button secondary"><i data-lucide="layout-grid" class="lucide-inline"></i> Chat Scene Creator</a>
-            <a href="chat.html" class="button"><i data-lucide="message-circle" class="lucide-inline"></i> Just Take Me to Chat</a>
+            <a href="chat-scene-creator.html" class="button secondary"><i data-lucide="layout-grid"
+                    class="lucide-inline"></i> Chat Scene Creator</a>
+            <a href="chat.html" class="button"><i data-lucide="message-circle" class="lucide-inline"></i> Just Take Me
+                to Chat</a>
         </div>
         <p style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
-            <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank" style="color: inherit; text-decoration: underline;">
+            <a href="https://github.com/detekoi/compact-chat-overlay" target="_blank"
+                style="color: inherit; text-decoration: underline;">
                 View Documentation on GitHub →
             </a>
         </p>
@@ -64,4 +74,5 @@
 
     <script>lucide.createIcons();</script>
 </body>
+
 </html>
