@@ -68,11 +68,80 @@ export class ChatRenderer {
     }
 
     renderSuperChat(data, targetContainer, currentScrollArea) {
-        // Feature coming in Phase 4
+        const itemContainer = document.createElement('div');
+        const isPopup = this.config.chatMode === 'popup';
+        itemContainer.className = isPopup ? 'popup-message superchat-message' : 'chat-message superchat-message';
+        if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
+        
+        const superChatEl = document.createElement('div');
+        superChatEl.className = 'superchat';
+        if (data.bodyColor) superChatEl.style.setProperty('--body-color', data.bodyColor);
+        if (data.headerColor) superChatEl.style.setProperty('--header-color', data.headerColor);
+
+        const headerEl = document.createElement('div');
+        headerEl.className = 'superchat-header';
+        
+        const authorEl = document.createElement('span');
+        authorEl.className = 'superchat-author';
+        authorEl.textContent = data.username;
+        headerEl.appendChild(authorEl);
+        
+        if (data.amount) {
+            const amountEl = document.createElement('span');
+            amountEl.className = 'superchat-amount';
+            amountEl.textContent = " - " + data.amount;
+            headerEl.appendChild(amountEl);
+        }
+        superChatEl.appendChild(headerEl);
+
+        const contentNodes = this.buildMessageContentDOM(data.message || "", data.emotes);
+        if (contentNodes.childNodes.length > 0) {
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'superchat-body chat-text';
+            bodyEl.appendChild(contentNodes);
+            superChatEl.appendChild(bodyEl);
+        }
+
+        itemContainer.appendChild(superChatEl);
+        targetContainer.appendChild(itemContainer);
+
+        if (isPopup) {
+            this.handlePopupMessage(itemContainer, targetContainer);
+        } else {
+            this.scrollManager.ensureSentinelLast();
+            this.limitMessages();
+            if (this.scrollManager.autoFollow && currentScrollArea) {
+                this.scrollManager.scrollToBottom();
+            }
+        }
     }
 
     renderMembershipEvent(data, targetContainer, currentScrollArea) {
-        // Feature coming in Phase 4
+        const itemContainer = document.createElement('div');
+        const isPopup = this.config.chatMode === 'popup';
+        itemContainer.className = isPopup ? 'popup-message membership-message system-message' : 'chat-message membership-message system-message';
+        if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
+
+        const memEl = document.createElement('div');
+        memEl.className = 'membership';
+        
+        const textEl = document.createElement('span');
+        textEl.className = 'membership-text';
+        textEl.textContent = `⭐ ${data.username} changed memberships: ${data.subtext || "Join"}`;
+        memEl.appendChild(textEl);
+        
+        itemContainer.appendChild(memEl);
+        targetContainer.appendChild(itemContainer);
+
+        if (isPopup) {
+            this.handlePopupMessage(itemContainer, targetContainer);
+        } else {
+            this.scrollManager.ensureSentinelLast();
+            this.limitMessages();
+            if (this.scrollManager.autoFollow && currentScrollArea) {
+                this.scrollManager.scrollToBottom();
+            }
+        }
     }
 
     /**

@@ -1367,3 +1367,36 @@ body.chat-page:hover #popup-settings-btn {
     -webkit-mask-image: url('../assets/icons/youtube.svg');
     background-color: #FF0000; /* Standard brand color */
 }
+
+/* Superchat and Memberships */
+.superchat {
+    border-radius: var(--chat-border-radius, 8px);
+    overflow: hidden;
+    margin-bottom: 8px;
+    background-color: var(--body-color, #ffffff);
+    color: #111;
+}
+.superchat-header {
+    background-color: var(--header-color, #1565c0);
+    padding: 8px 12px;
+    color: #fff;
+    font-weight: 800;
+}
+.superchat-body {
+    padding: 8px 12px;
+}
+.superchat-author {
+    opacity: 0.9;
+}
+.superchat-amount {
+    font-weight: 800;
+}
+.membership {
+    background-color: #0f9d58;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: var(--chat-border-radius, 8px);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+}
