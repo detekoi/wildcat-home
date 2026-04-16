@@ -1339,3 +1339,31 @@ body.chat-page:hover #popup-settings-btn {
 .chat-badge-placeholder:last-child {
     margin-right: 0;
 }
+
+/* Platform Badges */
+.platform-badge {
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: sub;
+    margin-right: 4px;
+    background-color: var(--chat-text-color, #fff); /* fallback if not using specific color */
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+.platform-twitch {
+    mask-image: url('../assets/icons/twitch.svg');
+    -webkit-mask-image: url('../assets/icons/twitch.svg');
+    background-color: #9146FF; /* Standard brand color */
+}
+
+.platform-youtube {
+    mask-image: url('../assets/icons/youtube.svg');
+    -webkit-mask-image: url('../assets/icons/youtube.svg');
+    background-color: #FF0000; /* Standard brand color */
+}

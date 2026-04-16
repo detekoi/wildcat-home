@@ -67,6 +67,14 @@ export class ChatRenderer {
         }
     }
 
+    renderSuperChat(data, targetContainer, currentScrollArea) {
+        // Feature coming in Phase 4
+    }
+
+    renderMembershipEvent(data, targetContainer, currentScrollArea) {
+        // Feature coming in Phase 4
+    }
+
     /**
      * Add a user message to the chat
      */
@@ -87,6 +95,15 @@ export class ChatRenderer {
                 if (!currentScrollArea) { console.error('Chat scroll area not found'); }
             }
             if (!targetContainer) { console.error('Target container could not be determined or found.'); return; }
+
+            const eventType = data.eventType || 'chat';
+            if (eventType === 'superchat' || eventType === 'supersticker') {
+                this.renderSuperChat(data, targetContainer, currentScrollArea);
+                return;
+            } else if (eventType === 'new-member' || eventType === 'member-milestone' || eventType === 'gift-purchase' || eventType === 'gift-received') {
+                this.renderMembershipEvent(data, targetContainer, currentScrollArea);
+                return;
+            }
 
             const shouldScroll = this.config.chatMode === 'window' && this.scrollManager.autoFollow;
             const messageElement = document.createElement('div');
@@ -109,38 +126,57 @@ export class ChatRenderer {
                 userColor = this.config.usernameColor;
             }
 
-            let message = this.parseEmotes(data.message, data.emotes);
+            // Build node tree dynamically instead of via innerHTML
+            const contentNodes = this.buildMessageContentDOM(data.message, data.emotes);
+            const isSingleEmote = this.checkSingleEmoteNodes(contentNodes);
 
-            // Check if message contains only a single emote (for enlargement feature)
-            const isSingleEmote = this.checkSingleEmote(message);
-
-            // Process URLs only if message does not contain emotes
-            if (!message.includes('<img class="emote"')) {
-                message = message.replace(/(\bhttps?:\/\/[^\s<]+)/g, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            if (timestamp) {
+                const tsSpan = document.createElement('span');
+                tsSpan.className = 'timestamp';
+                tsSpan.textContent = timestamp;
+                messageElement.appendChild(tsSpan);
             }
 
-            // Badge HTML
+            const showPlatformBadges = this.config.showPlatformBadges !== false;
+            if (showPlatformBadges) {
+                const platform = data.platform || 'twitch';
+                const pBadge = document.createElement('span');
+                pBadge.className = `platform-badge platform-${platform}`;
+                pBadge.setAttribute('aria-label', platform);
+                messageElement.appendChild(pBadge);
+            }
+
             const badgesHtml = data.tags?.badges
                 ? this.badgeManager.generateBadgeHTML(data.tags.badges, this.currentBroadcasterId)
                 : '';
+            
+            if (badgesHtml) {
+                const bWrapper = document.createElement('span');
+                bWrapper.innerHTML = badgesHtml;
+                while(bWrapper.firstChild) messageElement.appendChild(bWrapper.firstChild);
+            }
 
-            // Pronouns
-            let pronounHtml = '';
-            if (this.config.showPronouns !== false) { // Default to true if undefined
-                const boxId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                pronounHtml = `<span class="pronoun-badge" id="pronoun-${boxId}" style="display: none;"></span>`;
-
-                // Check cache immediately
+            if (this.config.showPronouns !== false) {
+                let pronounHtml = '';
                 const cachedPronoun = this.pronounManager?.getPronounDisplay(data.username);
                 if (cachedPronoun) {
-                    pronounHtml = `<span class="pronoun-badge">${cachedPronoun}</span>`;
+                    const pSpan = document.createElement('span');
+                    pSpan.className = 'pronoun-badge';
+                    pSpan.innerHTML = cachedPronoun; // pronoun manager output is safe HTML
+                    messageElement.appendChild(pSpan);
                 } else if (this.pronounManager) {
-                    // Fetch async
+                    const boxId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    const pStub = document.createElement('span');
+                    pStub.className = 'pronoun-badge';
+                    pStub.id = `pronoun-${boxId}`;
+                    pStub.style.display = 'none';
+                    messageElement.appendChild(pStub);
+
                     this.pronounManager.getUserPronoun(data.username).then(pronoun => {
                         if (pronoun) {
                             const el = document.getElementById(`pronoun-${boxId}`);
                             if (el) {
-                                el.textContent = pronoun;
+                                el.innerHTML = pronoun;
                                 el.style.display = 'inline';
                             }
                         }
@@ -148,12 +184,16 @@ export class ChatRenderer {
                 }
             }
 
-            messageElement.innerHTML = `
-                <span class="timestamp">${timestamp}</span>
-                ${badgesHtml}
-                ${pronounHtml}
-                <span class="username" style="color: ${userColor}">${data.username}:</span>
-                <span class="message-content">${message}</span>`;
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = 'username';
+            usernameSpan.style.color = userColor;
+            usernameSpan.textContent = `${data.username}:`;
+            messageElement.appendChild(usernameSpan);
+
+            const contentContainer = document.createElement('span');
+            contentContainer.className = 'message-content';
+            contentContainer.appendChild(contentNodes);
+            messageElement.appendChild(contentContainer);
 
             // Apply single-emote class if detected
             if (isSingleEmote) {
@@ -192,63 +232,109 @@ export class ChatRenderer {
     }
 
     /**
-     * Parse and replace emotes in message
+     * Build secure DOM fragment for message content parsing emotes and URLs
      */
-    parseEmotes(message, emotes) {
-        if (!emotes || typeof emotes !== 'object') {
-            return message;
-        }
-
-        const emotePositions = [];
-        try {
+    buildMessageContentDOM(message, emotes) {
+        const frag = document.createDocumentFragment();
+        
+        let emotePositions = [];
+        if (emotes && typeof emotes === 'object') {
             for (const emoteId in emotes) {
                 if (!emotes.hasOwnProperty(emoteId)) continue;
-                const emotePositionArray = emotes[emoteId];
-                if (!Array.isArray(emotePositionArray)) continue;
-
-                for (const position of emotePositionArray) {
-                    if (!position?.includes('-')) continue;
-                    const [startStr, endStr] = position.split('-');
-                    const start = parseInt(startStr, 10);
-                    const end = parseInt(endStr, 10);
-                    if (isNaN(start) || isNaN(end) || start < 0 || end < 0 || start > end || end >= message.length) continue;
-                    emotePositions.push({ start, end, id: emoteId });
+                for (const pos of emotes[emoteId]) {
+                    if (pos?.includes('-')) {
+                        const [s, e] = pos.split('-');
+                        const start = parseInt(s, 10);
+                        const end = parseInt(e, 10);
+                        if (!isNaN(start) && !isNaN(end) && start >= 0 && start <= end && end < message.length) {
+                            emotePositions.push({ start, end, id: emoteId });
+                        }
+                    }
                 }
             }
-        } catch (err) { console.error('Error processing emotes:', err); }
-
-        emotePositions.sort((a, b) => b.start - a.start); // Process from end
-
-        for (const emote of emotePositions) {
-            try {
-                const emoteCode = message.substring(emote.start, emote.end + 1);
-                const emoteBaseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark`;
-                const emoteHtml = `<img class="emote" src="${emoteBaseUrl}/3.0"
-                    onerror="this.onerror=function(){this.src='${emoteBaseUrl}/1.0';}; this.src='${emoteBaseUrl}/2.0';"
-                    alt="${emoteCode.replace(/"/g, '&quot;')}"
-                    title="${emoteCode.replace(/"/g, '&quot;')}" />`;
-                message = message.substring(0, emote.start) + emoteHtml + message.substring(emote.end + 1);
-            } catch (err) { console.error('Error replacing emote:', err); }
         }
+        emotePositions.sort((a, b) => a.start - b.start);
 
-        return message;
+        if (emotePositions.length === 0) {
+            // No emotes, check for URLs
+            const urlRegex = /(\bhttps?:\/\/[^\s<]+)/g;
+            let lastIndex = 0;
+            let match;
+            while ((match = urlRegex.exec(message)) !== null) {
+                if (match.index > lastIndex) {
+                    frag.appendChild(document.createTextNode(message.slice(lastIndex, match.index)));
+                }
+                const a = document.createElement('a');
+                a.href = match[0];
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = match[0]; // safe
+                frag.appendChild(a);
+                lastIndex = urlRegex.lastIndex;
+            }
+            if (lastIndex < message.length) {
+                frag.appendChild(document.createTextNode(message.slice(lastIndex)));
+            }
+        } else {
+            // Has emotes
+            let lastIndex = 0;
+            for (const emote of emotePositions) {
+                if (emote.start > lastIndex) {
+                    frag.appendChild(document.createTextNode(message.slice(lastIndex, emote.start)));
+                }
+                // Determine if it's an InnerTube emote or Twitch emote structure
+                // InnerTube emotes passed from our Normalizer might have URL rather than ID in some future cases,
+                // but for now sticking to the twitch structure compatibility.
+                const emoteCode = message.substring(emote.start, emote.end + 1);
+                
+                // Hacky check for YT emoji URL if we embed it in ID field for now, will refine in Phase 4
+                let isYtEmoji = emote.id.startsWith('http');
+                
+                const img = document.createElement('img');
+                img.className = 'emote';
+                if (isYtEmoji) {
+                    img.classList.add('yt-emoji');
+                    img.src = emote.id;
+                } else {
+                    const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark`;
+                    img.src = `${baseUrl}/3.0`;
+                    img.onerror = function() {
+                        this.onerror = function() { this.src = `${baseUrl}/1.0`; };
+                        this.src = `${baseUrl}/2.0`;
+                    };
+                }
+                img.alt = emoteCode;
+                img.title = emoteCode;
+                frag.appendChild(img);
+                
+                lastIndex = emote.end + 1;
+            }
+            if (lastIndex < message.length) {
+                frag.appendChild(document.createTextNode(message.slice(lastIndex)));
+            }
+        }
+        
+        return frag;
     }
 
     /**
-     * Check if message contains only a single emote
+     * Check if message content nodes contain only a single emote
      */
-    checkSingleEmote(message) {
-        if (!this.config.enlargeSingleEmotes || !message.includes('<img class="emote"')) {
-            return false;
+    checkSingleEmoteNodes(frag) {
+        if (!this.config.enlargeSingleEmotes) return false;
+        let hasOneEmote = false;
+        let hasText = false;
+        for (const child of frag.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                if (child.textContent.trim() !== '') hasText = true;
+            } else if (child.nodeName.toLowerCase() === 'img' && child.classList.contains('emote')) {
+                if (hasOneEmote) return false; // More than one
+                hasOneEmote = true;
+            } else {
+                return false; // Other element types
+            }
         }
-
-        // Create a temporary div to parse the HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = message;
-        const emotes = tempDiv.querySelectorAll('img.emote');
-        // Remove all whitespace and check if only one emote exists
-        const textContent = tempDiv.textContent.trim();
-        return emotes.length === 1 && textContent === '';
+        return hasOneEmote && !hasText;
     }
 
     /**
@@ -300,13 +386,15 @@ export class ChatRenderer {
             distanceFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
         }
 
-        // Remove oldest messages but never remove the sentinel
-        const sentinel = this.scrollManager.bottomSentinel;
-        const targetCount = max + (sentinel ? 1 : 0);
-        while (this.chatMessages.children.length > targetCount) {
-            const firstChild = this.chatMessages.firstChild;
-            if (firstChild === sentinel) break;
-            this.chatMessages.removeChild(firstChild);
+        // Collect non-pinned, non-sentinel children to consider for removal
+        const pinnedSelector = '.superchat-message';
+        const candidates = Array.from(this.chatMessages.children)
+            .filter(el => el !== this.scrollManager.bottomSentinel)
+            .filter(el => !el.matches(pinnedSelector));
+
+        while (candidates.length > max) {
+            const oldest = candidates.shift();
+            oldest.remove();
         }
 
         // Keep sentinel last

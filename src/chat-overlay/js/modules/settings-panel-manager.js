@@ -35,22 +35,17 @@ export class SettingsPanelManager {
      * Open the settings panel, snapshotting the current config for revert.
      */
     openSettingsPanel() {
-        const { configPanel, channelForm, disconnectBtn } = this._dom;
-        if (!configPanel) return;
-
-        this._initialConfigBeforeEdit = null;
-        try {
-            this._initialConfigBeforeEdit = JSON.parse(JSON.stringify(this._configManager.config));
-        } catch (error) {
-            console.error("Error storing config state for revert:", error);
-            this._chatRenderer.addSystemMessage("Error: Could not store settings state for revert.");
+        const isTwitchConnected = this._chatConnection.isTwitchConnected();
+        const isYouTubeConnected = this._chatConnection.isYouTubeConnected();
+        if (this._dom.twitchChannelForm) this._dom.twitchChannelForm.style.display = isTwitchConnected ? 'none' : 'flex';
+        if (this._dom.youtubeChannelForm) this._dom.youtubeChannelForm.style.display = isYouTubeConnected ? 'none' : 'flex';
+        if (this._dom.twitchDisconnectBtn) {
+            this._dom.twitchDisconnectBtn.style.display = isTwitchConnected ? 'block' : 'none';
+            if (isTwitchConnected) this._dom.twitchDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getTwitchChannel()}`;
         }
-
-        const isConnected = this._chatConnection.isConnected();
-        if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
-        if (disconnectBtn) {
-            disconnectBtn.style.display = isConnected ? 'block' : 'none';
-            if (isConnected) disconnectBtn.textContent = `Disconnect from ${this._chatConnection.getCurrentChannel()}`;
+        if (this._dom.youtubeDisconnectBtn) {
+            this._dom.youtubeDisconnectBtn.style.display = isYouTubeConnected ? 'block' : 'none';
+            if (isYouTubeConnected) this._dom.youtubeDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getYouTubeTarget()}`;
         }
 
         this.updateConfigPanelFromConfig();
@@ -165,7 +160,11 @@ export class SettingsPanelManager {
                     duration: getValue(document.getElementById('popup-duration'), this._configManager.config.popup?.duration || 5, true),
                     maxMessages: getValue(document.getElementById('popup-max-messages'), this._configManager.config.popup?.maxMessages || 3, true)
                 },
-                lastChannel: this._configManager.config.lastChannel,
+                lastTwitchChannel: this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel,
+                lastYouTubeTarget: this._configManager.config.lastYouTubeTarget,
+                showSuperChats: getValue(document.getElementById('show-superchats-toggle'), this._configManager.config.showSuperChats ?? true, false, true),
+                showMembershipEvents: getValue(document.getElementById('show-memberships-toggle'), this._configManager.config.showMembershipEvents ?? true, false, true),
+                showPlatformBadges: getValue(document.getElementById('show-platform-badges-toggle'), this._configManager.config.showPlatformBadges ?? true, false, true),
                 showBadges: getValue(showBadgesToggle, this._configManager.config.showBadges, false, true),
                 showPronouns: getValue(showPronounsToggle, this._configManager.config.showPronouns, false, true),
                 badgeEndpointUrlGlobal: this._configManager.config.badgeEndpointUrlGlobal,
@@ -219,7 +218,7 @@ export class SettingsPanelManager {
             textColorInput, usernameColorInput, overrideUsernameColorsInput, fontSizeSlider,
             fontSizeValue, chatWidthInput, chatWidthValue, chatHeightInput, chatHeightValue,
             maxMessagesInput, showTimestampsInput, borderRadiusPresets, boxShadowPresets,
-            textShadowPresets, fontWeightPresets, channelInput, channelForm, disconnectBtn,
+            textShadowPresets, fontWeightPresets, twitchChannelInput, youtubeChannelInput, twitchChannelForm, youtubeChannelForm, twitchDisconnectBtn, youtubeDisconnectBtn, 
             showBadgesToggle, enlargeSingleEmotesToggle } = this._dom;
 
         if (!configPanel) return;
@@ -268,12 +267,22 @@ export class SettingsPanelManager {
             if (typeof window.highlightActiveCard === 'function') window.highlightActiveCard(currentTheme.value);
         }
 
-        if (channelInput) channelInput.value = this._configManager.config.lastChannel || '';
-        const isConnected = this._chatConnection.isConnected();
-        if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
-        if (disconnectBtn) {
-            disconnectBtn.style.display = isConnected ? 'block' : 'none';
-            if (isConnected) disconnectBtn.textContent = `Disconnect from ${this._chatConnection.getCurrentChannel() || this._configManager.config.lastChannel}`;
+        if (twitchChannelInput) twitchChannelInput.value = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel || '';
+        if (youtubeChannelInput) youtubeChannelInput.value = this._configManager.config.lastYouTubeTarget || '';
+        
+        const isTwitchConnected = this._chatConnection.isTwitchConnected();
+        const isYouTubeConnected = this._chatConnection.isYouTubeConnected();
+        
+        if (twitchChannelForm) twitchChannelForm.style.display = isTwitchConnected ? 'none' : 'flex';
+        if (youtubeChannelForm) youtubeChannelForm.style.display = isYouTubeConnected ? 'none' : 'flex';
+        
+        if (twitchDisconnectBtn) {
+            twitchDisconnectBtn.style.display = isTwitchConnected ? 'block' : 'none';
+            if (isTwitchConnected) twitchDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getTwitchChannel() || this._configManager.config.lastTwitchChannel}`;
+        }
+        if (youtubeDisconnectBtn) {
+            youtubeDisconnectBtn.style.display = isYouTubeConnected ? 'block' : 'none';
+            if (isYouTubeConnected) youtubeDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getYouTubeTarget() || this._configManager.config.lastYouTubeTarget}`;
         }
 
         const currentMode = this._configManager.config.chatMode || 'window';
@@ -300,6 +309,13 @@ export class SettingsPanelManager {
 
         const topFadeToggle = document.getElementById('top-fade-toggle');
         if (topFadeToggle) topFadeToggle.checked = this._configManager.config.topFade ?? false;
+        
+        const showSuperchatsToggle = document.getElementById('show-superchats-toggle');
+        if (showSuperchatsToggle) showSuperchatsToggle.checked = this._configManager.config.showSuperChats ?? true;
+        const showMembershipsToggle = document.getElementById('show-memberships-toggle');
+        if (showMembershipsToggle) showMembershipsToggle.checked = this._configManager.config.showMembershipEvents ?? true;
+        const showPlatformBadgesToggle = document.getElementById('show-platform-badges-toggle');
+        if (showPlatformBadgesToggle) showPlatformBadgesToggle.checked = this._configManager.config.showPlatformBadges ?? true;
 
         this._themeManager.updateThemePreview();
     }

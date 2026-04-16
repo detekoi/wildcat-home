@@ -21,9 +21,9 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
     function initApp() {
         // --- DOM ELEMENT LOOKUPS ---
 
-        // Initial Connection Prompt Elements
         const initialConnectionPrompt = document.getElementById('initial-connection-prompt');
-        const initialChannelInput = document.getElementById('initial-channel-input');
+        const initialTwitchInput = document.getElementById('initial-twitch-input');
+        const initialYoutubeInput = document.getElementById('initial-youtube-input');
         const initialConnectBtn = document.getElementById('initial-connect-btn');
         const openSettingsFromPromptBtn = document.getElementById('open-settings-from-prompt');
 
@@ -35,9 +35,12 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const scrollArea = document.getElementById('chat-scroll-area');
 
         // Settings panel controls
-        const connectBtn = document.getElementById('connect-btn');
-        const disconnectBtn = document.getElementById('disconnect-btn');
-        const channelInput = document.getElementById('channel-input');
+        const twitchConnectBtn = document.getElementById('twitch-connect-btn');
+        const twitchDisconnectBtn = document.getElementById('twitch-disconnect-btn');
+        const twitchChannelInput = document.getElementById('twitch-channel-input');
+        const youtubeConnectBtn = document.getElementById('youtube-connect-btn');
+        const youtubeDisconnectBtn = document.getElementById('youtube-disconnect-btn');
+        const youtubeChannelInput = document.getElementById('youtube-channel-input');
         const settingsBtn = document.getElementById('settings-btn');
         const configPanel = document.getElementById('config-panel');
         const saveConfigBtn = document.getElementById('save-config');
@@ -67,7 +70,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const fontSearchInput = document.getElementById('font-search-input');
         const fontSearchResults = document.getElementById('font-search-results');
         const themePreview = document.getElementById('theme-preview');
-        const channelForm = document.getElementById('channel-form');
+        const twitchChannelForm = document.getElementById('twitch-channel-form');
+        const youtubeChannelForm = document.getElementById('youtube-channel-form');
         const showBadgesToggle = document.getElementById('show-badges-toggle');
         const showPronounsToggle = document.getElementById('show-pronouns-toggle');
         const enlargeSingleEmotesToggle = document.getElementById('enlarge-single-emotes-toggle');
@@ -83,8 +87,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
             fontSizeSlider, fontSizeValue, chatWidthInput, chatWidthValue,
             chatHeightInput, chatHeightValue, maxMessagesInput, showTimestampsInput,
             themePreview, chatWrapper, showBadgesToggle, showPronounsToggle,
-            enlargeSingleEmotesToggle, configPanel, channelForm, disconnectBtn,
-            channelInput
+            enlargeSingleEmotesToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
+            twitchDisconnectBtn, youtubeDisconnectBtn, twitchChannelInput, youtubeChannelInput
         };
 
         // --- MODULE INITIALIZATION ---
@@ -174,13 +178,36 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         // --- CONNECTION STATE UI ---
 
-        chatConnection.onConnectionChange((isConnected, channelName) => {
-            updateConnectionStateUI(isConnected);
-            if (disconnectBtn) {
-                disconnectBtn.style.display = isConnected ? 'block' : 'none';
-                if (isConnected) disconnectBtn.textContent = `Disconnect from ${channelName}`;
+        chatConnection.onConnectionChange((platform, isConnected, channelName) => {
+            updateConnectionStateUI(chatConnection.isConnected() || chatConnection.isYouTubeConnected());
+            if (platform === 'twitch') {
+                if (twitchDisconnectBtn) {
+                    twitchDisconnectBtn.style.display = isConnected ? 'block' : 'none';
+                    if (isConnected) twitchDisconnectBtn.textContent = `Disconnect from ${channelName}`;
+                }
+                if (twitchChannelForm) twitchChannelForm.style.display = isConnected ? 'none' : 'flex';
+                if (document.getElementById('twitch-status')) document.getElementById('twitch-status').textContent = isConnected ? 'Connected' : '';
+            } else if (platform === 'youtube') {
+                if (youtubeDisconnectBtn) {
+                    youtubeDisconnectBtn.style.display = isConnected ? 'block' : 'none';
+                    if (isConnected) youtubeDisconnectBtn.textContent = `Disconnect from ${channelName}`;
+                }
+                if (youtubeChannelForm) youtubeChannelForm.style.display = isConnected ? 'none' : 'flex';
+                if (document.getElementById('youtube-status')) document.getElementById('youtube-status').textContent = isConnected ? 'Connected' : '';
             }
-            if (channelForm) channelForm.style.display = isConnected ? 'none' : 'flex';
+            
+            // Auto-toggle badges check
+            const showBadgesToggleObj = document.getElementById('show-platform-badges-toggle');
+            if (chatConnection.isTwitchConnected() && chatConnection.isYouTubeConnected()) {
+                configManager.updateConfig('showPlatformBadges', true);
+                if (showBadgesToggleObj) showBadgesToggleObj.checked = true;
+            } else if (!chatConnection.isTwitchConnected() && !chatConnection.isYouTubeConnected()) {
+                // do nothing
+            } else {
+                configManager.updateConfig('showPlatformBadges', false);
+                if (showBadgesToggleObj) showBadgesToggleObj.checked = false;
+            }
+            chatRenderer.config = configManager.config;
         });
 
         function updateConnectionStateUI(isConnected) {
@@ -434,6 +461,14 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         });
 
         // Badge toggle
+        const showPlatformBadgesToggle = document.getElementById('show-platform-badges-toggle');
+        if (showPlatformBadgesToggle) {
+            showPlatformBadgesToggle.addEventListener('change', () => {
+                configManager.updateConfig('showPlatformBadges', showPlatformBadgesToggle.checked);
+                chatRenderer.config = configManager.config;
+            });
+        }
+        
         if (showBadgesToggle) {
             showBadgesToggle.addEventListener('change', () => themeManager.updateThemePreview());
         }
@@ -482,63 +517,78 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // --- CONNECTION HANDLERS ---
 
         function connectToChat() {
-            const channelName = channelInput?.value || initialChannelInput?.value || '';
-            if (!channelName) {
-                chatRenderer.addSystemMessage('Please enter a channel name');
+            const twitchTarget = twitchChannelInput?.value || initialTwitchInput?.value || '';
+            const ytTarget = youtubeChannelInput?.value || initialYoutubeInput?.value || '';
+            
+            if (!twitchTarget && !ytTarget) {
+                chatRenderer.addSystemMessage('Please enter a Twitch channel or YouTube stream URL/handle');
                 return;
             }
-            chatConnection.connect(channelName);
-        }
-
-        function disconnectChat() {
-            chatConnection.disconnect();
+            if (twitchTarget && !chatConnection.isTwitchConnected()) chatConnection.connectTwitch(twitchTarget);
+            if (ytTarget && !chatConnection.isYouTubeConnected()) chatConnection.connectYouTube(ytTarget);
         }
 
         // Initial connection prompt handlers
-        if (initialConnectBtn && initialChannelInput) {
+        if (initialConnectBtn) {
             initialConnectBtn.addEventListener('click', () => {
-                if (channelInput) channelInput.value = initialChannelInput.value;
+                if (twitchChannelInput && initialTwitchInput) twitchChannelInput.value = initialTwitchInput.value;
+                if (youtubeChannelInput && initialYoutubeInput) youtubeChannelInput.value = initialYoutubeInput.value;
                 connectToChat();
             });
-            initialChannelInput.addEventListener('keypress', (e) => {
+            const checkEnter = (e) => {
                 if (e.key === 'Enter') {
-                    if (channelInput) channelInput.value = initialChannelInput.value;
+                    if (twitchChannelInput && initialTwitchInput) twitchChannelInput.value = initialTwitchInput.value;
+                    if (youtubeChannelInput && initialYoutubeInput) youtubeChannelInput.value = initialYoutubeInput.value;
                     connectToChat();
                 }
-            });
-            initialChannelInput.addEventListener('input', () => {
-                if (channelInput) channelInput.value = initialChannelInput.value;
-            });
+            };
+            initialTwitchInput?.addEventListener('keypress', checkEnter);
+            initialYoutubeInput?.addEventListener('keypress', checkEnter);
         }
 
         if (openSettingsFromPromptBtn && configPanel) {
             openSettingsFromPromptBtn.addEventListener('click', () => {
-                if (initialChannelInput && channelInput) channelInput.value = initialChannelInput.value;
+                if (initialTwitchInput && twitchChannelInput) twitchChannelInput.value = initialTwitchInput.value;
+                if (initialYoutubeInput && youtubeChannelInput) youtubeChannelInput.value = initialYoutubeInput.value;
                 settingsPanel.openSettingsPanel();
             });
         }
 
-        // Connect button in settings panel
-        if (connectBtn && channelInput) {
-            if (!connectBtn.dataset.listenerAttachedPanel) {
-                connectBtn.addEventListener('click', connectToChat);
-                connectBtn.dataset.listenerAttachedPanel = 'true';
+        // Connect buttons in settings panel
+        if (twitchConnectBtn && twitchChannelInput) {
+            if (!twitchConnectBtn.dataset.listenerAttachedPanel) {
+                twitchConnectBtn.addEventListener('click', () => chatConnection.connectTwitch(twitchChannelInput.value));
+                twitchConnectBtn.dataset.listenerAttachedPanel = 'true';
             }
-            channelInput.addEventListener('keydown', (e) => {
+            twitchChannelInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    connectToChat();
+                    e.preventDefault(); e.stopPropagation();
+                    chatConnection.connectTwitch(twitchChannelInput.value);
                 }
             });
-            channelInput.addEventListener('input', () => {
-                if (initialChannelInput) initialChannelInput.value = channelInput.value;
+            twitchChannelInput.addEventListener('input', () => {
+                if (initialTwitchInput) initialTwitchInput.value = twitchChannelInput.value;
+            });
+        }
+        
+        if (youtubeConnectBtn && youtubeChannelInput) {
+            if (!youtubeConnectBtn.dataset.listenerAttachedPanel) {
+                youtubeConnectBtn.addEventListener('click', () => chatConnection.connectYouTube(youtubeChannelInput.value));
+                youtubeConnectBtn.dataset.listenerAttachedPanel = 'true';
+            }
+            youtubeChannelInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); e.stopPropagation();
+                    chatConnection.connectYouTube(youtubeChannelInput.value);
+                }
+            });
+            youtubeChannelInput.addEventListener('input', () => {
+                if (initialYoutubeInput) initialYoutubeInput.value = youtubeChannelInput.value;
             });
         }
 
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', disconnectChat);
-        }
+        if (twitchDisconnectBtn) twitchDisconnectBtn.addEventListener('click', () => chatConnection.disconnectTwitch());
+        if (youtubeDisconnectBtn) youtubeDisconnectBtn.addEventListener('click', () => chatConnection.disconnectYouTube());
 
         // --- INITIALIZATION ---
 
@@ -553,14 +603,22 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         settingsPanel.updateConfigPanelFromConfig();
 
         // Auto-connect if last channel is saved
-        if (configManager.config.lastChannel) {
-            if (channelInput) channelInput.value = configManager.config.lastChannel;
-            if (initialChannelInput) initialChannelInput.value = configManager.config.lastChannel;
+        if (configManager.config.lastTwitchChannel || configManager.config.lastYouTubeTarget) {
+            if (configManager.config.lastTwitchChannel) {
+                if (twitchChannelInput) twitchChannelInput.value = configManager.config.lastTwitchChannel;
+                if (initialTwitchInput) initialTwitchInput.value = configManager.config.lastTwitchChannel;
+            }
+            if (configManager.config.lastYouTubeTarget) {
+                if (youtubeChannelInput) youtubeChannelInput.value = configManager.config.lastYouTubeTarget;
+                if (initialYoutubeInput) initialYoutubeInput.value = configManager.config.lastYouTubeTarget;
+            }
             connectToChat();
         } else {
             updateConnectionStateUI(false);
-            if (channelInput) channelInput.value = '';
-            if (initialChannelInput) initialChannelInput.value = '';
+            if (twitchChannelInput) twitchChannelInput.value = '';
+            if (initialTwitchInput) initialTwitchInput.value = '';
+            if (youtubeChannelInput) youtubeChannelInput.value = '';
+            if (initialYoutubeInput) initialYoutubeInput.value = '';
         }
 
         // Apply chat mode

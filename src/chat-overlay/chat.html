@@ -21,11 +21,20 @@
 
 <body class="chat-page">
     <div id="initial-connection-prompt">
-        <div class="prompt-content">
-            <h2>Enter a Channel</h2>
+        <div class="prompt-content" style="width: 320px;">
+            <h2 style="margin-bottom: 15px;">Connect Chat</h2>
 
-            <input type="text" id="initial-channel-input" placeholder="Twitch Channel Name">
-            <button id="initial-connect-btn">Connect</button>
+            <div style="margin-bottom: 10px;">
+                <label for="initial-twitch-input" style="display:block; text-align:left; font-size: 0.9em; margin-bottom: 3px;">Twitch Channel</label>
+                <input type="text" id="initial-twitch-input" placeholder="Twitch username" style="width: 100%;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="initial-youtube-input" style="display:block; text-align:left; font-size: 0.9em; margin-bottom: 3px;">YouTube</label>
+                <input type="text" id="initial-youtube-input" placeholder="@handle or Video URL" style="width: 100%;">
+            </div>
+
+            <button id="initial-connect-btn" style="width: 100%; margin-bottom: 10px;">Connect</button>
 
             <button id="open-settings-from-prompt" class="secondary-button"><i data-lucide="settings" class="lucide-inline"></i> Settings</button>
         </div>
@@ -50,15 +59,30 @@
     <div id="config-panel">
         <h3>Chat Settings</h3>
 
-        <div class="section-divider">Connection</div>
-        <div class="config-row" id="connection-management" style="margin-top: 10px; padding-top: 10px;">
-            <div id="channel-form" style="display: flex; gap: 10px; align-items: center; width: 100%;">
-                <label for="channel-input" style="flex-shrink: 0;">Channel:</label>
-                <input type="text" id="channel-input" placeholder="Enter Twitch channel" style="flex-grow: 1;">
-                <button id="connect-btn" style="flex-shrink: 0;"><i data-lucide="plug" class="lucide-inline"></i> Connect</button>
+        <!-- Twitch -->
+        <div class="config-row connection-row" style="margin-top: 10px; padding-top: 10px;">
+            <div class="connection-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div><span class="platform-badge platform-twitch"></span><strong>Twitch</strong></div>
+                <span class="connection-status" id="twitch-status" style="font-size: 0.8em;"></span>
             </div>
-            <button id="disconnect-btn"
-                style="background-color: #aa5555; display: none; width: 100%; margin-top: 5px;">Disconnect</button>
+            <div id="twitch-channel-form" style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                <input type="text" id="twitch-channel-input" placeholder="Twitch channel" style="flex: 1;">
+                <button id="twitch-connect-btn" style="flex-shrink: 0;"><i data-lucide="plug" class="lucide-inline"></i> Connect</button>
+            </div>
+            <button id="twitch-disconnect-btn" style="display: none; background: #aa5555; width: 100%; margin-top: 5px;">Disconnect</button>
+        </div>
+
+        <!-- YouTube -->
+        <div class="config-row connection-row">
+            <div class="connection-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div><span class="platform-badge platform-youtube"></span><strong>YouTube</strong></div>
+                <span class="connection-status" id="youtube-status" style="font-size: 0.8em;"></span>
+            </div>
+            <div id="youtube-channel-form" style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                <input type="text" id="youtube-channel-input" placeholder="@handle or Video URL" style="flex: 1;">
+                <button id="youtube-connect-btn" style="flex-shrink: 0;"><i data-lucide="plug" class="lucide-inline"></i> Connect</button>
+            </div>
+            <button id="youtube-disconnect-btn" style="display: none; background: #aa5555; width: 100%; margin-top: 5px;">Disconnect</button>
         </div>
 
         <div class="config-row theme-section">
@@ -284,6 +308,24 @@
         </div>
 
         <div class="section-divider">Message Elements</div>
+        <div class="config-row">
+            <label for="show-platform-badges-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-platform-badges-toggle" checked>
+                Show Platform Badges
+            </label>
+        </div>
+        <div class="config-row">
+            <label for="show-superchats-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-superchats-toggle" checked>
+                Show Super Chats
+            </label>
+        </div>
+        <div class="config-row">
+            <label for="show-memberships-toggle" style="display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-memberships-toggle" checked>
+                Show Membership Events
+            </label>
+        </div>
         <div class="config-row">
             <label for="show-badges-toggle" style="display: flex; align-items: center; gap: 5px;">
                 <input type="checkbox" id="show-badges-toggle" checked>
