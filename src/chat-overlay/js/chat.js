@@ -525,8 +525,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                 chatRenderer.addSystemMessage('Please enter a Twitch channel or YouTube stream URL/handle');
                 return;
             }
-            if (twitchTarget && !chatConnection.isTwitchConnected()) chatConnection.connectTwitch(twitchTarget);
-            if (ytTarget && !chatConnection.isYouTubeConnected()) chatConnection.connectYouTube(ytTarget);
+            if (twitchTarget && !chatConnection.twitch.isActive()) chatConnection.connectTwitch(twitchTarget);
+            if (ytTarget && !chatConnection.youtube.isActive()) chatConnection.connectYouTube(ytTarget);
         }
 
         // Initial connection prompt handlers

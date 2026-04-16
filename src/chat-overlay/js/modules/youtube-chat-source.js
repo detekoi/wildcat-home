@@ -8,13 +8,27 @@ export class YouTubeChatSource extends ChatSource {
         this.ws = null;
         this.target = '';
         this.isExplicitDisconnect = false;
+        this.isConnecting = false;
         this.status = false;
         this.reconnectTimeout = null;
+        this.seenIds = new Set();
     }
 
     async connect(target) {
+        // Prevent duplicate connections
+        if (this.isConnecting) return;
+        if (this.status && this.target === target) return;
+
+        this.isConnecting = true;
+
+        // Silently clean up any existing socket without emitting state changes
         if (this.ws) {
-            this.disconnect();
+            try { this.ws.onclose = null; this.ws.onerror = null; this.ws.close(); } catch(e) {}
+            this.ws = null;
+        }
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
         }
         
         this.target = target;
@@ -22,8 +36,6 @@ export class YouTubeChatSource extends ChatSource {
         this.chatRenderer.addSystemMessage(`Connecting to YouTube: ${target}...`, true);
         
         this.configManager.updateConfig('lastYouTubeTarget', this.target);
-        // Wait, for scene specific logic, we should probably save it like twitch does.
-        // For now, updating config is enough for the UI to persist it.
 
         const wsUrl = `ws://localhost:8092/ws`;
         
@@ -34,11 +46,13 @@ export class YouTubeChatSource extends ChatSource {
             this.ws.onclose = this.handleClose.bind(this);
             this.ws.onerror = this.handleError.bind(this);
         } catch (err) {
+            this.isConnecting = false;
             this.chatRenderer.addSystemMessage(`Could not connect to proxy: ${err}`, true);
         }
     }
 
     handleOpen() {
+        this.isConnecting = false;
         this.ws.send(JSON.stringify({
             action: 'JOIN',
             target: this.target
@@ -56,6 +70,16 @@ export class YouTubeChatSource extends ChatSource {
                     this.chatRenderer.addSystemMessage(`YouTube: ${data.message}`, true);
                 }
             } else if (data.type === 'message') {
+                // Client-side dedup by message ID
+                if (data.id && this.seenIds.has(data.id)) return;
+                if (data.id) {
+                    this.seenIds.add(data.id);
+                    // Cap size to prevent memory leak
+                    if (this.seenIds.size > 2000) {
+                        const arr = [...this.seenIds].slice(500);
+                        this.seenIds = new Set(arr);
+                    }
+                }
                 this.chatRenderer.addChatMessage(data);
             }
         } catch (err) {
@@ -65,11 +89,15 @@ export class YouTubeChatSource extends ChatSource {
 
     handleClose() {
         this.status = false;
-        this.emitConnectionChange(false, '');
+        this.isConnecting = false;
+        this.ws = null;
         
-        if (!this.isExplicitDisconnect) {
-            this.chatRenderer.addSystemMessage('YouTube connection lost. Reconnecting in 5s...');
+        if (!this.isExplicitDisconnect && this.target) {
+            // Don't emit false — we're about to reconnect, keep UI stable
+            this.chatRenderer.addSystemMessage('YouTube connection lost. Reconnecting in 5s...', true);
             this.reconnectTimeout = setTimeout(() => this.connect(this.target), 5000);
+        } else {
+            this.emitConnectionChange(false, '');
         }
     }
 
@@ -79,13 +107,14 @@ export class YouTubeChatSource extends ChatSource {
 
     disconnect() {
         this.isExplicitDisconnect = true;
+        this.isConnecting = false;
         this.status = false;
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
         if (this.ws) {
-            this.ws.close();
+            try { this.ws.onclose = null; this.ws.close(); } catch(e) {}
             this.ws = null;
         }
         this.target = '';
@@ -93,6 +122,6 @@ export class YouTubeChatSource extends ChatSource {
     }
 
     isConnected() { return this.status; }
-    isActive() { return this.status || this.ws !== null || this.reconnectTimeout !== null; }
+    isActive() { return this.status || this.isConnecting || this.ws !== null || this.reconnectTimeout !== null; }
     getCurrentTarget() { return this.target; }
 }
