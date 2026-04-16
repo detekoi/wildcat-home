@@ -53,7 +53,7 @@ export class YouTubeChatSource extends ChatSource {
                     this.status = true;
                     this.emitConnectionChange(true, this.target);
                 } else if (data.message) {
-                    this.chatRenderer.addSystemMessage(`YouTube: ${data.message}`);
+                    this.chatRenderer.addSystemMessage(`YouTube: ${data.message}`, true);
                 }
             } else if (data.type === 'message') {
                 this.chatRenderer.addChatMessage(data);
