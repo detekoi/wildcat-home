@@ -93,5 +93,6 @@ export class YouTubeChatSource extends ChatSource {
     }
 
     isConnected() { return this.status; }
+    isActive() { return this.status || this.ws !== null || this.reconnectTimeout !== null; }
     getCurrentTarget() { return this.target; }
 }

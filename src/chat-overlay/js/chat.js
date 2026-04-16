@@ -179,7 +179,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // --- CONNECTION STATE UI ---
 
         chatConnection.onConnectionChange((platform, isConnected, channelName) => {
-            updateConnectionStateUI(chatConnection.isConnected() || chatConnection.isYouTubeConnected());
+            const isAnyActive = chatConnection.twitch.isActive() || chatConnection.youtube.isActive();
+            updateConnectionStateUI(isAnyActive);
             if (platform === 'twitch') {
                 if (twitchDisconnectBtn) {
                     twitchDisconnectBtn.style.display = isConnected ? 'block' : 'none';
@@ -604,6 +605,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         // Auto-connect if last channel is saved
         if (configManager.config.lastTwitchChannel || configManager.config.lastYouTubeTarget) {
+            updateConnectionStateUI(true);
             if (configManager.config.lastTwitchChannel) {
                 if (twitchChannelInput) twitchChannelInput.value = configManager.config.lastTwitchChannel;
                 if (initialTwitchInput) initialTwitchInput.value = configManager.config.lastTwitchChannel;

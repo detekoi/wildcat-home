@@ -299,9 +299,20 @@ export class TwitchChatSource extends ChatSource {
     }
 
     /**
+     * Check if currently connected, connecting, or actively attempting to reconnect.
+     */
+    isActive() {
+        return this.isConnected() || this.isConnecting || this.reconnectTimer !== null;
+    }
+
+    /**
      * Get current channel
      */
     getCurrentChannel() {
+        return this.channel;
+    }
+
+    getCurrentTarget() {
         return this.channel;
     }
 }
