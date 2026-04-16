@@ -35,17 +35,15 @@ export class SettingsPanelManager {
      * Open the settings panel, snapshotting the current config for revert.
      */
     openSettingsPanel() {
-        const isTwitchConnected = this._chatConnection.isTwitchConnected();
-        const isYouTubeConnected = this._chatConnection.isYouTubeConnected();
-        if (this._dom.twitchChannelForm) this._dom.twitchChannelForm.style.display = isTwitchConnected ? 'none' : 'flex';
-        if (this._dom.youtubeChannelForm) this._dom.youtubeChannelForm.style.display = isYouTubeConnected ? 'none' : 'flex';
-        if (this._dom.twitchDisconnectBtn) {
-            this._dom.twitchDisconnectBtn.style.display = isTwitchConnected ? 'block' : 'none';
-            if (isTwitchConnected) this._dom.twitchDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getTwitchChannel()}`;
-        }
-        if (this._dom.youtubeDisconnectBtn) {
-            this._dom.youtubeDisconnectBtn.style.display = isYouTubeConnected ? 'block' : 'none';
-            if (isYouTubeConnected) this._dom.youtubeDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getYouTubeTarget()}`;
+        const { configPanel } = this._dom;
+        if (!configPanel) return;
+
+        this._initialConfigBeforeEdit = null;
+        try {
+            this._initialConfigBeforeEdit = JSON.parse(JSON.stringify(this._configManager.config));
+        } catch (error) {
+            console.error("Error storing config state for revert:", error);
+            this._chatRenderer.addSystemMessage("Error: Could not store settings state for revert.");
         }
 
         this.updateConfigPanelFromConfig();
