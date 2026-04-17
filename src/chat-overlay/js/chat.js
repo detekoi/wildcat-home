@@ -598,6 +598,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         configManager.applyConfiguration(configManager.config);
         badgeManager.config = configManager.config;
         chatRenderer.config = configManager.config;
+        themeManager.lastAppliedThemeValue = configManager.config.theme || 'default';
 
         UIHelpers.fixCssVariables();
 
@@ -641,6 +642,10 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                 return;
             }
             themeManager.applyTheme(event.detail.themeValue);
+            
+            // Auto-save the config when a new theme is generated so the selection persists on reload
+            const sceneName = UIHelpers.getUrlParameter('scene') || 'default';
+            configManager.saveConfig(sceneName);
         });
 
         themeManager.updateColorPreviews();
