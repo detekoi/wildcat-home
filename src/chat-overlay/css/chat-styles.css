@@ -1343,9 +1343,9 @@ body.chat-page:hover #popup-settings-btn {
 /* Platform Badges */
 .platform-badge {
     display: inline-block;
-    width: 1.25em;
-    height: 1.25em;
-    vertical-align: sub;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
     margin-right: 4px;
     background-color: var(--chat-text-color, #fff); /* fallback if not using specific color */
     mask-size: contain;
