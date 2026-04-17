@@ -19,6 +19,29 @@ export class YouTubeChatSource extends ChatSource {
         if (this.isConnecting) return;
         if (this.status && this.target === target) return;
 
+        // Clean up target if the user pasted a full URL
+        let cleanTarget = target.trim();
+        try {
+            // Handle full YouTube URLs
+            if (cleanTarget.includes('youtube.com') || cleanTarget.includes('youtu.be')) {
+                const url = new URL(cleanTarget.startsWith('http') ? cleanTarget : `https://${cleanTarget}`);
+                
+                // Extract video ID from watch?v= or youtu.be/
+                const vidParam = url.searchParams.get('v');
+                if (vidParam) {
+                    cleanTarget = vidParam;
+                } else if (url.hostname === 'youtu.be') {
+                    cleanTarget = url.pathname.slice(1);
+                } 
+                // Extract handle from /@handle
+                else if (url.pathname.startsWith('/@')) {
+                    cleanTarget = url.pathname.split('/')[1]; // @handle
+                }
+            }
+        } catch (e) {
+            // If URL parsing fails, ignore and try the string as provided
+        }
+
         this.isConnecting = true;
 
         // Silently clean up any existing socket without emitting state changes
@@ -31,9 +54,9 @@ export class YouTubeChatSource extends ChatSource {
             this.reconnectTimeout = null;
         }
         
-        this.target = target;
+        this.target = cleanTarget;
         this.isExplicitDisconnect = false;
-        this.chatRenderer.addSystemMessage(`Connecting to YouTube: ${target}...`, true);
+        this.chatRenderer.addSystemMessage(`Connecting to YouTube: ${this.target}...`, true);
         
         this.configManager.updateConfig('lastYouTubeTarget', this.target);
 
