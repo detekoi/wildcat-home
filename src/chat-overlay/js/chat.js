@@ -604,15 +604,18 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         settingsPanel.updateConfigPanelFromConfig();
 
         // Auto-connect if last channel is saved
-        if (configManager.config.lastTwitchChannel || configManager.config.lastYouTubeTarget) {
+        const savedTwitch = configManager.config.lastTwitchChannel || configManager.config.lastChannel;
+        const savedYouTube = configManager.config.lastYouTubeTarget;
+
+        if (savedTwitch || savedYouTube) {
             updateConnectionStateUI(true);
-            if (configManager.config.lastTwitchChannel) {
-                if (twitchChannelInput) twitchChannelInput.value = configManager.config.lastTwitchChannel;
-                if (initialTwitchInput) initialTwitchInput.value = configManager.config.lastTwitchChannel;
+            if (savedTwitch) {
+                if (twitchChannelInput) twitchChannelInput.value = savedTwitch;
+                if (initialTwitchInput) initialTwitchInput.value = savedTwitch;
             }
-            if (configManager.config.lastYouTubeTarget) {
-                if (youtubeChannelInput) youtubeChannelInput.value = configManager.config.lastYouTubeTarget;
-                if (initialYoutubeInput) initialYoutubeInput.value = configManager.config.lastYouTubeTarget;
+            if (savedYouTube) {
+                if (youtubeChannelInput) youtubeChannelInput.value = savedYouTube;
+                if (initialYoutubeInput) initialYoutubeInput.value = savedYouTube;
             }
             connectToChat();
         } else {
