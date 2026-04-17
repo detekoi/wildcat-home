@@ -37,7 +37,10 @@ export class YouTubeChatSource extends ChatSource {
         
         this.configManager.updateConfig('lastYouTubeTarget', this.target);
 
-        const wsUrl = `ws://localhost:8092/ws`;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+        const wsUrl = isLocalhost 
+            ? 'ws://localhost:8092/ws' 
+            : 'wss://yt-chat-proxy-361545143046.us-central1.run.app/ws';
         
         try {
             this.ws = new WebSocket(wsUrl);
