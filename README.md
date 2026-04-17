@@ -187,5 +187,5 @@ All rights reserved © 2026 Wildcat.chat
 
 ## Support
 
-For questions or support, visit [https://detekoi.github.io/#contact-me](https://detekoi.github.io/#contact-me)
+For questions or support, visit [https://parfaitfair.com/#contact](https://parfaitfair.com/#contact)
 

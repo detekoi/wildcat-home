@@ -19,4 +19,4 @@ Here's what you can look forward to reading about:
 
 Bookmark this page and check back regularly for the latest news.
 
-If you have questions or want to request access to the platform, [get in touch](https://detekoi.github.io/#contact-me).
+If you have questions or want to request access to the platform, [get in touch](https://parfaitfair.com/#contact).
