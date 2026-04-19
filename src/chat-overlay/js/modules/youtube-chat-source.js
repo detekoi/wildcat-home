@@ -91,6 +91,7 @@ export class YouTubeChatSource extends ChatSource {
             if (data.type === 'system') {
                 if (data.status === 'connected') {
                     this.status = true;
+                    this.reconnectFailures = 0;
                     this.emitConnectionChange(true, this.target);
                 } else if (data.message) {
                     this.chatRenderer.addSystemMessage(`YouTube: ${data.message}`, true);
@@ -114,15 +115,24 @@ export class YouTubeChatSource extends ChatSource {
     }
 
     handleClose() {
-        this.status = false;
         this.isConnecting = false;
         this.ws = null;
         
         if (!this.isExplicitDisconnect && this.target) {
-            // Don't emit false — we're about to reconnect, keep UI stable
-            this.chatRenderer.addSystemMessage('YouTube connection lost. Reconnecting in 5s...', true);
-            this.reconnectTimeout = setTimeout(() => this.connect(this.target), 5000);
+            // Silent reconnect — don't disrupt the chat overlay with system messages
+            // for routine Cloud Run timeouts or transient disconnects
+            this.reconnectFailures = (this.reconnectFailures || 0) + 1;
+            const delay = Math.min(5000 * this.reconnectFailures, 30000);
+            
+            // Only show a message after 3+ consecutive failures (persistent problem)
+            if (this.reconnectFailures >= 3) {
+                this.chatRenderer.addSystemMessage(`YouTube reconnecting... (attempt ${this.reconnectFailures})`, true);
+            }
+            
+            this.reconnectTimeout = setTimeout(() => this.connect(this.target), delay);
         } else {
+            this.status = false;
+            this.reconnectFailures = 0;
             this.emitConnectionChange(false, '');
         }
     }
