@@ -197,17 +197,6 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                 if (document.getElementById('youtube-status')) document.getElementById('youtube-status').textContent = isConnected ? 'Connected' : '';
             }
             
-            // Auto-toggle badges check
-            const showBadgesToggleObj = document.getElementById('show-platform-badges-toggle');
-            if (chatConnection.isTwitchConnected() && chatConnection.isYouTubeConnected()) {
-                configManager.updateConfig('showPlatformBadges', true);
-                if (showBadgesToggleObj) showBadgesToggleObj.checked = true;
-            } else if (!chatConnection.isTwitchConnected() && !chatConnection.isYouTubeConnected()) {
-                // do nothing
-            } else {
-                configManager.updateConfig('showPlatformBadges', false);
-                if (showBadgesToggleObj) showBadgesToggleObj.checked = false;
-            }
             chatRenderer.config = configManager.config;
         });
 

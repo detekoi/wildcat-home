@@ -57,7 +57,6 @@ export class TwitchChatSource extends ChatSource {
 
         this.chatRenderer.addSystemMessage(`Connecting to ${this.channel}'s chat...`, true);
         this.socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-        window.socket = this.socket; // Debugging access
 
         this.socket.onopen = () => this.handleSocketOpen();
         this.socket.onclose = (event) => this.handleSocketClose(event);

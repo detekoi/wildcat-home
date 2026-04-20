@@ -226,12 +226,11 @@ export class ChatRenderer {
             }
 
             if (this.config.showPronouns !== false) {
-                let pronounHtml = '';
                 const cachedPronoun = this.pronounManager?.getPronounDisplay(data.username);
                 if (cachedPronoun) {
                     const pSpan = document.createElement('span');
                     pSpan.className = 'pronoun-badge';
-                    pSpan.innerHTML = cachedPronoun; // pronoun manager output is safe HTML
+                    pSpan.textContent = cachedPronoun; 
                     messageElement.appendChild(pSpan);
                 } else if (this.pronounManager) {
                     const boxId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -245,7 +244,7 @@ export class ChatRenderer {
                         if (pronoun) {
                             const el = document.getElementById(`pronoun-${boxId}`);
                             if (el) {
-                                el.innerHTML = pronoun;
+                                el.textContent = pronoun;
                                 el.style.display = 'inline';
                             }
                         }
@@ -346,31 +345,62 @@ export class ChatRenderer {
             }
         } else {
             // Has emotes
+            const urlRegex = /(\bhttps?:\/\/[^\s<]+)/g;
+            const appendTextWithUrls = (text) => {
+                if (!text) return;
+                let lastIdx = 0;
+                let match;
+                while ((match = urlRegex.exec(text)) !== null) {
+                    if (match.index > lastIdx) {
+                        frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+                    }
+                    const a = document.createElement('a');
+                    a.href = match[0];
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = match[0]; // safe
+                    frag.appendChild(a);
+                    lastIdx = urlRegex.lastIndex;
+                }
+                if (lastIdx < text.length) {
+                    frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+                }
+            };
+
             let lastIndex = 0;
             for (const emote of emotePositions) {
                 if (emote.start > lastIndex) {
-                    frag.appendChild(document.createTextNode(message.slice(lastIndex, emote.start)));
+                    appendTextWithUrls(message.slice(lastIndex, emote.start));
                 }
                 // Determine if it's an InnerTube emote or Twitch emote structure
                 // InnerTube emotes passed from our Normalizer might have URL rather than ID in some future cases,
                 // but for now sticking to the twitch structure compatibility.
                 const emoteCode = message.substring(emote.start, emote.end + 1);
                 
-                // Hacky check for YT emoji URL if we embed it in ID field for now, will refine in Phase 4
-                let isYtEmoji = emote.id.startsWith('http');
+                // Restrict YT emoji URLs to trusted domains to prevent loading untrusted resources
+                const isYtEmoji = emote.id.startsWith('http') && 
+                                  (emote.id.includes('youtube.com') || 
+                                   emote.id.includes('ytimg.com') || 
+                                   emote.id.includes('google.com') ||
+                                   emote.id.includes('ggpht.com'));
                 
                 const img = document.createElement('img');
                 img.className = 'emote';
                 if (isYtEmoji) {
                     img.classList.add('yt-emoji');
                     img.src = emote.id;
-                } else {
-                    const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark`;
+                } else if (!emote.id.startsWith('http')) {
+                    const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(emote.id)}/default/dark`;
                     img.src = `${baseUrl}/3.0`;
                     img.onerror = function() {
                         this.onerror = function() { this.src = `${baseUrl}/1.0`; };
                         this.src = `${baseUrl}/2.0`;
                     };
+                } else {
+                    // Fallback for malicious or unrecognized HTTP IDs
+                    frag.appendChild(document.createTextNode(emoteCode));
+                    lastIndex = emote.end + 1;
+                    continue;
                 }
                 img.alt = emoteCode;
                 img.title = emoteCode;
@@ -379,7 +409,7 @@ export class ChatRenderer {
                 lastIndex = emote.end + 1;
             }
             if (lastIndex < message.length) {
-                frag.appendChild(document.createTextNode(message.slice(lastIndex)));
+                appendTextWithUrls(message.slice(lastIndex));
             }
         }
         
