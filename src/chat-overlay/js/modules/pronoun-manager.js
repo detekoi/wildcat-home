@@ -10,6 +10,19 @@ export class PronounManager {
         this.pendingRequests = new Map(); // username -> Promise
         this.hasLoadedDefinitions = false;
         this.BASE_URL = 'https://pronouns.alejo.io/api';
+        // Twitch usernames: alphanumeric + underscores, 1-25 characters
+        this.VALID_USERNAME_RE = /^[a-zA-Z0-9_]{1,25}$/;
+    }
+
+    /**
+     * Validate that a username contains only safe characters.
+     * Prevents SSRF by rejecting path-traversal or encoded sequences
+     * before they reach the fetch URL. Matches Twitch username rules.
+     * @param {string} username
+     * @returns {boolean}
+     */
+    isValidUsername(username) {
+        return typeof username === 'string' && this.VALID_USERNAME_RE.test(username);
     }
 
     /**
@@ -45,6 +58,9 @@ export class PronounManager {
         if (!username) return null;
         const lowerUser = username.toLowerCase();
 
+        // Reject usernames with disallowed characters to prevent SSRF
+        if (!this.isValidUsername(lowerUser)) return null;
+
         // 1. Check cache
         if (this.userPronounsCache.has(lowerUser)) {
             const pronounId = this.userPronounsCache.get(lowerUser);
@@ -56,10 +72,10 @@ export class PronounManager {
             return this.pendingRequests.get(lowerUser);
         }
 
-        // 3. Trigger fetch
+        // 3. Trigger fetch — lowerUser is validated above to contain only [a-z0-9_]
         const fetchPromise = (async () => {
             try {
-                const response = await fetch(`${this.BASE_URL}/users/${lowerUser}`);
+                const response = await fetch(`${this.BASE_URL}/users/${encodeURIComponent(lowerUser)}`);
                 if (response.ok) {
                     const rawData = await response.json();
                     const data = Array.isArray(rawData) ? rawData[0] : rawData;
@@ -97,6 +113,7 @@ export class PronounManager {
     getPronounDisplay(username) {
         if (!username) return null;
         const lowerUser = username.toLowerCase();
+        if (!this.isValidUsername(lowerUser)) return null;
         const pid = this.userPronounsCache.get(lowerUser);
         return pid ? (this.pronounsMap.get(pid) || pid) : null;
     }
