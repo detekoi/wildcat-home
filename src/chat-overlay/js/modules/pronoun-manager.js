@@ -95,7 +95,7 @@ export class PronounManager {
                     return null;
                 }
             } catch (error) {
-                console.warn(`[PronounManager] Error fetching for ${lowerUser}:`, error);
+                console.warn('[PronounManager] Error fetching for', lowerUser, ':', error);
                 return null;
             } finally {
                 this.pendingRequests.delete(lowerUser);
