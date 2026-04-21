@@ -35,15 +35,21 @@ export class ChatRenderer {
         const messageElement = document.createElement('div');
         messageElement.className = 'chat-message system-message';
 
-        let timestamp = '';
         if (this.config.showTimestamps) {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
-            timestamp = `${hours}:${minutes} `;
+            const tsSpan = document.createElement('span');
+            tsSpan.className = 'timestamp';
+            tsSpan.textContent = `${hours}:${minutes} `;
+            messageElement.appendChild(tsSpan);
         }
 
-        messageElement.innerHTML = `<span class="timestamp">${timestamp}</span><span class="message-content">${message}</span>`;
+        const contentSpan = document.createElement('span');
+        contentSpan.className = 'message-content';
+        contentSpan.textContent = message;
+        messageElement.appendChild(contentSpan);
+
         this.chatMessages.appendChild(messageElement);
 
         // Keep sentinel as the last element
@@ -332,12 +338,21 @@ export class ChatRenderer {
                 if (match.index > lastIndex) {
                     frag.appendChild(document.createTextNode(message.slice(lastIndex, match.index)));
                 }
-                const a = document.createElement('a');
-                a.href = match[0];
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = match[0]; // safe
-                frag.appendChild(a);
+                try {
+                    const validUrl = new URL(match[0]);
+                    if (validUrl.protocol === 'http:' || validUrl.protocol === 'https:') {
+                        const a = document.createElement('a');
+                        a.href = validUrl.href;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.textContent = match[0]; // safe
+                        frag.appendChild(a);
+                    } else {
+                        frag.appendChild(document.createTextNode(match[0]));
+                    }
+                } catch (e) {
+                    frag.appendChild(document.createTextNode(match[0]));
+                }
                 lastIndex = urlRegex.lastIndex;
             }
             if (lastIndex < message.length) {
@@ -354,12 +369,21 @@ export class ChatRenderer {
                     if (match.index > lastIdx) {
                         frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
                     }
-                    const a = document.createElement('a');
-                    a.href = match[0];
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    a.textContent = match[0]; // safe
-                    frag.appendChild(a);
+                    try {
+                        const validUrl = new URL(match[0]);
+                        if (validUrl.protocol === 'http:' || validUrl.protocol === 'https:') {
+                            const a = document.createElement('a');
+                            a.href = validUrl.href;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.textContent = match[0]; // safe
+                            frag.appendChild(a);
+                        } else {
+                            frag.appendChild(document.createTextNode(match[0]));
+                        }
+                    } catch (e) {
+                        frag.appendChild(document.createTextNode(match[0]));
+                    }
                     lastIdx = urlRegex.lastIndex;
                 }
                 if (lastIdx < text.length) {
@@ -378,11 +402,21 @@ export class ChatRenderer {
                 const emoteCode = message.substring(emote.start, emote.end + 1);
                 
                 // Restrict YT emoji URLs to trusted domains to prevent loading untrusted resources
-                const isYtEmoji = emote.id.startsWith('http') && 
-                                  (emote.id.includes('youtube.com') || 
-                                   emote.id.includes('ytimg.com') || 
-                                   emote.id.includes('google.com') ||
-                                   emote.id.includes('ggpht.com'));
+                let isYtEmoji = false;
+                if (emote.id.startsWith('http')) {
+                    try {
+                        const emoteUrl = new URL(emote.id);
+                        const host = emoteUrl.hostname;
+                        if (host === 'youtube.com' || host.endsWith('.youtube.com') ||
+                            host === 'ytimg.com' || host.endsWith('.ytimg.com') ||
+                            host === 'google.com' || host.endsWith('.google.com') ||
+                            host === 'ggpht.com' || host.endsWith('.ggpht.com')) {
+                            isYtEmoji = true;
+                        }
+                    } catch (e) {
+                        // Invalid URL
+                    }
+                }
                 
                 const img = document.createElement('img');
                 img.className = 'emote';

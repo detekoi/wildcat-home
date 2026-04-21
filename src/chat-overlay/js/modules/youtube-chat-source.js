@@ -23,14 +23,15 @@ export class YouTubeChatSource extends ChatSource {
         let cleanTarget = target.trim();
         try {
             // Handle full YouTube URLs
-            if (cleanTarget.includes('youtube.com') || cleanTarget.includes('youtu.be')) {
-                const url = new URL(cleanTarget.startsWith('http') ? cleanTarget : `https://${cleanTarget}`);
-                
+            const url = new URL(cleanTarget.startsWith('http') ? cleanTarget : `https://${cleanTarget}`);
+            const host = url.hostname;
+            
+            if (host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be') {
                 // Extract video ID from watch?v= or youtu.be/
                 const vidParam = url.searchParams.get('v');
                 if (vidParam) {
                     cleanTarget = vidParam;
-                } else if (url.hostname === 'youtu.be') {
+                } else if (host === 'youtu.be') {
                     cleanTarget = url.pathname.slice(1);
                 } 
                 // Extract handle from /@handle
