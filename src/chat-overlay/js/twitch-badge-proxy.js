@@ -1,12 +1,19 @@
 // twitch-badge-proxy.js
 
 const axios = require('axios');
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
-const { Firestore, Timestamp } = require('@google-cloud/firestore'); // Added Firestore
+const { Firestore, Timestamp } = require('@google-cloud/firestore');
 const functions = require('@google-cloud/functions-framework');
 
 // --- Configuration ---
 const PROJECT_ID = process.env.PROJECT_ID || 'chat-themer';
+
+// Secret values: prefer direct env vars (mounted via Cloud Run --set-secrets)
+// over runtime Secret Manager API calls to avoid per-access billing.
+const DIRECT_TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
+const DIRECT_TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || '';
+const DIRECT_INTERNAL_REFRESH_TOKEN = process.env.INTERNAL_REFRESH_TOKEN || '';
+
+// Fallback: Secret Manager resource names (only used if direct env vars are empty)
 const TWITCH_CLIENT_ID_SECRET_NAME = process.env.TWITCH_CLIENT_ID_SECRET_NAME || `projects/${PROJECT_ID}/secrets/TWITCH_CLIENT_ID/versions/latest`;
 const TWITCH_CLIENT_SECRET_SECRET_NAME = process.env.TWITCH_CLIENT_SECRET_SECRET_NAME || `projects/${PROJECT_ID}/secrets/TWITCH_CLIENT_SECRET/versions/latest`;
 const INTERNAL_REFRESH_TOKEN_SECRET_NAME = process.env.INTERNAL_REFRESH_TOKEN_SECRET_NAME || `projects/${PROJECT_ID}/secrets/INTERNAL_REFRESH_TOKEN/versions/latest`;
@@ -28,8 +35,16 @@ const GLOBAL_BADGES_TTL_SECONDS = parseInt(process.env.GLOBAL_BADGES_TTL) || 12 
 const CHANNEL_BADGES_TTL_SECONDS = parseInt(process.env.CHANNEL_BADGES_TTL) || 1 * 60 * 60; // 1 hour
 
 // --- Initialize Clients ---
-const secretManagerClient = new SecretManagerServiceClient();
-const firestore = new Firestore(); // Initialize Firestore
+// Only initialize Secret Manager client if we actually need it (direct env vars not set)
+let secretManagerClient = null;
+function getSecretManagerClient() {
+    if (!secretManagerClient) {
+        const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+        secretManagerClient = new SecretManagerServiceClient();
+    }
+    return secretManagerClient;
+}
+const firestore = new Firestore();
 
 // --- Firestore Cache Helper Functions ---
 
@@ -82,9 +97,24 @@ async function setInCache(docId, value, ttlSeconds) {
 
 
 // --- Helper Function: Get Secret ---
+// Returns the secret value from a direct env var if available,
+// otherwise falls back to the Secret Manager API.
 async function getSecret(secretName) {
+    // Check if we have a direct env var match for known secrets
+    if (secretName === TWITCH_CLIENT_ID_SECRET_NAME && DIRECT_TWITCH_CLIENT_ID) {
+        return DIRECT_TWITCH_CLIENT_ID;
+    }
+    if (secretName === TWITCH_CLIENT_SECRET_SECRET_NAME && DIRECT_TWITCH_CLIENT_SECRET) {
+        return DIRECT_TWITCH_CLIENT_SECRET;
+    }
+    if (secretName === INTERNAL_REFRESH_TOKEN_SECRET_NAME && DIRECT_INTERNAL_REFRESH_TOKEN) {
+        return DIRECT_INTERNAL_REFRESH_TOKEN;
+    }
+
+    // Fallback: fetch from Secret Manager API
     try {
-        const [version] = await secretManagerClient.accessSecretVersion({
+        const client = getSecretManagerClient();
+        const [version] = await client.accessSecretVersion({
             name: secretName,
         });
         const payload = version.payload.data.toString('utf8');
