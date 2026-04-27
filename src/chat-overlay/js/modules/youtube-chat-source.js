@@ -72,6 +72,13 @@ export class YouTubeChatSource extends ChatSource {
             this.ws.onmessage = this.handleMessage.bind(this);
             this.ws.onclose = this.handleClose.bind(this);
             this.ws.onerror = this.handleError.bind(this);
+
+            // Start client-side heartbeat to keep Cloud Run connection alive
+            this.pingInterval = setInterval(() => {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({ action: 'PING' }));
+                }
+            }, 30000); // 30 seconds
         } catch (err) {
             this.isConnecting = false;
             this.chatRenderer.addSystemMessage(`Could not connect to proxy: ${err}`, true);
@@ -96,6 +103,15 @@ export class YouTubeChatSource extends ChatSource {
                     this.emitConnectionChange(true, this.target);
                 } else if (data.message) {
                     this.chatRenderer.addSystemMessage(`YouTube: ${data.message}`, true);
+                    
+                    // If the server gave up polling because the stream isn't live yet,
+                    // forcefully close the connection so our auto-reconnect loop takes over.
+                    // This ensures the overlay recovers if left open for hours before going live.
+                    if (data.message.includes("Could not find a live stream")) {
+                        if (this.ws) {
+                            this.ws.close();
+                        }
+                    }
                 }
             } else if (data.type === 'message') {
                 // Client-side dedup by message ID
@@ -118,6 +134,10 @@ export class YouTubeChatSource extends ChatSource {
     handleClose() {
         this.isConnecting = false;
         this.ws = null;
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
         
         if (!this.isExplicitDisconnect && this.target) {
             // Silent reconnect — don't disrupt the chat overlay with system messages
@@ -153,6 +173,10 @@ export class YouTubeChatSource extends ChatSource {
         if (this.ws) {
             try { this.ws.onclose = null; this.ws.close(); } catch(e) {}
             this.ws = null;
+        }
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
         }
         this.target = '';
         this.emitConnectionChange(false, '');
