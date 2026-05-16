@@ -133,6 +133,7 @@ export class YouTubeChatSource extends ChatSource {
 
     handleClose() {
         this.isConnecting = false;
+        this.status = false;
         this.ws = null;
         if (this.pingInterval) {
             clearInterval(this.pingInterval);
