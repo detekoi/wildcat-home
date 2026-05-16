@@ -410,7 +410,8 @@ export class ChatRenderer {
                         if (host === 'youtube.com' || host.endsWith('.youtube.com') ||
                             host === 'ytimg.com' || host.endsWith('.ytimg.com') ||
                             host === 'google.com' || host.endsWith('.google.com') ||
-                            host === 'ggpht.com' || host.endsWith('.ggpht.com')) {
+                            host === 'ggpht.com' || host.endsWith('.ggpht.com') ||
+                            host === 'gstatic.com' || host.endsWith('.gstatic.com')) {
                             isYtEmoji = true;
                         }
                     } catch (e) {
