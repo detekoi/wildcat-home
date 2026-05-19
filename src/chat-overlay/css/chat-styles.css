@@ -981,6 +981,11 @@ body.chat-page:hover #popup-settings-btn {
     font-size: 0.9em;
 }
 
+/* /me action messages - italicized like native Twitch */
+.action-text {
+    font-style: italic;
+}
+
 .font-preview {
     margin-top: 8px;
     white-space: nowrap;

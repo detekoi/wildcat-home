@@ -261,11 +261,15 @@ export class ChatRenderer {
             const usernameSpan = document.createElement('span');
             usernameSpan.className = 'username';
             usernameSpan.style.color = userColor;
-            usernameSpan.textContent = `${data.username}:`;
+            usernameSpan.textContent = data.isAction ? `${data.username}` : `${data.username}:`;
             messageElement.appendChild(usernameSpan);
 
             const contentContainer = document.createElement('span');
             contentContainer.className = 'message-content';
+            if (data.isAction) {
+                contentContainer.classList.add('action-text');
+                contentContainer.style.color = userColor;
+            }
             contentContainer.appendChild(contentNodes);
             messageElement.appendChild(contentContainer);
 

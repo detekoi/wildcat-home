@@ -228,13 +228,33 @@ export class TwitchChatSource extends ChatSource {
             this.badgeManager.fetchChannelBadges(this.currentBroadcasterId);
         }
 
+        // Detect /me (ACTION) messages: IRC format is \x01ACTION <msg>\x01
+        let isAction = false;
+        if (messageContent.startsWith('\x01ACTION ') && messageContent.endsWith('\x01')) {
+            isAction = true;
+            messageContent = messageContent.slice(8, -1); // Strip \x01ACTION  and trailing \x01
+        } else if (messageContent.startsWith('ACTION ') && messageContent.endsWith('\x01')) {
+            // Sometimes the leading \x01 is already stripped
+            isAction = true;
+            messageContent = messageContent.slice(7, -1);
+        } else if (messageContent.startsWith('\x01ACTION ')) {
+            // Sometimes the trailing \x01 is already stripped
+            isAction = true;
+            messageContent = messageContent.slice(8);
+        } else if (messageContent.startsWith('ACTION ')) {
+            // Both control chars stripped
+            isAction = true;
+            messageContent = messageContent.slice(7);
+        }
+
         this.chatRenderer.addChatMessage({
             platform: 'twitch',
             username,
             message: messageContent,
             color: tags.color || null,
             emotes,
-            tags
+            tags,
+            isAction
         });
     }
 
