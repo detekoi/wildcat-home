@@ -8,7 +8,7 @@ We're excited to announce that **YouTube Live Chat TTS** is now fully integrated
 
 If you are multistreaming to both Twitch and YouTube, you no longer have to keep your eyes glued to two separate chat windows. WildcatTTS will now read messages from both platforms aloud, mixing them seamlessly into your existing audio feed.
 
-### Perfect for Multi-Streamers
+## Perfect for Multi-Streamers
 
 The integration is designed with multi-streamers in mind. When a viewer chats on YouTube, their message goes through the same powerful processing pipeline as Twitch messages:
 
@@ -16,7 +16,7 @@ The integration is designed with multi-streamers in mind. When a viewer chats on
 - **URL Handling:** Links are smartly shortened or read in full depending on your dashboard settings.
 - **Voice Preferences:** Your channel's default voice, language boost, and pitch/speed settings apply universally to YouTube chatters.
 
-### How to Enable YouTube TTS
+## How to Enable YouTube TTS
 
 Getting started takes just a few seconds through the Web Dashboard:
 
@@ -27,7 +27,7 @@ Getting started takes just a few seconds through the Web Dashboard:
 
 That's it! Your OBS Browser Source will automatically begin speaking YouTube chat messages.
 
-### Reliable and Seamless
+## Reliable and Seamless
 
 Under the hood, this feature leverages my custom [yt-chat-proxy](https://github.com/detekoi/yt-chat-proxy) infrastructure. I recently deployed major updates to ensure the connection remains completely stable:
 
@@ -36,5 +36,6 @@ Under the hood, this feature leverages my custom [yt-chat-proxy](https://github.
 
 Happy multistreaming!
 
-<a href="https://tts.wildcat.chat/" target="_blank" rel="noopener noreferrer">Configure your dashboard →</a>
-<a href="https://docs.wildcat.chat/wildcatttsdocs.html" target="_blank" rel="noopener noreferrer">Read the TTS documentation →</a>
+[Configure your dashboard →](https://tts.wildcat.chat/)
+[Read the TTS documentation →](https://docs.wildcat.chat/wildcatttsdocs.html)
+

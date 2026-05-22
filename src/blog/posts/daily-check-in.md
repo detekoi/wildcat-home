@@ -6,7 +6,7 @@ description: "Viewers can now check in daily using a Channel Point Reward. Track
 
 WildcatSage now supports **Daily Check-In** — a Channel Point Reward that lets viewers check in once per stream and track their streak.
 
-### How It Works
+## How It Works
 
 Open the [web dashboard](https://app.wildcat.chat/), scroll to **Daily Check-In**, and flip the toggle. Set a title, a Channel Point cost, and a response template. The reward is automatically created on your Twitch channel.
 
@@ -16,13 +16,13 @@ When a viewer redeems the reward, the bot replies with their running total:
 
 > *"WildcatGamer checked in! Day #14 🎉"*
 
-### AI Mode
+## AI Mode
 
 Toggle **AI Mode** to generate a unique message every check-in. Write a prompt using response variables and the bot will produce something fresh each time:
 
 > *"Congrats WildcatGamer — 14 days strong! At this rate you'll outlast the sun. ☀️"*
 
-### Response Variables
+## Response Variables
 
 Use `$(user)`, `$(checkin_count)`, and `$(channel)` in your template or AI prompt:
 
@@ -32,9 +32,9 @@ Use `$(user)`, `$(checkin_count)`, and `$(channel)` in your template or AI promp
 | `$(checkin_count)` | Their running check-in count |
 | `$(channel)` | Channel name |
 
-### Requirements
+## Requirements
 
 - **Twitch Affiliate or Partner** status (required for Channel Point Rewards)
 - You may need to **re-authenticate** once to grant the new `channel:manage:redemptions` permission
 
-<a href="https://docs.wildcat.chat/botcommands.html#daily-check-in" target="_blank" rel="noopener noreferrer">Full docs →</a>
+[Full docs →](https://docs.wildcat.chat/botcommands.html#daily-check-in)

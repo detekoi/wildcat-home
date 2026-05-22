@@ -6,14 +6,14 @@ description: "Emote descriptions are now permanently cached and moderators can v
 
 Emote descriptions are now permanently cached so the bot doesn't need to re-generate them every time an emote appears. Moderators also get a new command to manage descriptions directly from chat.
 
-### Persistent Caching
+## Persistent Caching
 
 Previously, emote descriptions were only cached in memory and lost on restart. Now they're stored permanently — each emote only needs to be described once, ever. This means:
 
 - **Faster TTS** — no delay waiting for a description to be generated for emotes the bot has seen before.
 - **Consistent descriptions** — the same emote always gets the same description across sessions and channels.
 
-### New Command: `!tts emote`
+## New Command: `!tts emote`
 
 Moderators and broadcasters can manage emote descriptions for their channel's emotes:
 
@@ -23,6 +23,6 @@ Moderators and broadcasters can manage emote descriptions for their channel's em
 
 Setting and regenerating is scoped to the channel's own emotes — global Twitch emotes (like LUL, Kappa) are managed automatically and can't be manually overridden.
 
-### Documentation
+## Documentation
 
 Full details are available in the [WildcatTTS Docs](https://docs.wildcat.chat/wildcatttsdocs.html#emote-descriptions) under the new **Emote Descriptions** section.

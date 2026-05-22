@@ -6,7 +6,7 @@ description: "WildcatSage now supports custom commands. Create your own `!comman
 
 WildcatSage now supports custom commands. Create your own `!commands` with dynamic responses.
 
-### What You Can Do
+## What You Can Do
 
 - **Add commands** — `!command add hello Hello $(user), welcome to the stream!`
 - **Edit commands** — `!command edit hello` to update the response.
@@ -14,7 +14,7 @@ WildcatSage now supports custom commands. Create your own `!commands` with dynam
 - **Set permissions** — Restrict commands to subs, VIPs, mods, or everyone.
 - **Set cooldowns** — Prevent spam with per-command cooldowns.
 
-### Dynamic Response Variables
+## Dynamic Response Variables
 
 Make your commands come alive with variables that fill in automatically:
 
@@ -30,7 +30,7 @@ Make your commands come alive with variables that fill in automatically:
 Full variable docs & examples:  
 [https://docs.wildcat.chat/botcommands.html#response-variables](https://docs.wildcat.chat/botcommands.html#response-variables)
 
-### Web Dashboard
+## Web Dashboard
 
 Manage your custom commands through the [web dashboard](https://app.wildcat.chat)
 
