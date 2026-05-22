@@ -29,4 +29,3 @@ The proxy server employs a smart, lightweight [background poller](https://github
 [Launch the Chat Overlay →](https://wildcat.chat/chat-overlay/)
 
 [Read the setup guide →](https://docs.wildcat.chat/chatoverlay.html)
-

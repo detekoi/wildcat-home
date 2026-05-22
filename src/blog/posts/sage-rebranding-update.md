@@ -11,6 +11,7 @@ My knowledge bot has a new name.
 This is a branding update only. The bot will continue doing exactly what it does now — answering questions, minigames, translations, and supporting game integrations — just under a new name in chat.
 
 ## Important note for streamers
+
 If you use a Text-to-Speech (TTS) service, especially **WildcatTTS**, you may need to update your ignore list.
 
 - If you previously blocked `ChatSageBot` from being read aloud by TTS, you’ll need to **add `WildcatSage`** to your ignore / blocked users list as well.

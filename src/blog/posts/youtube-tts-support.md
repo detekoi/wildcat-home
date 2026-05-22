@@ -38,4 +38,3 @@ Happy multistreaming!
 
 [Configure your dashboard →](https://tts.wildcat.chat/)
 [Read the TTS documentation →](https://docs.wildcat.chat/wildcatttsdocs.html)
-

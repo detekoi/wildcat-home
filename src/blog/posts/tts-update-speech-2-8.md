@@ -21,15 +21,15 @@ You can embed **interjection tags** directly in your TTS messages to add realist
 Just include the tag in parentheses anywhere in your message:
 
 > `!tts I can't believe that worked (laughs) that was amazing`
-
+>
 > `!tts (sighs) here we go again`
-
+>
 > `!tts Wait what? (gasps) No way!`
 
 ### Available tags
 
 | Tag | Sound |
-|---|---|
+| --- | --- |
 | `(laughs)` | Laughter |
 | `(chuckle)` | Soft chuckle |
 | `(coughs)` | Coughing |

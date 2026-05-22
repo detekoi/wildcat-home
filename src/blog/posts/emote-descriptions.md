@@ -6,7 +6,7 @@ description: "WildcatTTS can now describe what emotes look like instead of readi
 
 WildcatTTS can now describe what emotes look like instead of reading out the emote name. This makes emote-heavy messages much more accessible and natural to listen to.
 
-## How It Works:
+## How It Works
 
 - When someone sends a message like `hello LUL nice play Kappa`, TTS will say:  
   "hello, laughing face emote, nice play, smirking face emote."
@@ -15,13 +15,13 @@ WildcatTTS can now describe what emotes look like instead of reading out the emo
 - Descriptions appear inline where the emote was used, keeping conversational flow.
 - Descriptions are cached so repeated emotes are instant.
 
-## Emote Modes Available:
+## Emote Modes Available
 
 - **Describe emotes** — describes what the emote depicts visually (new).
 - **Read emote names** — reads the emote code as-is (e.g. "LUL", "Kappa").
 - **Skip emotes** — removes emotes from TTS entirely.
 
-## How to Configure:
+## How to Configure
 
 1. Go to the [WildcatTTS Dashboard](https://tts.wildcat.chat/).
 2. Open the Broadcaster tab (the default tab).

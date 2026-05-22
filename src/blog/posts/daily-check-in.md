@@ -27,7 +27,7 @@ Toggle **AI Mode** to generate a unique message every check-in. Write a prompt u
 Use `$(user)`, `$(checkin_count)`, and `$(channel)` in your template or AI prompt:
 
 | Variable | What it does |
-|---|---|
+| --- | --- |
 | `$(user)` | Viewer's display name |
 | `$(checkin_count)` | Their running check-in count |
 | `$(channel)` | Channel name |
