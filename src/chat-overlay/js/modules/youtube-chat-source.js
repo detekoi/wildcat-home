@@ -33,7 +33,11 @@ export class YouTubeChatSource extends ChatSource {
                     cleanTarget = vidParam;
                 } else if (host === 'youtu.be') {
                     cleanTarget = url.pathname.slice(1);
-                } 
+                }
+                // Extract video ID from /live/VIDEO_ID format
+                else if (url.pathname.startsWith('/live/')) {
+                    cleanTarget = url.pathname.split('/')[2];
+                }
                 // Extract handle from /@handle
                 else if (url.pathname.startsWith('/@')) {
                     cleanTarget = url.pathname.split('/')[1]; // @handle
