@@ -67,3 +67,47 @@ describe('YouTubeChatSource - URL Substring URL Redirection Mitigations', () => 
         expect(source.target).toBe('@detekoi');
     });
 });
+
+describe('YouTubeChatSource - System Message Handling', () => {
+    let source;
+    let mockChatRenderer;
+    let mockConfigManager;
+
+    beforeEach(() => {
+        mockChatRenderer = { addSystemMessage: vi.fn(), addChatMessage: vi.fn() };
+        mockConfigManager = { updateConfig: vi.fn() };
+        source = new YouTubeChatSource(mockConfigManager, mockChatRenderer);
+        source.ws = { close: vi.fn(), send: vi.fn() };
+    });
+
+    it('should close WebSocket when "Could not find a live stream" is received', () => {
+        source.handleMessage({
+            data: JSON.stringify({
+                type: 'system',
+                message: 'Could not find a live stream. Please check the channel name and try again.'
+            })
+        });
+        expect(source.ws.close).toHaveBeenCalled();
+    });
+
+    it('should close WebSocket when "Lost connection" is received', () => {
+        source.handleMessage({
+            data: JSON.stringify({
+                type: 'system',
+                message: 'Lost connection to YouTube stream. Reconnecting...'
+            })
+        });
+        expect(source.ws.close).toHaveBeenCalled();
+    });
+
+    it('should not close WebSocket for other system messages', () => {
+        source.handleMessage({
+            data: JSON.stringify({
+                type: 'system',
+                message: 'Waiting for YouTube stream to go live...'
+            })
+        });
+        expect(source.ws.close).not.toHaveBeenCalled();
+    });
+});
+

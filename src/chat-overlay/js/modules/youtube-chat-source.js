@@ -111,7 +111,7 @@ export class YouTubeChatSource extends ChatSource {
                     // If the server gave up polling because the stream isn't live yet,
                     // forcefully close the connection so our auto-reconnect loop takes over.
                     // This ensures the overlay recovers if left open for hours before going live.
-                    if (data.message.includes("Could not find a live stream")) {
+                    if (data.message.includes("Could not find a live stream") || data.message.includes("Lost connection")) {
                         if (this.ws) {
                             this.ws.close();
                         }
