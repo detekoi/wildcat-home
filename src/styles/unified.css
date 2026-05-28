@@ -48,6 +48,14 @@
   --hover-transform: translate(-2px, -2px);
   --active-transform: translate(2px, 2px);
 
+  /* Extended palette — post-industrial design system */
+  --color-rule: #262626;
+  --color-body-text: #d4d4d4;
+  --color-text-secondary: #9b9b9b;
+  --color-text-muted: rgba(255, 255, 255, 0.55);
+  --color-border-muted: #555;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
   /* Navigation */
   --nav-height: 60px;
   --sidebar-width: 200px;
