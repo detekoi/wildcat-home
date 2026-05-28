@@ -1,116 +1,130 @@
 ---
 layout: base.njk
-title: "Wildcat.chat - AI Tools for Twitch Streamers"
-description: "Wildcat.chat - AI-powered Twitch & YouTube bot platform featuring WildcatSage chatbot, WildcatTTS, and customizable
-chat overlays for streamers."
+title: "Wildcat.chat - Interactive Tools for Twitch Streamers"
+description: "Wildcat.chat - Customizable Twitch & YouTube bot platform featuring WildcatSage chatbot, WildcatTTS, and custom chat overlays for streamers."
 ---
 <link rel="stylesheet" href="/styles/home.css">
 
 <!-- Hero Section -->
 <section class="hero-section">
-    <video class="hero-video-background" autoplay loop muted playsinline>
-        <source src="assets/video/Pixelated_static_pattern_web_balanced.mp4" type="video/mp4">
-    </video>
-    <div class="hero-content-wrapper">
-        <h1 class="hero-title">
-            Wildcat: Unique Tools for Twitch Streamers
-        </h1>
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="hero-vignette" aria-hidden="true"></div>
+
+    <div class="hero-meta-top meta-strip">
+        <span>↳ wildcat.chat / live</span>
+        <span>broadcast desk / 2026</span>
+    </div>
+
+    <div class="hero-wordmark-wrap">
+        <h1 class="hero-wordmark">Wildcat</h1>
+        <div class="hero-subtitle">A&nbsp;&nbsp;Twitch&nbsp;&nbsp;&amp;&nbsp;&nbsp;YouTube&nbsp;&nbsp;bot&nbsp;&nbsp;platform</div>
+    </div>
+
+    <div class="hero-marquee-wrap" aria-hidden="true">
+        <div class="hero-marquee">
+            <span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · OBS plug-in · multi-language · auto-chat · </span><span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · OBS plug-in · multi-language · auto-chat · </span><span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · OBS plug-in · multi-language · auto-chat · </span><span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · OBS plug-in · multi-language · auto-chat · </span>
+        </div>
+    </div>
+
+    <div class="hero-bottom">
         <p class="hero-tagline">
-            Knowledgeable chatbots, realistic TTS, and smart overlays – all in one platform
+            Knowledgeable chatbots, realistic TTS, and custom chat overlays —
+            all in one platform. Invite-only beta.
         </p>
         <div class="hero-cta-buttons">
-            <a href="https://app.wildcat.chat" class="twitch-button">Launch WildcatSage</a>
-            <a href="https://tts.wildcat.chat" class="twitch-button">Launch WildcatTTS</a>
+            <a href="https://app.wildcat.chat" class="twitch-button">Launch Sage</a>
+            <a href="https://tts.wildcat.chat" class="twitch-button secondary">Launch TTS</a>
+        </div>
+    </div>
+
+    <div class="hero-onair">
+        <div class="meta-strip">
+            <span>— ˕ • マ</span>
+            <span><span class="onair-dot" aria-hidden="true"></span>↑ on air</span>
         </div>
     </div>
 </section>
 
 <!-- Platform Overview -->
 <section class="platform-overview">
-    <p>
-        Wildcat is a suite of Twitch & YouTube bot tools designed to elevate your stream's interactivity.
-        From answering chat questions intelligently to reading messages aloud with natural TTS and generating
-        on-brand chat overlays, Wildcat brings advanced AI to your channel with minimal setup.
-    </p>
-    <p>
-        All tools are seamlessly integrated and maintained under the Wildcat platform, making it one
-        cohesive ecosystem for your streaming needs.
-    </p>
-    <div class="invite-notice">
-        <strong>Note:</strong> Wildcat is currently in beta and access is invite-only.
-        <a href="https://parfaitfair.com/#contact">Request access here</a>.
+    <div class="meta-strip">
+        <span>§02 — the platform</span>
+        <span>01 / 04</span>
+    </div>
+    <div class="platform-grid">
+        <p>
+            Wildcat is a suite of Twitch &amp; YouTube bot tools designed to elevate
+            your stream's interactivity. From answering chat questions intelligently
+            to reading messages aloud with natural TTS and generating on-brand chat
+            overlays, Wildcat brings advanced interactivity and customization to your channel with minimal setup.
+        </p>
+        <p>
+            All tools are seamlessly integrated and maintained under the Wildcat
+            platform, making it one cohesive ecosystem for your streaming needs.
+            Currently in invite-only beta — <a href="https://parfaitfair.com/#contact">request access</a>.
+        </p>
     </div>
 </section>
 
 <!-- Features Section -->
 <section class="features-section">
-    <h2>Explore Wildcat Tools</h2>
+    <div class="features-header">
+        <h2>Explore Wildcat Tools</h2>
+        <span class="meta-strip-label">§03 — three tools</span>
+    </div>
     <div class="features-grid">
         <!-- Sage Card -->
         <article class="feature-card">
-            <div class="feature-icon"><i data-lucide="message-circle"></i></div>
+            <span class="product-code">W—01</span>
             <h3>Wildcat Sage</h3>
             <p>
-                A Google Gemini-powered chatbot that lives in your Twitch chat. Sage can answer viewer questions,
-                fetch information from the web, play trivia and mini-games, and even translate or role-play
-                – all automatically in chat.
+                A Google Gemini-powered chatbot that lives in your Twitch chat. Sage answers viewer questions,
+                fetches information from the web, runs trivia, and translates.
             </p>
             <ul class="feature-list">
-                <li>Contextual responses powered by Google Gemini</li>
+                <li>Contextual responses powered by Gemini</li>
                 <li>Real-time web search integration</li>
-                <li>Interactive games (trivia, geo-guessing, riddles)</li>
-                <li>Auto-chat and multi-language translation</li>
-                <li>Customizable commands and behavior</li>
+                <li>Trivia, geo-guessing, riddles</li>
+                <li>Auto-chat &amp; multi-language translation</li>
             </ul>
             <div class="feature-card-actions">
-                <a href="https://app.wildcat.chat" class="twitch-button">Open Wildcat Sage</a>
-                <a href="https://docs.wildcat.chat/botcommands.html" class="secondary-link">View Documentation
-                    →</a>
+                <a href="https://app.wildcat.chat" class="twitch-button">Open Sage →</a>
             </div>
         </article>
 
         <!-- WildcatTTS Card -->
         <article class="feature-card">
-            <div class="feature-icon"><i data-lucide="volume-2"></i></div>
+            <span class="product-code">W—02</span>
             <h3>Wildcat TTS</h3>
             <p>
-                Give your chat a voice with WildcatTTS. This text-to-speech bot reads chat messages and
-                alerts aloud in real time using natural-sounding AI voices. Engage your audience with
-                hundreds of voice options!
+                Give your chat a voice. WildcatTTS reads chat messages and alerts aloud in real time using natural TTS voices.
             </p>
             <ul class="feature-list">
-                <li>Natural-sounding TTS with 300+ voices</li>
-                <li>Channel points and Bits integration</li>
-                <li>Web dashboard for easy configuration</li>
-                <li>Customizable viewer voice preferences</li>
+                <li>300+ high-quality voices</li>
+                <li>Channel Points &amp; Bits integration</li>
+                <li>Web dashboard for config</li>
+                <li>Per-viewer voice preferences</li>
             </ul>
             <div class="feature-card-actions">
-                <a href="https://tts.wildcat.chat" class="twitch-button">Open Wildcat TTS</a>
-                <a href="https://docs.wildcat.chat/wildcatttsdocs.html" class="secondary-link">View
-                    Documentation →</a>
+                <a href="https://tts.wildcat.chat" class="twitch-button">Open TTS →</a>
             </div>
         </article>
 
         <!-- Chat Overlay Card -->
         <article class="feature-card">
-            <div class="feature-icon"><i data-lucide="palette"></i></div>
-            <h3>Wildcat Chat Overlay</h3>
+            <span class="product-code">W—03</span>
+            <h3>Wildcat Overlay</h3>
             <p>
-                A customizable Twitch & YouTube chat overlay with themes generated using natural language. Describe any aesthetic
-                (e.g. "cyberpunk city" or "cozy forest") and let the AI design a matching background
-                image and style for your chat. No login required – just plug into OBS!
+                A customizable Twitch &amp; YouTube chat overlay with dynamic themes. Describe any aesthetic and generate a matching background.
             </p>
             <ul class="feature-list">
-                <li>Automatic theme generation</li>
-                <li>Visual editor for colors, fonts, and layout</li>
-                <li>Multiple display modes (standard and pop-ups)</li>
-                <li>No authentication needed</li>
-                <li>Instant OBS integration via URL</li>
+                <li>Theme generation by description</li>
+                <li>Visual editor (colors, fonts, layout)</li>
+                <li>Multiple display modes</li>
+                <li>OBS plug-and-play via URL</li>
             </ul>
             <div class="feature-card-actions">
-                <a href="/chat-overlay/" class="twitch-button">Open Chat Overlay</a>
-                <a href="https://docs.wildcat.chat/chatoverlay.html" class="secondary-link">View Documentation
-                    →</a>
+                <a href="/chat-overlay/" class="twitch-button">Open Overlay →</a>
             </div>
         </article>
     </div>
@@ -118,18 +132,21 @@ chat overlays for streamers."
 
 <!-- Resources Section -->
 <section class="resources-section">
-    <h2>Resources & Support</h2>
-    <p>
-        Want to dive deeper? Check out our comprehensive documentation for full command lists,
-        setup guides, and advanced tips for all Wildcat tools.
-    </p>
-    <p>
-        Need help or want to request access? We're here to assist you in getting the most out of
-        the Wildcat platform.
-    </p>
-    <div class="resources-links">
-        <a href="https://docs.wildcat.chat"><i data-lucide="book-open"></i> View Documentation</a>
-        <a href="https://parfaitfair.com/#contact"><i data-lucide="mail"></i> Contact & Request Access</a>
-        <a href="https://github.com/detekoi"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" stroke="none" class="lucide lucide-github"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> GitHub</a>
+    <div class="meta-strip">
+        <span>§04 — resources</span>
+        <span>end</span>
+    </div>
+    <div class="resources-card">
+        <h2>Resources &amp; Support</h2>
+        <p>
+            Want to dive deeper? Check the docs for full command lists, setup
+            guides, and advanced tips. Need help or want to request access? We're
+            here to help.
+        </p>
+        <div class="resources-links">
+            <a href="https://docs.wildcat.chat" class="twitch-button">Documentation →</a>
+            <a href="https://parfaitfair.com/#contact" class="twitch-button secondary">Contact &amp; Request →</a>
+            <a href="https://github.com/detekoi" class="twitch-button secondary">GitHub →</a>
+        </div>
     </div>
 </section>
