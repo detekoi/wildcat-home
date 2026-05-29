@@ -223,8 +223,9 @@ export class SettingsPanelManager {
         if (!configPanel) return;
 
         const hexColor = this._configManager.config.bgColor || '#121212';
-        const opacityPercent = Math.round((this._configManager.config.bgColorOpacity ?? 0.85) * 100);
-        if (bgColorInput) bgColorInput.value = hexColor;
+        const isChromaKey = !!this._configManager.config.chromaKey;
+        const opacityPercent = isChromaKey ? 0 : Math.round((this._configManager.config.bgColorOpacity ?? 0.85) * 100);
+        if (bgColorInput) bgColorInput.value = isChromaKey ? '#000000' : hexColor;
         if (bgOpacityInput && bgOpacityValue) {
             bgOpacityInput.value = opacityPercent;
             bgOpacityValue.textContent = `${opacityPercent}%`;

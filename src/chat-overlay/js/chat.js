@@ -261,18 +261,30 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                     case 'bg':
                         if (color === 'chroma-key') {
                             // Chroma key mode: green page background, transparent chat bg
+                            // Store the current opacity so we can restore it when leaving chroma key
+                            const currentOpacity = bgOpacityInput ? parseInt(bgOpacityInput.value) / 100 : (configManager.config.bgColorOpacity ?? 0.85);
+                            configManager.updateConfig('preChromaKeyOpacity', currentOpacity > 0 ? currentOpacity : 0.85);
                             document.body.classList.add('chroma-key');
                             if (bgColorInput) bgColorInput.value = '#000000';
                             if (bgOpacityInput) bgOpacityInput.value = 0;
                             configManager.updateConfig('chromaKey', true);
+                            configManager.updateConfig('bgColorOpacity', 0);
                         } else {
+                            const wasChromaKey = !!configManager.config.chromaKey;
                             document.body.classList.remove('chroma-key');
                             configManager.updateConfig('chromaKey', false);
                             if (color === 'transparent') {
                                 if (bgColorInput) bgColorInput.value = '#000000';
                                 if (bgOpacityInput) bgOpacityInput.value = 0;
+                                configManager.updateConfig('bgColorOpacity', 0);
                             } else {
                                 if (bgColorInput) bgColorInput.value = color;
+                                // Restore opacity when leaving chroma key or transparent
+                                if (wasChromaKey || (bgOpacityInput && parseInt(bgOpacityInput.value) === 0)) {
+                                    const restoredOpacity = configManager.config.preChromaKeyOpacity ?? 0.85;
+                                    if (bgOpacityInput) bgOpacityInput.value = Math.round(restoredOpacity * 100);
+                                    configManager.updateConfig('bgColorOpacity', restoredOpacity);
+                                }
                             }
                         }
                         updateBgColor();

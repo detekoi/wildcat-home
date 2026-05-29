@@ -89,9 +89,8 @@ export class ThemeManager {
         this._configManager.updateConfig('bgImage', theme.backgroundImage || null);
         this._configManager.updateConfig('bgImageOpacity', theme.bgImageOpacity ?? 0.55);
 
-        // Clear chroma key when applying a theme
+        // Clear chroma key when applying a theme (applyConfiguration handles the body class)
         this._configManager.updateConfig('chromaKey', false);
-        document.body.classList.remove('chroma-key');
 
         // Enable top-fade automatically only when background is fully transparent
         if (theme.topFade !== undefined) {
