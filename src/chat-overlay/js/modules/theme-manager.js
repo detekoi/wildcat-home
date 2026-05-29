@@ -89,6 +89,10 @@ export class ThemeManager {
         this._configManager.updateConfig('bgImage', theme.backgroundImage || null);
         this._configManager.updateConfig('bgImageOpacity', theme.bgImageOpacity ?? 0.55);
 
+        // Clear chroma key when applying a theme
+        this._configManager.updateConfig('chromaKey', false);
+        document.body.classList.remove('chroma-key');
+
         // Enable top-fade automatically only when background is fully transparent
         if (theme.topFade !== undefined) {
             this._configManager.updateConfig('topFade', theme.topFade);
@@ -306,11 +310,19 @@ export class ThemeManager {
         // Background color
         const bgColorValue = bgColorInput?.value || '#121212';
         const bgOpacityVal = bgOpacityInput ? parseInt(bgOpacityInput.value) : 85;
+        const isChromaKeyActive = !!this._configManager.config.chromaKey;
         document.querySelectorAll('.color-btn[data-target="bg"]').forEach(btn => {
             const btnColor = btn.getAttribute('data-color');
-            let isActive = (btnColor === 'transparent')
-                ? (bgColorValue === '#000000' && bgOpacityVal === 0)
-                : (btnColor === bgColorValue && bgOpacityVal > 0);
+            let isActive;
+            if (btnColor === 'chroma-key') {
+                isActive = isChromaKeyActive;
+            } else if (isChromaKeyActive) {
+                isActive = false;
+            } else if (btnColor === 'transparent') {
+                isActive = (bgColorValue === '#000000' && bgOpacityVal === 0);
+            } else {
+                isActive = (btnColor === bgColorValue && bgOpacityVal > 0);
+            }
             btn.classList.toggle('active', isActive);
         });
 

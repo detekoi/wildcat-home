@@ -210,6 +210,19 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Chroma Key (Green Screen) Mode */
+.chat-page.chroma-key {
+    background-color: #00b140;
+}
+
+/* Chroma key button styling in settings panel */
+.chroma-key-btn {
+    background-color: #00b140 !important;
+    color: #000 !important;
+    border: 1px solid #009930 !important;
+    font-weight: 600;
+}
+
 #config-panel {
     position: fixed;
     top: 0;

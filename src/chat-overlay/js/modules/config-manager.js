@@ -58,7 +58,8 @@ export class ConfigManager {
             enlargeSingleEmotes: false,
             bgColorOpacity: 0.8,
             bgImageOpacity: 0.55,
-            topFade: false
+            topFade: false,
+            chromaKey: false
         };
     }
 
@@ -129,6 +130,9 @@ export class ConfigManager {
 
         // Toggle top-fade class on body
         document.body.classList.toggle('top-fade', !!cfg.topFade);
+
+        // Toggle chroma-key class on body
+        document.body.classList.toggle('chroma-key', !!cfg.chromaKey);
 
         // Apply chat mode if callback is set
         if (this.switchChatModeCallback && typeof this.switchChatModeCallback === 'function') {

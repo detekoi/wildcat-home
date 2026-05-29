@@ -238,14 +238,14 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // Color preset button click handlers
         document.querySelectorAll('.color-btn').forEach(button => {
             const color = button.getAttribute('data-color');
-            if (color) button.style.backgroundColor = color;
+            if (color && color !== 'chroma-key') button.style.backgroundColor = color;
 
             if (color === 'transparent' || ['#ffffff', '#ffdeec', '#f5f2e6'].includes(color)) {
                 button.style.border = '1px solid #888';
             }
             if (['#000000', '#121212', '#1a1a1a', '#0c0c28', '#4e3629'].includes(color)) {
                 button.style.color = 'white';
-            } else {
+            } else if (color !== 'chroma-key') {
                 button.style.color = 'black';
             }
 
@@ -259,11 +259,21 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
                 switch (target) {
                     case 'bg':
-                        if (color === 'transparent') {
+                        if (color === 'chroma-key') {
+                            // Chroma key mode: green page background, transparent chat bg
+                            document.body.classList.add('chroma-key');
                             if (bgColorInput) bgColorInput.value = '#000000';
                             if (bgOpacityInput) bgOpacityInput.value = 0;
+                            configManager.updateConfig('chromaKey', true);
                         } else {
-                            if (bgColorInput) bgColorInput.value = color;
+                            document.body.classList.remove('chroma-key');
+                            configManager.updateConfig('chromaKey', false);
+                            if (color === 'transparent') {
+                                if (bgColorInput) bgColorInput.value = '#000000';
+                                if (bgOpacityInput) bgOpacityInput.value = 0;
+                            } else {
+                                if (bgColorInput) bgColorInput.value = color;
+                            }
                         }
                         updateBgColor();
                         break;

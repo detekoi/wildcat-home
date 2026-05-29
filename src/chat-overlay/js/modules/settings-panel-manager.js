@@ -172,6 +172,7 @@ export class SettingsPanelManager {
                 badgeFallbackHide: true,
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
                 topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
+                chromaKey: this._configManager.config.chromaKey ?? false,
             };
 
             this._configManager.config = newConfig;
