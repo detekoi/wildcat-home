@@ -97,13 +97,7 @@ export class TwitchChatSource extends ChatSource {
 
             // Fetch global badges on successful connection
             await this.badgeManager.fetchGlobalBadges();
-            // Fetch global cheermotes on successful connection
-            if (this.cheermoteManager) {
-                this.cheermoteManager.fetchCheermotes().catch(err =>
-                    console.warn('Failed to fetch global cheermotes:', err)
-                );
-            }
-            // Channel badges will be fetched on ROOMSTATE or first message with room-id
+            // Channel badges and cheermotes will be fetched on ROOMSTATE with the broadcaster ID
         }, 50); // Small delay can sometimes help ensure readiness
     }
 

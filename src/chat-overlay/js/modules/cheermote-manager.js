@@ -8,7 +8,8 @@ export class CheermoteManager {
         this.config = config;
         this.cheermoteData = null; // { prefix: { prefix, type, tiers: [...] } }
         this.cheermoteRegex = null; // Compiled regex from known prefixes
-        this.fetchPromise = null;  // Prevent duplicate fetches
+        this.prefixMap = null;     // Map<lowercasePrefix, cheermoteEntry> for O(1) lookup
+        this.fetchPromises = new Map(); // Per-key dedup to avoid cross-contamination
     }
 
     /**
@@ -22,30 +23,33 @@ export class CheermoteManager {
             return;
         }
 
-        // Prevent duplicate fetches
-        if (this.fetchPromise) {
-            return this.fetchPromise;
+        // Per-key dedup: global and channel fetches track independently
+        const dedupKey = broadcasterId || '__global__';
+        if (this.fetchPromises.has(dedupKey)) {
+            return this.fetchPromises.get(dedupKey);
         }
 
-        this.fetchPromise = this._doFetch(broadcasterId).finally(() => {
-            this.fetchPromise = null;
+        const promise = this._doFetch(broadcasterId).finally(() => {
+            this.fetchPromises.delete(dedupKey);
         });
 
-        return this.fetchPromise;
+        this.fetchPromises.set(dedupKey, promise);
+        return promise;
     }
 
     async _doFetch(broadcasterId) {
         const cacheKey = broadcasterId
             ? `twitchCheermotes_${broadcasterId}`
             : 'twitchCheermotesGlobal';
-        const cacheTTL = this.config.cheermoteCacheTTL || 12 * 60 * 60 * 1000; // 12 hours
+        // Use nullish coalescing to respect an explicit 0 (always-refresh intent)
+        const cacheTTL = this.config.cheermoteCacheTTL ?? 12 * 60 * 60 * 1000; // 12 hours
 
         // Check localStorage cache
         try {
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < cacheTTL) {
+                if (cacheTTL > 0 && Date.now() - timestamp < cacheTTL) {
                     console.log(`Using cached cheermotes for ${cacheKey}`);
                     this.cheermoteData = data;
                     this._buildRegex();
@@ -61,7 +65,7 @@ export class CheermoteManager {
         try {
             let url = this.config.cheermoteEndpointUrl;
             if (broadcasterId) {
-                url += `?broadcaster_id=${broadcasterId}`;
+                url += `?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
             }
 
             console.log(`Fetching cheermotes from ${url}`);
@@ -87,13 +91,20 @@ export class CheermoteManager {
     }
 
     /**
-     * Build a combined regex from all known cheermote prefixes
+     * Build a combined regex and O(1) prefix lookup map from all known cheermote prefixes
      * Pattern: word-boundary, then any known prefix, then one or more digits
      */
     _buildRegex() {
         if (!this.cheermoteData || Object.keys(this.cheermoteData).length === 0) {
             this.cheermoteRegex = null;
+            this.prefixMap = null;
             return;
+        }
+
+        // Build O(1) lowercase prefix map
+        this.prefixMap = new Map();
+        for (const key of Object.keys(this.cheermoteData)) {
+            this.prefixMap.set(key.toLowerCase(), this.cheermoteData[key]);
         }
 
         // Sort prefixes by length descending to match longest first
@@ -102,7 +113,6 @@ export class CheermoteManager {
             .map(p => this._escapeRegex(p));
 
         // Match cheermote tokens: prefix followed by digits, at word boundaries
-        // Using (?:^|\s) and (?:\s|$) to ensure whole-word matching
         this.cheermoteRegex = new RegExp(
             `(?:^|(?<=\\s))(${prefixes.join('|')})(\\d+)(?=\\s|$)`,
             'gi'
@@ -134,8 +144,8 @@ export class CheermoteManager {
             const bits = parseInt(match[2], 10);
             const fullText = match[0]; // e.g. "Cheer100"
 
-            // Find the cheermote data (case-insensitive lookup)
-            const cheermoteEntry = this._findCheermoteEntry(prefix);
+            // O(1) prefix lookup via pre-built Map
+            const cheermoteEntry = this.prefixMap?.get(prefix.toLowerCase());
             if (!cheermoteEntry) continue;
 
             // Resolve the appropriate tier
@@ -166,31 +176,23 @@ export class CheermoteManager {
     }
 
     /**
-     * Find cheermote entry by prefix (case-insensitive)
-     */
-    _findCheermoteEntry(prefix) {
-        const lowerPrefix = prefix.toLowerCase();
-        for (const key of Object.keys(this.cheermoteData)) {
-            if (key.toLowerCase() === lowerPrefix) {
-                return this.cheermoteData[key];
-            }
-        }
-        return null;
-    }
-
-    /**
      * Resolve the correct tier for a given bit amount
-     * Tiers are sorted ascending by min_bits — pick the highest tier where min_bits <= bits
+     * Defensively sorts tiers ascending by min_bits before resolving, in case the
+     * source data (API, cache, or Firestore) arrives unsorted.
      */
     _resolveTier(cheermoteEntry, bits) {
-        if (!cheermoteEntry.tiers || cheermoteEntry.tiers.length === 0) return null;
+        if (!Array.isArray(cheermoteEntry.tiers) || cheermoteEntry.tiers.length === 0) return null;
 
-        let resolvedTier = cheermoteEntry.tiers[0]; // Default to lowest tier
-        for (const tier of cheermoteEntry.tiers) {
+        // Defensive sort — tiers should already be sorted from the proxy transform,
+        // but guard against corrupted localStorage or future API changes
+        const sortedTiers = [...cheermoteEntry.tiers].sort((a, b) => a.min_bits - b.min_bits);
+
+        let resolvedTier = sortedTiers[0]; // Default to lowest tier
+        for (const tier of sortedTiers) {
             if (bits >= tier.min_bits) {
                 resolvedTier = tier;
             } else {
-                break; // Tiers are sorted ascending
+                break;
             }
         }
         return resolvedTier;
