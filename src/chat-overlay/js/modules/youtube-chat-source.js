@@ -1,4 +1,5 @@
 import { ChatSource } from './chat-source.js';
+import { UIHelpers } from './ui-helpers.js';
 
 export class YouTubeChatSource extends ChatSource {
     constructor(configManager, chatRenderer) {
@@ -64,6 +65,7 @@ export class YouTubeChatSource extends ChatSource {
         this.chatRenderer.addSystemMessage(`Connecting to YouTube: ${this.target}...`, true);
         
         this.configManager.updateConfig('lastYouTubeTarget', this.target);
+        this.configManager.saveLastYouTubeTargetOnly(this.target, UIHelpers.getUrlParameter('scene') || 'default');
 
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
         const wsUrl = isLocalhost 

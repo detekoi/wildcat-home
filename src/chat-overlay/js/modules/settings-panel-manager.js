@@ -158,8 +158,8 @@ export class SettingsPanelManager {
                     duration: getValue(document.getElementById('popup-duration'), this._configManager.config.popup?.duration || 5, true),
                     maxMessages: getValue(document.getElementById('popup-max-messages'), this._configManager.config.popup?.maxMessages || 3, true)
                 },
-                lastTwitchChannel: this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel,
-                lastYouTubeTarget: this._configManager.config.lastYouTubeTarget,
+                lastTwitchChannel: this._chatConnection.getTwitchChannel() || this._dom.twitchChannelInput?.value?.trim() || this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel,
+                lastYouTubeTarget: this._chatConnection.getYouTubeTarget() || this._dom.youtubeChannelInput?.value?.trim() || this._configManager.config.lastYouTubeTarget,
                 showSuperChats: getValue(document.getElementById('show-superchats-toggle'), this._configManager.config.showSuperChats ?? true, false, true),
                 showMembershipEvents: getValue(document.getElementById('show-memberships-toggle'), this._configManager.config.showMembershipEvents ?? true, false, true),
                 showPlatformBadges: getValue(document.getElementById('show-platform-badges-toggle'), this._configManager.config.showPlatformBadges ?? true, false, true),

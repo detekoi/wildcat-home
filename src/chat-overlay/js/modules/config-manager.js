@@ -195,10 +195,38 @@ export class ConfigManager {
             }
 
             currentFullConfig.lastChannel = channelToSave;
+            currentFullConfig.lastTwitchChannel = channelToSave;
             localStorage.setItem(configKey, JSON.stringify(currentFullConfig));
             this.config.lastChannel = channelToSave;
+            this.config.lastTwitchChannel = channelToSave;
         } catch (storageError) {
             console.error("[saveLastChannelOnly] Error saving lastChannel:", storageError);
+        }
+    }
+
+    /**
+     * Save only the last YouTube target
+     */
+    saveLastYouTubeTargetOnly(targetToSave, sceneName = 'default') {
+        if (!targetToSave) {
+            console.warn("[saveLastYouTubeTargetOnly] Attempted to save empty target.");
+            return;
+        }
+        try {
+            const configKey = `chatConfig-${sceneName}`;
+            let currentFullConfig = {};
+            try {
+                const saved = localStorage.getItem(configKey);
+                if (saved) currentFullConfig = JSON.parse(saved);
+            } catch (parseError) {
+                console.error("[saveLastYouTubeTargetOnly] Error parsing existing config:", parseError);
+            }
+
+            currentFullConfig.lastYouTubeTarget = targetToSave;
+            localStorage.setItem(configKey, JSON.stringify(currentFullConfig));
+            this.config.lastYouTubeTarget = targetToSave;
+        } catch (storageError) {
+            console.error("[saveLastYouTubeTargetOnly] Error saving lastYouTubeTarget:", storageError);
         }
     }
 

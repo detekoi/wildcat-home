@@ -84,6 +84,7 @@ export class TwitchChatSource extends ChatSource {
 
             this.updateStatus(true);
             this.configManager.updateConfig('lastChannel', this.channel);
+            this.configManager.updateConfig('lastTwitchChannel', this.channel);
             this.configManager.saveLastChannelOnly(this.channel, UIHelpers.getUrlParameter('scene') || 'default');
 
             this.emitConnectionChange(true, this.channel);
