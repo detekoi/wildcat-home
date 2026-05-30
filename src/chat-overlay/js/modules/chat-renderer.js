@@ -170,10 +170,14 @@ export class ChatRenderer {
         headerEl.className = 'twitch-event-header';
 
         if (data.icon) {
-            const iconEl = document.createElement('span');
+            const iconEl = document.createElement('i');
             iconEl.className = 'twitch-event-icon';
-            iconEl.textContent = data.icon;
+            iconEl.setAttribute('data-lucide', data.icon);
             headerEl.appendChild(iconEl);
+            // Render the Lucide SVG; scoped to just this icon element
+            if (typeof lucide !== 'undefined') {
+                try { lucide.createIcons({ attrs: { class: 'twitch-event-icon-svg' }, nameAttr: 'data-lucide', nodes: [iconEl] }); } catch (e) { /* fallback: icon stays as empty <i> */ }
+            }
         }
 
         const textEl = document.createElement('span');

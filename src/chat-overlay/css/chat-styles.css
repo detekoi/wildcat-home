@@ -1460,8 +1460,18 @@ body.chat-page:hover #popup-settings-btn {
 }
 
 .twitch-event-icon {
-    font-size: 1.1em;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    color: var(--event-accent);
+}
+
+.twitch-event-icon-svg,
+.twitch-event-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.5;
+    color: inherit;
 }
 
 .twitch-event-text {

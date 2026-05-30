@@ -328,7 +328,7 @@ export class TwitchChatSource extends ChatSource {
             case 'sub':
                 eventData = {
                     eventType: 'sub',
-                    icon: '⭐',
+                    icon: 'star',
                     text: `${displayName} subscribed${subPlan ? ` with ${subPlan}` : ''}!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -345,7 +345,7 @@ export class TwitchChatSource extends ChatSource {
                 }
                 eventData = {
                     eventType: 'resub',
-                    icon: '⭐',
+                    icon: 'star',
                     text, userMessage, emotes, tags,
                     color: tags.color || null
                 };
@@ -356,7 +356,7 @@ export class TwitchChatSource extends ChatSource {
                 const recipient = tags['msg-param-recipient-display-name'] || 'someone';
                 eventData = {
                     eventType: 'subgift',
-                    icon: '🎁',
+                    icon: 'gift',
                     text: `${displayName} gifted a ${subPlan || 'Tier 1'} sub to ${recipient}!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -368,7 +368,7 @@ export class TwitchChatSource extends ChatSource {
                 const giftCount = tags['msg-param-mass-gift-count'] || '?';
                 eventData = {
                     eventType: 'submysterygift',
-                    icon: '🎁',
+                    icon: 'gift',
                     text: `${displayName} is gifting ${giftCount} ${subPlan || 'Tier 1'} subs to the community!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -380,7 +380,7 @@ export class TwitchChatSource extends ChatSource {
                 const viewerCount = tags['msg-param-viewerCount'] || '?';
                 eventData = {
                     eventType: 'raid',
-                    icon: '🎉',
+                    icon: 'swords',
                     text: `${displayName} is raiding with ${viewerCount} viewers!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -392,7 +392,7 @@ export class TwitchChatSource extends ChatSource {
                 const announcementColor = tags['msg-param-color'] || 'PRIMARY';
                 eventData = {
                     eventType: 'announcement',
-                    icon: '📢',
+                    icon: 'megaphone',
                     text: `${displayName}`,
                     announcementColor,
                     userMessage: userMessage || systemMsg,
@@ -406,7 +406,7 @@ export class TwitchChatSource extends ChatSource {
                 const threshold = tags['msg-param-threshold'] || '?';
                 eventData = {
                     eventType: 'bitsbadgetier',
-                    icon: '💎',
+                    icon: 'gem',
                     text: `${displayName} earned a new ${threshold} Bits badge!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -418,7 +418,7 @@ export class TwitchChatSource extends ChatSource {
                 const sender = tags['msg-param-sender-name'] || tags['msg-param-sender-login'] || 'someone';
                 eventData = {
                     eventType: 'giftpaidupgrade',
-                    icon: '⭐',
+                    icon: 'star',
                     text: `${displayName} is continuing their gifted sub from ${sender}!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -429,7 +429,7 @@ export class TwitchChatSource extends ChatSource {
             case 'primepaidupgrade':
                 eventData = {
                     eventType: 'primepaidupgrade',
-                    icon: '⭐',
+                    icon: 'star',
                     text: `${displayName} converted from Prime to a ${subPlan || 'paid'} sub!`,
                     userMessage, emotes, tags,
                     color: tags.color || null
@@ -441,7 +441,7 @@ export class TwitchChatSource extends ChatSource {
                 if (systemMsg) {
                     eventData = {
                         eventType: 'unknown',
-                        icon: 'ℹ️',
+                        icon: 'info',
                         text: systemMsg,
                         userMessage, emotes, tags,
                         color: tags.color || null

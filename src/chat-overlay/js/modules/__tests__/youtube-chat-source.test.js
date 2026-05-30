@@ -8,7 +8,7 @@ describe('YouTubeChatSource - URL Substring URL Redirection Mitigations', () => 
 
     beforeEach(() => {
         mockChatRenderer = { addSystemMessage: vi.fn(), addChatMessage: vi.fn() };
-        mockConfigManager = { updateConfig: vi.fn() };
+        mockConfigManager = { updateConfig: vi.fn(), saveLastYouTubeTargetOnly: vi.fn() };
         source = new YouTubeChatSource(mockConfigManager, mockChatRenderer);
         source.ws = { close: vi.fn(), send: vi.fn() };
         
@@ -75,7 +75,7 @@ describe('YouTubeChatSource - System Message Handling', () => {
 
     beforeEach(() => {
         mockChatRenderer = { addSystemMessage: vi.fn(), addChatMessage: vi.fn() };
-        mockConfigManager = { updateConfig: vi.fn() };
+        mockConfigManager = { updateConfig: vi.fn(), saveLastYouTubeTargetOnly: vi.fn() };
         source = new YouTubeChatSource(mockConfigManager, mockChatRenderer);
         source.ws = { close: vi.fn(), send: vi.fn() };
     });
