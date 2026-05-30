@@ -6,11 +6,12 @@
 import { UIHelpers } from './ui-helpers.js';
 
 export class ChatRenderer {
-    constructor(config, scrollManager, badgeManager, pronounManager) {
+    constructor(config, scrollManager, badgeManager, pronounManager, cheermoteManager) {
         this.config = config;
         this.scrollManager = scrollManager;
         this.badgeManager = badgeManager;
         this.pronounManager = pronounManager;
+        this.cheermoteManager = cheermoteManager;
         this.chatMessages = document.getElementById('chat-messages');
         this.currentBroadcasterId = null;
     }
@@ -202,7 +203,8 @@ export class ChatRenderer {
             }
 
             // Build node tree dynamically instead of via innerHTML
-            const contentNodes = this.buildMessageContentDOM(data.message, data.emotes);
+            const hasBits = !!(data.tags?.bits);
+            const contentNodes = this.buildMessageContentDOM(data.message, data.emotes, hasBits);
             const isSingleEmote = this.checkSingleEmoteNodes(contentNodes);
 
             if (timestamp) {
@@ -312,7 +314,7 @@ export class ChatRenderer {
     /**
      * Build secure DOM fragment for message content parsing emotes and URLs
      */
-    buildMessageContentDOM(message, emotes) {
+    buildMessageContentDOM(message, emotes, hasBits = false) {
         const frag = document.createDocumentFragment();
         
         let emotePositions = [];
@@ -333,14 +335,28 @@ export class ChatRenderer {
         }
         emotePositions.sort((a, b) => a.start - b.start);
 
-        if (emotePositions.length === 0) {
-            // No emotes, check for URLs
-            const urlRegex = /(\bhttps?:\/\/[^\s<]+)/g;
-            let lastIndex = 0;
+        // Parse cheermotes if the message has bits and we have cheermote data
+        let cheermotePositions = [];
+        if (hasBits && this.cheermoteManager) {
+            cheermotePositions = this.cheermoteManager.parseCheermotes(message);
+        }
+
+        // Merge emote positions and cheermote positions into a unified list
+        const allPositions = [
+            ...emotePositions.map(e => ({ ...e, type: 'emote' })),
+            ...cheermotePositions.map(c => ({ ...c, type: 'cheermote' }))
+        ].sort((a, b) => a.start - b.start);
+
+        // URL detection helper for text segments
+        const urlRegex = /(\bhttps?:\/\/[^\s<]+)/g;
+        const appendTextWithUrls = (text) => {
+            if (!text) return;
+            urlRegex.lastIndex = 0;
+            let lastIdx = 0;
             let match;
-            while ((match = urlRegex.exec(message)) !== null) {
-                if (match.index > lastIndex) {
-                    frag.appendChild(document.createTextNode(message.slice(lastIndex, match.index)));
+            while ((match = urlRegex.exec(text)) !== null) {
+                if (match.index > lastIdx) {
+                    frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
                 }
                 try {
                     const validUrl = new URL(match[0]);
@@ -357,95 +373,91 @@ export class ChatRenderer {
                 } catch (e) {
                     frag.appendChild(document.createTextNode(match[0]));
                 }
-                lastIndex = urlRegex.lastIndex;
+                lastIdx = urlRegex.lastIndex;
             }
-            if (lastIndex < message.length) {
-                frag.appendChild(document.createTextNode(message.slice(lastIndex)));
+            if (lastIdx < text.length) {
+                frag.appendChild(document.createTextNode(text.slice(lastIdx)));
             }
-        } else {
-            // Has emotes
-            const urlRegex = /(\bhttps?:\/\/[^\s<]+)/g;
-            const appendTextWithUrls = (text) => {
-                if (!text) return;
-                let lastIdx = 0;
-                let match;
-                while ((match = urlRegex.exec(text)) !== null) {
-                    if (match.index > lastIdx) {
-                        frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
-                    }
-                    try {
-                        const validUrl = new URL(match[0]);
-                        if (validUrl.protocol === 'http:' || validUrl.protocol === 'https:') {
-                            const a = document.createElement('a');
-                            a.href = validUrl.href;
-                            a.target = '_blank';
-                            a.rel = 'noopener noreferrer';
-                            a.textContent = match[0]; // safe
-                            frag.appendChild(a);
-                        } else {
-                            frag.appendChild(document.createTextNode(match[0]));
-                        }
-                    } catch (e) {
-                        frag.appendChild(document.createTextNode(match[0]));
-                    }
-                    lastIdx = urlRegex.lastIndex;
-                }
-                if (lastIdx < text.length) {
-                    frag.appendChild(document.createTextNode(text.slice(lastIdx)));
-                }
-            };
+        };
 
+        if (allPositions.length === 0) {
+            // No emotes or cheermotes — just parse URLs
+            appendTextWithUrls(message);
+        } else {
             let lastIndex = 0;
-            for (const emote of emotePositions) {
-                if (emote.start > lastIndex) {
-                    appendTextWithUrls(message.slice(lastIndex, emote.start));
+            for (const pos of allPositions) {
+                // Skip if this position overlaps with a previous one
+                if (pos.start < lastIndex) continue;
+
+                if (pos.start > lastIndex) {
+                    appendTextWithUrls(message.slice(lastIndex, pos.start));
                 }
-                // Determine if it's an InnerTube emote or Twitch emote structure
-                // InnerTube emotes passed from our Normalizer might have URL rather than ID in some future cases,
-                // but for now sticking to the twitch structure compatibility.
-                const emoteCode = message.substring(emote.start, emote.end + 1);
-                
-                // Restrict YT emoji URLs to trusted domains to prevent loading untrusted resources
-                let isYtEmoji = false;
-                if (emote.id.startsWith('http')) {
-                    try {
-                        const emoteUrl = new URL(emote.id);
-                        const host = emoteUrl.hostname;
-                        if (host === 'youtube.com' || host.endsWith('.youtube.com') ||
-                            host === 'ytimg.com' || host.endsWith('.ytimg.com') ||
-                            host === 'google.com' || host.endsWith('.google.com') ||
-                            host === 'ggpht.com' || host.endsWith('.ggpht.com') ||
-                            host === 'gstatic.com' || host.endsWith('.gstatic.com')) {
-                            isYtEmoji = true;
-                        }
-                    } catch (e) {
-                        // Invalid URL
-                    }
-                }
-                
-                const img = document.createElement('img');
-                img.className = 'emote';
-                if (isYtEmoji) {
-                    img.classList.add('yt-emoji');
-                    img.src = emote.id;
-                } else if (!emote.id.startsWith('http')) {
-                    const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(emote.id)}/default/dark`;
-                    img.src = `${baseUrl}/3.0`;
-                    img.onerror = function() {
-                        this.onerror = function() { this.src = `${baseUrl}/1.0`; };
-                        this.src = `${baseUrl}/2.0`;
-                    };
+
+                if (pos.type === 'cheermote') {
+                    // Render cheermote: animated image + colored bit amount
+                    const wrapper = document.createElement('span');
+                    wrapper.className = 'cheermote';
+
+                    const img = document.createElement('img');
+                    img.className = 'emote cheermote-img';
+                    img.src = pos.imageUrl;
+                    img.alt = pos.text;
+                    img.title = `${pos.prefix} ${pos.bits}`;
+                    wrapper.appendChild(img);
+
+                    const bitsSpan = document.createElement('span');
+                    bitsSpan.className = 'cheermote-bits';
+                    bitsSpan.style.color = pos.color;
+                    bitsSpan.textContent = pos.bits;
+                    wrapper.appendChild(bitsSpan);
+
+                    frag.appendChild(wrapper);
+                    lastIndex = pos.end + 1;
                 } else {
-                    // Fallback for malicious or unrecognized HTTP IDs
-                    frag.appendChild(document.createTextNode(emoteCode));
-                    lastIndex = emote.end + 1;
-                    continue;
+                    // Render emote (existing logic)
+                    const emoteCode = message.substring(pos.start, pos.end + 1);
+
+                    // Restrict YT emoji URLs to trusted domains
+                    let isYtEmoji = false;
+                    if (pos.id.startsWith('http')) {
+                        try {
+                            const emoteUrl = new URL(pos.id);
+                            const host = emoteUrl.hostname;
+                            if (host === 'youtube.com' || host.endsWith('.youtube.com') ||
+                                host === 'ytimg.com' || host.endsWith('.ytimg.com') ||
+                                host === 'google.com' || host.endsWith('.google.com') ||
+                                host === 'ggpht.com' || host.endsWith('.ggpht.com') ||
+                                host === 'gstatic.com' || host.endsWith('.gstatic.com')) {
+                                isYtEmoji = true;
+                            }
+                        } catch (e) {
+                            // Invalid URL
+                        }
+                    }
+
+                    const img = document.createElement('img');
+                    img.className = 'emote';
+                    if (isYtEmoji) {
+                        img.classList.add('yt-emoji');
+                        img.src = pos.id;
+                    } else if (!pos.id.startsWith('http')) {
+                        const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(pos.id)}/default/dark`;
+                        img.src = `${baseUrl}/3.0`;
+                        img.onerror = function() {
+                            this.onerror = function() { this.src = `${baseUrl}/1.0`; };
+                            this.src = `${baseUrl}/2.0`;
+                        };
+                    } else {
+                        // Fallback for malicious or unrecognized HTTP IDs
+                        frag.appendChild(document.createTextNode(emoteCode));
+                        lastIndex = pos.end + 1;
+                        continue;
+                    }
+                    img.alt = emoteCode;
+                    img.title = emoteCode;
+                    frag.appendChild(img);
+                    lastIndex = pos.end + 1;
                 }
-                img.alt = emoteCode;
-                img.title = emoteCode;
-                frag.appendChild(img);
-                
-                lastIndex = emote.end + 1;
             }
             if (lastIndex < message.length) {
                 appendTextWithUrls(message.slice(lastIndex));

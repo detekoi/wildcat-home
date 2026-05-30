@@ -446,6 +446,27 @@ body.window-mode.top-fade #chat-scroll-area {
     margin: 5px;
 }
 
+/* Cheermote styles (animated bit emotes) */
+.cheermote {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.cheermote-img {
+    height: calc(var(--font-size) * 1.8);
+    vertical-align: middle;
+}
+
+.cheermote-bits {
+    font-weight: 800;
+    font-size: 0.9em;
+    margin-left: 1px;
+    vertical-align: middle;
+    text-shadow: 0 0 3px currentColor;
+}
+
 #channel-form {
     margin-bottom: 15px;
     order: -1;

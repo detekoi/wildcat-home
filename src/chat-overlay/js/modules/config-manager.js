@@ -55,6 +55,8 @@ export class ConfigManager {
             badgeCacheGlobalTTL: 12 * 60 * 60 * 1000,
             badgeCacheChannelTTL: 1 * 60 * 60 * 1000,
             badgeFallbackHide: true,
+            cheermoteEndpointUrl: 'https://us-central1-chat-themer.cloudfunctions.net/getCheermotes',
+            cheermoteCacheTTL: 12 * 60 * 60 * 1000,
             enlargeSingleEmotes: false,
             bgColorOpacity: 0.8,
             bgImageOpacity: 0.55,

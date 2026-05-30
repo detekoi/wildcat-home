@@ -7,11 +7,12 @@ import { ChatSource } from './chat-source.js';
 import { UIHelpers } from './ui-helpers.js';
 
 export class TwitchChatSource extends ChatSource {
-    constructor(configManager, chatRenderer, badgeManager) {
+    constructor(configManager, chatRenderer, badgeManager, cheermoteManager) {
         super();
         this.configManager = configManager;
         this.chatRenderer = chatRenderer;
         this.badgeManager = badgeManager;
+        this.cheermoteManager = cheermoteManager;
         this.socket = null;
         this.channel = '';
         this.currentBroadcasterId = null;
@@ -96,6 +97,12 @@ export class TwitchChatSource extends ChatSource {
 
             // Fetch global badges on successful connection
             await this.badgeManager.fetchGlobalBadges();
+            // Fetch global cheermotes on successful connection
+            if (this.cheermoteManager) {
+                this.cheermoteManager.fetchCheermotes().catch(err =>
+                    console.warn('Failed to fetch global cheermotes:', err)
+                );
+            }
             // Channel badges will be fetched on ROOMSTATE or first message with room-id
         }, 50); // Small delay can sometimes help ensure readiness
     }
@@ -155,6 +162,12 @@ export class TwitchChatSource extends ChatSource {
                     console.log(`Switched to room/broadcaster ID: ${this.currentBroadcasterId}`);
                     this.chatRenderer.setCurrentBroadcasterId(this.currentBroadcasterId);
                     this.badgeManager.fetchChannelBadges(this.currentBroadcasterId); // Fetch badges for the new room
+                    // Fetch channel-specific cheermotes (includes global + channel custom)
+                    if (this.cheermoteManager) {
+                        this.cheermoteManager.fetchCheermotes(this.currentBroadcasterId).catch(err =>
+                            console.warn('Failed to fetch channel cheermotes:', err)
+                        );
+                    }
                 }
                 return; // ROOMSTATE messages don't need further processing as chat messages
             }

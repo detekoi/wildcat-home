@@ -5,6 +5,7 @@ import { BadgeManager } from './modules/badge-manager.js';
 import { PronounManager } from './modules/pronoun-manager.js';
 import { ConfigManager } from './modules/config-manager.js';
 import { ChatRenderer } from './modules/chat-renderer.js';
+import { CheermoteManager } from './modules/cheermote-manager.js';
 import { ChatConnection } from './modules/chat-connection.js';
 import { FontManager } from './modules/font-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
@@ -96,11 +97,12 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const configManager = new ConfigManager();
         const scrollManager = new ScrollManager(scrollArea, chatMessages);
         const badgeManager = new BadgeManager(configManager.config);
+        const cheermoteManager = new CheermoteManager(configManager.config);
         const pronounManager = new PronounManager();
         pronounManager.loadDefinitions();
 
-        const chatRenderer = new ChatRenderer(configManager.config, scrollManager, badgeManager, pronounManager);
-        const chatConnection = new ChatConnection(configManager, chatRenderer, badgeManager);
+        const chatRenderer = new ChatRenderer(configManager.config, scrollManager, badgeManager, pronounManager, cheermoteManager);
+        const chatConnection = new ChatConnection(configManager, chatRenderer, badgeManager, cheermoteManager);
 
         const fontManager = new FontManager({
             fontSearchInput, fontSearchResults, prevFontBtn, nextFontBtn,
