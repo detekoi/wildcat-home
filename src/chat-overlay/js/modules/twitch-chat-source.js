@@ -142,7 +142,7 @@ export class TwitchChatSource extends ChatSource {
         messages.forEach(message => {
             if (!message) return;
 
-            if (message.includes('PING')) { // Handle PING/PONG keepalive
+            if (message.startsWith('PING ') || message === 'PING') { // Handle PING/PONG keepalive
                 this.socket?.send('PONG :tmi.twitch.tv');
                 return;
             }
@@ -168,6 +168,8 @@ export class TwitchChatSource extends ChatSource {
 
             if (message.includes('PRIVMSG')) { // Handle chat messages
                 this.handlePrivMsg(message, tags);
+            } else if (message.includes('USERNOTICE')) { // Handle sub/resub/gift/raid events
+                this.handleUserNotice(message, tags);
             }
         });
     }
@@ -194,6 +196,42 @@ export class TwitchChatSource extends ChatSource {
     }
 
     /**
+     * Decode IRCv3 tag value escape sequences
+     * @see https://ircv3.net/specs/extensions/message-tags.html#escaping-values
+     */
+    unescapeTagValue(value) {
+        if (!value) return '';
+        return value
+            .replace(/\\s/g, ' ')
+            .replace(/\\:/g, ';')
+            .replace(/\\r/g, '\r')
+            .replace(/\\n/g, '\n')
+            .replace(/\\\\/g, '\\');
+    }
+
+    /**
+     * Parse emote tag string into a structured object
+     * Shared by handlePrivMsg and handleUserNotice
+     * @param {string} emotesTag - Raw emotes tag value (e.g. "25:0-4,12-16/30:6-9")
+     * @returns {Object|null} - Parsed emotes object or null
+     */
+    parseEmoteTags(emotesTag) {
+        if (!emotesTag) return null;
+        try {
+            const emotes = {};
+            emotesTag.split('/').forEach(group => {
+                if (!group?.includes(':')) return;
+                const [emoteId, positions] = group.split(':');
+                if (emoteId && positions) emotes[emoteId] = positions.split(',').filter(pos => pos?.includes('-'));
+            });
+            return emotes;
+        } catch (err) {
+            console.error('Error parsing emotes:', err, emotesTag);
+            return null;
+        }
+    }
+
+    /**
      * Handle PRIVMSG (chat message)
      */
     handlePrivMsg(message, tags) {
@@ -213,19 +251,7 @@ export class TwitchChatSource extends ChatSource {
         }
 
         // Parse emotes from tags
-        let emotes = null;
-        if (tags.emotes) {
-            try {
-                emotes = {};
-                tags.emotes.split('/').forEach(group => {
-                    if (!group?.includes(':')) return;
-                    const [emoteId, positions] = group.split(':');
-                    if (emoteId && positions) emotes[emoteId] = positions.split(',').filter(pos => pos?.includes('-'));
-                });
-            } catch (err) {
-                console.error('Error parsing emotes:', err, tags.emotes);
-            }
-        }
+        const emotes = this.parseEmoteTags(tags.emotes);
 
         // If broadcasterId hasn't been set yet (e.g. from ROOMSTATE), try to get it from PRIVMSG tags
         if (!this.currentBroadcasterId && tags['room-id']) {
@@ -263,6 +289,170 @@ export class TwitchChatSource extends ChatSource {
             tags,
             isAction
         });
+    }
+
+    /**
+     * Handle USERNOTICE (sub, resub, gift sub, raid, announcement, etc.)
+     * These events arrive via IRC when twitch.tv/commands capability is requested.
+     */
+    handleUserNotice(message, tags) {
+        const msgId = tags['msg-id'];
+        if (!msgId) return;
+
+        const displayName = tags['display-name'] || tags.login || 'Someone';
+        const systemMsg = this.unescapeTagValue(tags['system-msg']);
+
+        // Extract optional user message (e.g. resub share text)
+        let userMessage = '';
+        try {
+            const parts = message.split('USERNOTICE #');
+            if (parts.length > 1) {
+                const colonIndex = parts[1].indexOf(' :');
+                if (colonIndex !== -1) userMessage = parts[1].substring(colonIndex + 2);
+            }
+        } catch (err) {
+            // No user message attached
+        }
+
+        // Parse emotes — always parse when present (needed for both userMessage and systemMsg fallback)
+        const emotes = this.parseEmoteTags(tags.emotes);
+
+        // Sub plan display name
+        const subPlanMap = { 'Prime': 'Prime', '1000': 'Tier 1', '2000': 'Tier 2', '3000': 'Tier 3' };
+        const subPlan = subPlanMap[tags['msg-param-sub-plan']] || tags['msg-param-sub-plan'] || '';
+
+        let eventData = null;
+
+        switch (msgId) {
+            case 'sub':
+                eventData = {
+                    eventType: 'sub',
+                    icon: '⭐',
+                    text: `${displayName} subscribed${subPlan ? ` with ${subPlan}` : ''}!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+
+            case 'resub': {
+                const months = tags['msg-param-cumulative-months'] || '?';
+                const showStreak = tags['msg-param-should-share-streak'] === '1';
+                const streak = tags['msg-param-streak-months'];
+                let text = `${displayName} resubscribed for ${months} months${subPlan ? ` with ${subPlan}` : ''}!`;
+                if (showStreak && streak) {
+                    text += ` (${streak} month streak)`;
+                }
+                eventData = {
+                    eventType: 'resub',
+                    icon: '⭐',
+                    text, userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'subgift': {
+                const recipient = tags['msg-param-recipient-display-name'] || 'someone';
+                eventData = {
+                    eventType: 'subgift',
+                    icon: '🎁',
+                    text: `${displayName} gifted a ${subPlan || 'Tier 1'} sub to ${recipient}!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'submysterygift': {
+                const giftCount = tags['msg-param-mass-gift-count'] || '?';
+                eventData = {
+                    eventType: 'submysterygift',
+                    icon: '🎁',
+                    text: `${displayName} is gifting ${giftCount} ${subPlan || 'Tier 1'} subs to the community!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'raid': {
+                const viewerCount = tags['msg-param-viewerCount'] || '?';
+                eventData = {
+                    eventType: 'raid',
+                    icon: '🎉',
+                    text: `${displayName} is raiding with ${viewerCount} viewers!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'announcement': {
+                const announcementColor = tags['msg-param-color'] || 'PRIMARY';
+                eventData = {
+                    eventType: 'announcement',
+                    icon: '📢',
+                    text: `${displayName}`,
+                    announcementColor,
+                    userMessage: userMessage || systemMsg,
+                    emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'bitsbadgetier': {
+                const threshold = tags['msg-param-threshold'] || '?';
+                eventData = {
+                    eventType: 'bitsbadgetier',
+                    icon: '💎',
+                    text: `${displayName} earned a new ${threshold} Bits badge!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'giftpaidupgrade': {
+                const sender = tags['msg-param-sender-name'] || tags['msg-param-sender-login'] || 'someone';
+                eventData = {
+                    eventType: 'giftpaidupgrade',
+                    icon: '⭐',
+                    text: `${displayName} is continuing their gifted sub from ${sender}!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
+            case 'primepaidupgrade':
+                eventData = {
+                    eventType: 'primepaidupgrade',
+                    icon: '⭐',
+                    text: `${displayName} converted from Prime to a ${subPlan || 'paid'} sub!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+
+            default:
+                // Unknown USERNOTICE type — render with system-msg fallback
+                if (systemMsg) {
+                    eventData = {
+                        eventType: 'unknown',
+                        icon: 'ℹ️',
+                        text: systemMsg,
+                        userMessage, emotes, tags,
+                        color: tags.color || null
+                    };
+                }
+                break;
+        }
+
+        if (eventData) {
+            eventData.platform = 'twitch';
+            this.chatRenderer.renderTwitchEvent(eventData);
+        }
     }
 
     /**

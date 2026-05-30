@@ -75,8 +75,10 @@ export class ChatRenderer {
     }
 
     renderSuperChat(data, targetContainer, currentScrollArea) {
+        const { container, isPopup } = this._resolveTargetContainer();
+        if (!container) return;
+
         const itemContainer = document.createElement('div');
-        const isPopup = this.config.chatMode === 'popup';
         itemContainer.className = isPopup ? 'popup-message superchat-message' : 'chat-message superchat-message';
         if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
         
@@ -110,22 +112,14 @@ export class ChatRenderer {
         }
 
         itemContainer.appendChild(superChatEl);
-        targetContainer.appendChild(itemContainer);
-
-        if (isPopup) {
-            this.handlePopupMessage(itemContainer, targetContainer);
-        } else {
-            this.scrollManager.ensureSentinelLast();
-            this.limitMessages();
-            if (this.scrollManager.autoFollow && currentScrollArea) {
-                this.scrollManager.scrollToBottom();
-            }
-        }
+        this._finalizeAppend(itemContainer, container, isPopup);
     }
 
     renderMembershipEvent(data, targetContainer, currentScrollArea) {
+        const { container, isPopup } = this._resolveTargetContainer();
+        if (!container) return;
+
         const itemContainer = document.createElement('div');
-        const isPopup = this.config.chatMode === 'popup';
         itemContainer.className = isPopup ? 'popup-message membership-message system-message' : 'chat-message membership-message system-message';
         if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
 
@@ -138,14 +132,100 @@ export class ChatRenderer {
         memEl.appendChild(textEl);
         
         itemContainer.appendChild(memEl);
-        targetContainer.appendChild(itemContainer);
+        this._finalizeAppend(itemContainer, container, isPopup);
+    }
 
+    /**
+     * Render a Twitch native event (sub, resub, gift sub, raid, announcement, etc.)
+     * Called from TwitchChatSource.handleUserNotice()
+     */
+    renderTwitchEvent(data) {
+        const { container, isPopup } = this._resolveTargetContainer();
+        if (!container) return;
+
+        const itemContainer = document.createElement('div');
+        itemContainer.className = isPopup
+            ? 'popup-message twitch-event-message'
+            : 'chat-message twitch-event-message';
+        if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
+
+        const eventEl = document.createElement('div');
+        eventEl.className = `twitch-event twitch-event--${data.eventType}`;
+
+        // Announcement color accent
+        if (data.eventType === 'announcement' && data.announcementColor) {
+            const colorMap = {
+                'PRIMARY': '#9147ff',
+                'BLUE': '#0076ff',
+                'GREEN': '#00c853',
+                'ORANGE': '#ff6f00',
+                'PURPLE': '#9147ff'
+            };
+            const accentColor = colorMap[data.announcementColor.toUpperCase()] || colorMap.PRIMARY;
+            eventEl.style.setProperty('--event-accent', accentColor);
+        }
+
+        // Event header: icon + text
+        const headerEl = document.createElement('div');
+        headerEl.className = 'twitch-event-header';
+
+        if (data.icon) {
+            const iconEl = document.createElement('span');
+            iconEl.className = 'twitch-event-icon';
+            iconEl.textContent = data.icon;
+            headerEl.appendChild(iconEl);
+        }
+
+        const textEl = document.createElement('span');
+        textEl.className = 'twitch-event-text';
+        textEl.textContent = data.text;
+        headerEl.appendChild(textEl);
+
+        eventEl.appendChild(headerEl);
+
+        // Optional user message (resub share, announcement body, etc.)
+        if (data.userMessage) {
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'twitch-event-body';
+
+            // Use buildMessageContentDOM for emote support in the user message
+            const hasBits = !!(data.tags?.bits);
+            const contentNodes = this.buildMessageContentDOM(data.userMessage, data.emotes, hasBits);
+            bodyEl.appendChild(contentNodes);
+
+            eventEl.appendChild(bodyEl);
+        }
+
+        itemContainer.appendChild(eventEl);
+        this._finalizeAppend(itemContainer, container, isPopup);
+    }
+
+    /**
+     * Resolve the target container for appending messages (shared by all render methods)
+     * @returns {{ container: HTMLElement|null, isPopup: boolean }}
+     */
+    _resolveTargetContainer() {
+        const isPopup = this.config.chatMode === 'popup';
         if (isPopup) {
-            this.handlePopupMessage(itemContainer, targetContainer);
+            return { container: document.getElementById('popup-messages'), isPopup };
+        }
+        return { container: this.chatMessages, isPopup };
+    }
+
+    /**
+     * Append an item to the container and handle scroll/sentinel/popup behavior
+     * @param {HTMLElement} itemContainer - The message element to append
+     * @param {HTMLElement} container - The target container
+     * @param {boolean} isPopup - Whether in popup mode
+     */
+    _finalizeAppend(itemContainer, container, isPopup) {
+        container.appendChild(itemContainer);
+        if (isPopup) {
+            this.handlePopupMessage(itemContainer, container);
         } else {
             this.scrollManager.ensureSentinelLast();
             this.limitMessages();
-            if (this.scrollManager.autoFollow && currentScrollArea) {
+            if (this.scrollManager.autoFollow) {
                 this.scrollManager.scrollToBottom();
             }
         }
