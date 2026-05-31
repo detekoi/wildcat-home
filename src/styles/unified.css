@@ -208,15 +208,15 @@ h6 {
 /* Mobile menu toggle */
 .navbar-toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   background-color: transparent;
   color: var(--color-text);
   border: 1px solid var(--color-grid-line);
-  padding: 8px 12px;
   cursor: pointer;
-  font-size: var(--font-size-regular);
-  font-weight: 600;
   transition: all 0.2s ease;
-  text-transform: uppercase;
   border-radius: 0;
 }
 
@@ -633,7 +633,7 @@ footer a:active {
   }
 
   .navbar-toggle {
-    display: block;
+    display: flex;
   }
 
   .site-navbar-menu {
