@@ -42,15 +42,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const navbarToggle = document.querySelector('.navbar-toggle');
     const navbarMenu = document.querySelector('.site-navbar-menu');
 
+    /**
+     * Swap the Lucide icon inside the toggle button.
+     * Using innerHTML + lucide.createIcons() keeps the SVG size consistent.
+     */
+    function setToggleIcon(iconName) {
+        navbarToggle.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        lucide.createIcons({ nodes: [navbarToggle] });
+    }
+
     if (navbarToggle && navbarMenu) {
         navbarToggle.addEventListener('click', function () {
             navbarMenu.classList.toggle('active');
 
-            // Update button text
+            // Swap between menu (☰) and x (✕) Lucide icons
             if (navbarMenu.classList.contains('active')) {
-                navbarToggle.textContent = '✕';
+                setToggleIcon('x');
             } else {
-                navbarToggle.textContent = '☰';
+                setToggleIcon('menu');
             }
         });
 
@@ -59,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
             link.addEventListener('click', function () {
                 if (window.innerWidth <= 768) {
                     navbarMenu.classList.remove('active');
-                    navbarToggle.textContent = '☰';
+                    setToggleIcon('menu');
                 }
             });
         });
@@ -70,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 !navbarMenu.contains(event.target) &&
                 navbarMenu.classList.contains('active')) {
                 navbarMenu.classList.remove('active');
-                navbarToggle.textContent = '☰';
+                setToggleIcon('menu');
             }
         });
     }
@@ -83,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.innerWidth > 768 && navbarMenu && navbarMenu.classList.contains('active')) {
                 navbarMenu.classList.remove('active');
                 if (navbarToggle) {
-                    navbarToggle.textContent = '☰';
+                    setToggleIcon('menu');
                 }
             }
         }, 250);
