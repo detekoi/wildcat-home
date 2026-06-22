@@ -643,7 +643,6 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // Apply chat mode
         if (configManager.config.chatMode === 'popup') {
             switchChatMode('popup', true);
-            chatRenderer.addChatMessage({ username: 'Test', message: 'Test message', color: configManager.config.usernameColor, tags: {} });
         }
 
         // Event listeners for theme changes
