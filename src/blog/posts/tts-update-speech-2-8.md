@@ -52,4 +52,4 @@ Just include the tag in parentheses anywhere in your message:
 
 These tags work with any voice and in any TTS mode. Mix them into your messages naturally for more expressive, lifelike delivery.
 
-[Full docs →](https://docs.wildcat.chat/wildcatttsdocs.html)
+[Full docs](https://docs.wildcat.chat/wildcatttsdocs.html)

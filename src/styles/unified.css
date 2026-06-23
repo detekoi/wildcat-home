@@ -439,6 +439,46 @@ a:active {
   color: var(--color-accent);
 }
 
+/* Diagonal arrow for external links (target="_blank") */
+a[target="_blank"] {
+  position: relative;
+}
+
+a[target="_blank"]::after {
+  content: "";
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.25em;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='7' y1='17' x2='17' y2='7' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/line%3E%3Cpolyline points='7 7 17 7 17 17' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/polyline%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='7' y1='17' x2='17' y2='7' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/line%3E%3Cpolyline points='7 7 17 7 17 17' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/polyline%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  vertical-align: middle;
+  opacity: 0.75;
+  transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+}
+
+a[target="_blank"]:hover::after,
+a[target="_blank"]:focus::after {
+  transform: translate(1px, -1px);
+  opacity: 1;
+}
+
+/* Exclude specific links that don't need arrows (buttons, images, brands, overlays) */
+a[target="_blank"]:has(img)::after,
+a[target="_blank"]:has(svg)::after,
+a[target="_blank"].twitch-button::after,
+a[target="_blank"].site-navbar-brand::after,
+a[target="_blank"].no-arrow::after {
+  display: none !important;
+}
+
 /* Footer links (simple style) */
 footer a {
   text-decoration: underline;

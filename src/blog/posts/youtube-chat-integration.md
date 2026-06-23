@@ -26,6 +26,6 @@ There should be no need to refresh the browser source after the initial setup. I
 
 The proxy server employs a smart, lightweight [background poller](https://github.com/detekoi/yt-chat-proxy). It will silently retry connecting for up to 10 minutes, and the exact second you go live, the chat widget will automatically flip to "Connected."
 
-[Launch the Chat Overlay →](https://wildcat.chat/chat-overlay/)
+[Launch the Chat Overlay](https://wildcat.chat/chat-overlay/)
 
-[Read the setup guide →](https://docs.wildcat.chat/chatoverlay.html)
+[Read the setup guide](https://docs.wildcat.chat/chatoverlay.html)

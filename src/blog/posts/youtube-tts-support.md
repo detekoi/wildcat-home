@@ -36,5 +36,5 @@ Under the hood, this feature leverages my custom [yt-chat-proxy](https://github.
 
 Happy multistreaming!
 
-[Configure your dashboard →](https://tts.wildcat.chat/)
-[Read the TTS documentation →](https://docs.wildcat.chat/wildcatttsdocs.html)
+[Configure your dashboard](https://tts.wildcat.chat/)
+[Read the TTS documentation](https://docs.wildcat.chat/wildcatttsdocs.html)
