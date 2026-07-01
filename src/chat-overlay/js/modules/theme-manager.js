@@ -385,8 +385,8 @@ export class ThemeManager {
 
         // Pronoun badge color
         const pronounBadgeColorValue = (pronounBadgeColorHex?.value || '#adadb8').toLowerCase();
-        const isPronounSameAsTsActive = (this._configManager.config?.pronounBadgeColor === 'timestamp') || 
-                                       document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]')?.classList.contains('active');
+        // Only check the button's live DOM state, not the saved config (config isn't updated until Save)
+        const isPronounSameAsTsActive = !!document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"].active');
         document.querySelectorAll('.color-btn[data-target="pronounBadge"]').forEach(btn => {
             const btnColor = btn.getAttribute('data-color');
             let isActive;
