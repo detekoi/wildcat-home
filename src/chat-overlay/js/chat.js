@@ -412,6 +412,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
             const pronounBtn = document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]');
             if (pronounBtn && pronounBtn.classList.contains('active')) {
                 document.documentElement.style.setProperty('--pronoun-badge-color', 'var(--timestamp-color)');
+                setSwatchColor(pronounBadgeColorInput, color);
             }
             themeManager.updateColorPreviews();
             themeManager.updateThemePreview();

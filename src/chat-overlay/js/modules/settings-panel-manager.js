@@ -95,7 +95,7 @@ export class SettingsPanelManager {
                 const isUsername = buttonSelector.includes('username');
                 const isTimestamp = buttonSelector.includes('timestamp');
                 const isPronoun = buttonSelector.includes('pronounBadge');
-                
+
                 const targetType = isBg ? 'bg' : isBorder ? 'border' : isText ? 'text' : isUsername ? 'username' : isTimestamp ? 'timestamp' : 'pronounBadge';
                 const activeButton = document.querySelector(`${buttonSelector}.active`);
                 const activeColor = activeButton?.dataset.color;
@@ -233,7 +233,7 @@ export class SettingsPanelManager {
             overrideUsernameColorsInput, fontSizeSlider,
             fontSizeValue, chatWidthInput, chatWidthValue, chatHeightInput, chatHeightValue,
             maxMessagesInput, showTimestampsInput, borderRadiusPresets, boxShadowPresets,
-            textShadowPresets, fontWeightPresets, twitchChannelInput, youtubeChannelInput, twitchChannelForm, youtubeChannelForm, twitchDisconnectBtn, youtubeDisconnectBtn, 
+            textShadowPresets, fontWeightPresets, twitchChannelInput, youtubeChannelInput, twitchChannelForm, youtubeChannelForm, twitchDisconnectBtn, youtubeDisconnectBtn,
             showBadgesToggle, enlargeSingleEmotesToggle } = this._dom;
 
         if (!configPanel) return;
@@ -254,7 +254,7 @@ export class SettingsPanelManager {
         if (textColorHex) textColorHex.value = (this._configManager.config.textColor || '#efeff1').toUpperCase();
         if (usernameColorInput) usernameColorInput.style.backgroundColor = this._configManager.config.usernameColor || '#9147ff';
         if (usernameColorHex) usernameColorHex.value = (this._configManager.config.usernameColor || '#9147ff').toUpperCase();
-        
+
         const timestampColorVal = this._configManager.config.timestampColor || '#adadb8';
         if (timestampColorInput) timestampColorInput.style.backgroundColor = timestampColorVal;
         if (timestampColorHex) timestampColorHex.value = timestampColorVal.toUpperCase();
@@ -302,13 +302,13 @@ export class SettingsPanelManager {
 
         if (twitchChannelInput) twitchChannelInput.value = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel || '';
         if (youtubeChannelInput) youtubeChannelInput.value = this._configManager.config.lastYouTubeTarget || '';
-        
+
         const isTwitchConnected = this._chatConnection.isTwitchConnected();
         const isYouTubeConnected = this._chatConnection.isYouTubeConnected();
-        
+
         if (twitchChannelForm) twitchChannelForm.style.display = isTwitchConnected ? 'none' : 'flex';
         if (youtubeChannelForm) youtubeChannelForm.style.display = isYouTubeConnected ? 'none' : 'flex';
-        
+
         if (twitchDisconnectBtn) {
             twitchDisconnectBtn.style.display = isTwitchConnected ? 'block' : 'none';
             if (isTwitchConnected) twitchDisconnectBtn.textContent = `Disconnect from ${this._chatConnection.getTwitchChannel() || this._configManager.config.lastTwitchChannel}`;
@@ -342,7 +342,7 @@ export class SettingsPanelManager {
 
         const topFadeToggle = document.getElementById('top-fade-toggle');
         if (topFadeToggle) topFadeToggle.checked = this._configManager.config.topFade ?? false;
-        
+
         const showSuperchatsToggle = document.getElementById('show-superchats-toggle');
         if (showSuperchatsToggle) showSuperchatsToggle.checked = this._configManager.config.showSuperChats ?? true;
         const showMembershipsToggle = document.getElementById('show-memberships-toggle');
