@@ -50,6 +50,8 @@ export class ConfigManager {
             lastChannel: '',
             showBadges: true,
             showPronouns: true,
+            timestampColor: '#adadb8',
+            pronounBadgeColor: '#adadb8',
             badgeEndpointUrlGlobal: 'https://us-central1-chat-themer.cloudfunctions.net/getGlobalBadges',
             badgeEndpointUrlChannel: 'https://us-central1-chat-themer.cloudfunctions.net/getChannelBadges',
             badgeCacheGlobalTTL: 12 * 60 * 60 * 1000,
@@ -93,6 +95,7 @@ export class ConfigManager {
         rootStyle.setProperty('--chat-text-color', cfg.textColor || '#efeff1');
         rootStyle.setProperty('--username-color', cfg.usernameColor || '#9147ff');
         rootStyle.setProperty('--timestamp-color', cfg.timestampColor || '#adadb8');
+        rootStyle.setProperty('--pronoun-badge-color', (cfg.pronounBadgeColor && cfg.pronounBadgeColor !== 'timestamp') ? cfg.pronounBadgeColor : 'var(--timestamp-color)');
         rootStyle.setProperty('--font-size', `${cfg.fontSize || 14}px`);
         rootStyle.setProperty('--font-family', cfg.fontFamily || "'Inter', 'Helvetica Neue', Arial, sans-serif");
         rootStyle.setProperty('--font-weight', cfg.fontWeight || 'normal');

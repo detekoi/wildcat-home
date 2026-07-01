@@ -83,6 +83,8 @@ export class ThemeManager {
         this._configManager.updateConfig('borderColor', theme.borderColor === 'transparent' ? 'transparent' : (theme.borderColor || '#9147ff'));
         this._configManager.updateConfig('textColor', theme.textColor || '#efeff1');
         this._configManager.updateConfig('usernameColor', theme.usernameColor || '#9147ff');
+        this._configManager.updateConfig('timestampColor', theme.timestampColor || '#adadb8');
+        this._configManager.updateConfig('pronounBadgeColor', theme.pronounBadgeColor || 'timestamp');
         this._configManager.updateConfig('borderRadius', theme.borderRadius || theme.borderRadiusValue || '8px');
         this._configManager.updateConfig('boxShadow', theme.boxShadow || theme.boxShadowValue || 'none');
         this._configManager.updateConfig('textShadow', theme.textShadow || 'none');
@@ -149,19 +151,36 @@ export class ThemeManager {
         this._chatRenderer.config = this._configManager.config;
 
         // Update UI controls
-        const { bgColorInput, bgOpacityInput, bgOpacityValue, borderColorInput,
-            textColorInput, usernameColorInput, bgImageOpacityInput, bgImageOpacityValue,
-            borderRadiusPresets, boxShadowPresets, textShadowPresets } = this._dom;
+        const { bgColorInput, bgColorHex, bgOpacityInput, bgOpacityValue, borderColorInput, borderColorHex,
+            textColorInput, textColorHex, usernameColorInput, usernameColorHex,
+            timestampColorInput, timestampColorHex, pronounBadgeColorInput, pronounBadgeColorHex,
+            bgImageOpacityInput, bgImageOpacityValue, borderRadiusPresets, boxShadowPresets, textShadowPresets } = this._dom;
 
-        if (bgColorInput) bgColorInput.value = this._configManager.config.bgColor;
+        if (bgColorInput) bgColorInput.style.backgroundColor = this._configManager.config.bgColor;
+        if (bgColorHex) bgColorHex.value = this._configManager.config.bgColor.toUpperCase();
         if (bgOpacityInput && bgOpacityValue) {
             const opacityPercent = Math.round(this._configManager.config.bgColorOpacity * 100);
             bgOpacityInput.value = opacityPercent;
             bgOpacityValue.textContent = `${opacityPercent}%`;
         }
-        if (borderColorInput) borderColorInput.value = this._configManager.config.borderColor === 'transparent' ? '#000000' : this._configManager.config.borderColor;
-        if (textColorInput) textColorInput.value = this._configManager.config.textColor;
-        if (usernameColorInput) usernameColorInput.value = this._configManager.config.usernameColor;
+        if (borderColorInput) borderColorInput.style.backgroundColor = this._configManager.config.borderColor === 'transparent' ? 'transparent' : this._configManager.config.borderColor;
+        if (borderColorHex) borderColorHex.value = this._configManager.config.borderColor.toUpperCase();
+        if (textColorInput) textColorInput.style.backgroundColor = this._configManager.config.textColor;
+        if (textColorHex) textColorHex.value = this._configManager.config.textColor.toUpperCase();
+        if (usernameColorInput) usernameColorInput.style.backgroundColor = this._configManager.config.usernameColor;
+        if (usernameColorHex) usernameColorHex.value = this._configManager.config.usernameColor.toUpperCase();
+        if (timestampColorInput) timestampColorInput.style.backgroundColor = this._configManager.config.timestampColor || '#adadb8';
+        if (timestampColorHex) timestampColorHex.value = (this._configManager.config.timestampColor || '#adadb8').toUpperCase();
+        
+        if (pronounBadgeColorInput) {
+            const pColor = this._configManager.config.pronounBadgeColor;
+            pronounBadgeColorInput.style.backgroundColor = (pColor === 'timestamp' || !pColor) ? (this._configManager.config.timestampColor || '#adadb8') : pColor;
+        }
+        if (pronounBadgeColorHex) {
+            const pColor = this._configManager.config.pronounBadgeColor;
+            pronounBadgeColorHex.value = (pColor === 'timestamp' || !pColor) ? 'TIMESTAMP' : pColor.toUpperCase();
+        }
+
         if (bgImageOpacityInput && bgImageOpacityValue) {
             const imageOpacityPercent = Math.round(this._configManager.config.bgImageOpacity * 100);
             bgImageOpacityInput.value = imageOpacityPercent;
@@ -182,20 +201,28 @@ export class ThemeManager {
      * Update the theme preview display in the settings panel.
      */
     updateThemePreview() {
-        const { themePreview, showTimestampsInput, bgColorInput, bgOpacityInput,
-            borderColorInput, textColorInput, usernameColorInput, borderRadiusPresets,
+        const { themePreview, showTimestampsInput, bgColorHex, bgOpacityInput,
+            borderColorHex, textColorHex, usernameColorHex, timestampColorHex, pronounBadgeColorHex, borderRadiusPresets,
             boxShadowPresets, textShadowPresets, fontSizeSlider, showBadgesToggle,
             chatWrapper, bgImageOpacityInput } = this._dom;
 
         if (!themePreview) return;
 
         const showTimestamps = showTimestampsInput?.checked ?? this._configManager.config?.showTimestamps ?? true;
-        const bgColor = bgColorInput?.value || '#1e1e1e';
+        const bgColor = bgColorHex?.value || '#1e1e1e';
         const bgColorOpacity = (bgOpacityInput ? parseInt(bgOpacityInput.value) : (this._configManager.config?.bgColorOpacity ?? 0.85) * 100) / 100.0;
-        const borderColor = borderColorInput?.value || '#444444';
-        const textColor = textColorInput?.value || '#efeff1';
-        const usernameColor = usernameColorInput?.value || '#9147ff';
-        const timestampColor = this._configManager.config?.timestampColor || '#adadb8';
+        const borderColor = borderColorHex?.value || '#444444';
+        const textColor = textColorHex?.value || '#efeff1';
+        const usernameColor = usernameColorHex?.value || '#9147ff';
+        
+        const timestampColor = timestampColorHex?.value || this._configManager.config?.timestampColor || '#adadb8';
+        const pronounBtn = document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]');
+        const isPronounSameAsTs = (pronounBtn && pronounBtn.classList.contains('active')) ||
+                                 (this._configManager.config?.pronounBadgeColor === 'timestamp');
+        const pronounBadgeColor = isPronounSameAsTs
+            ? timestampColor
+            : (pronounBadgeColorHex?.value || this._configManager.config?.pronounBadgeColor || '#adadb8');
+
         const fontFamily = this._fontManager.getCurrentFontValue();
         const activeBorderRadiusBtn = borderRadiusPresets?.querySelector('.preset-btn.active');
         const borderRadiusValue = activeBorderRadiusBtn?.dataset.value ?? this._configManager.config?.borderRadius ?? '8px';
@@ -250,6 +277,7 @@ export class ThemeManager {
         previewStyle.setProperty('--preview-text-color', textColor);
         previewStyle.setProperty('--preview-username-color', usernameColor);
         previewStyle.setProperty('--preview-timestamp-color', timestampColor);
+        previewStyle.setProperty('--preview-pronoun-badge-color', pronounBadgeColor);
         previewStyle.setProperty('--preview-font-family', fontFamily);
         previewStyle.fontFamily = fontFamily;
         previewStyle.setProperty('--preview-border-radius', borderRadius);
@@ -282,12 +310,16 @@ export class ThemeManager {
             }
         }
 
+        const showPronounsToggle = document.getElementById('show-pronouns-toggle');
+        const shouldShowPronounsInPreview = showPronounsToggle?.checked ?? this._configManager.config.showPronouns;
+        const previewPronounHtml = shouldShowPronounsInPreview ? `<span class="pronoun-badge" style="color: var(--preview-pronoun-badge-color); background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 2px 4px; font-size: 0.8em; margin-right: 5px; vertical-align: middle; text-transform: uppercase; font-weight: 600; display: inline-block; line-height: 1;">she/her</span>` : '';
+
         themePreview.innerHTML = `
             <div class="preview-chat-message">
-                ${ts1}${previewBadgesHtml}<span class="username" style="color: var(--preview-username-color);">Username:</span> <span>Example chat message</span>
+                ${ts1}${previewBadgesHtml}${previewPronounHtml}<span class="username" style="color: var(--preview-username-color);">Username:</span> <span>Example chat message</span>
             </div>
             <div class="preview-chat-message">
-                ${ts2}${previewBadgesHtml}<span class="username" style="color: var(--preview-username-color);">AnotherUser:</span> <span>This is how your chat will look</span>
+                ${ts2}${previewBadgesHtml}${previewPronounHtml}<span class="username" style="color: var(--preview-username-color);">AnotherUser:</span> <span>This is how your chat will look</span>
             </div>
         `.trim();
     }
@@ -304,10 +336,10 @@ export class ThemeManager {
      * Highlight active color buttons based on current input/CSS state.
      */
     highlightActiveColorButtons() {
-        const { bgColorInput, bgOpacityInput, borderColorInput, textColorInput, usernameColorInput } = this._dom;
+        const { bgColorHex, bgOpacityInput, borderColorHex, textColorHex, usernameColorHex, timestampColorHex, pronounBadgeColorHex } = this._dom;
 
-        // Background color
-        const bgColorValue = bgColorInput?.value || '#121212';
+        // Background color (normalize to lowercase for comparison with data-color attributes)
+        const bgColorValue = (bgColorHex?.value || '#121212').toLowerCase();
         const bgOpacityVal = bgOpacityInput ? parseInt(bgOpacityInput.value) : 85;
         const isChromaKeyActive = !!this._configManager.config.chromaKey;
         document.querySelectorAll('.color-btn[data-target="bg"]').forEach(btn => {
@@ -327,7 +359,7 @@ export class ThemeManager {
 
         // Border color
         const currentBorderCSS = document.documentElement.style.getPropertyValue('--chat-border-color').trim();
-        const borderColorInputValue = borderColorInput?.value || '#9147ff';
+        const borderColorInputValue = (borderColorHex?.value || '#9147ff').toLowerCase();
         document.querySelectorAll('.color-btn[data-target="border"]').forEach(btn => {
             const btnColor = btn.getAttribute('data-color');
             let isActive = (btnColor === 'transparent')
@@ -337,13 +369,33 @@ export class ThemeManager {
         });
 
         // Text color
-        const textColorValue = textColorInput?.value || '#efeff1';
+        const textColorValue = (textColorHex?.value || '#efeff1').toLowerCase();
         document.querySelectorAll('.color-btn[data-target="text"]')
             .forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-color') === textColorValue));
 
         // Username color
-        const usernameColorValue = usernameColorInput?.value || '#9147ff';
+        const usernameColorValue = (usernameColorHex?.value || '#9147ff').toLowerCase();
         document.querySelectorAll('.color-btn[data-target="username"]')
             .forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-color') === usernameColorValue));
+
+        // Timestamp color
+        const timestampColorValue = (timestampColorHex?.value || '#adadb8').toLowerCase();
+        document.querySelectorAll('.color-btn[data-target="timestamp"]')
+            .forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-color') === timestampColorValue));
+
+        // Pronoun badge color
+        const pronounBadgeColorValue = (pronounBadgeColorHex?.value || '#adadb8').toLowerCase();
+        const isPronounSameAsTsActive = (this._configManager.config?.pronounBadgeColor === 'timestamp') || 
+                                       document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]')?.classList.contains('active');
+        document.querySelectorAll('.color-btn[data-target="pronounBadge"]').forEach(btn => {
+            const btnColor = btn.getAttribute('data-color');
+            let isActive;
+            if (btnColor === 'timestamp') {
+                isActive = isPronounSameAsTsActive;
+            } else {
+                isActive = (!isPronounSameAsTsActive && btnColor === pronounBadgeColorValue);
+            }
+            btn.classList.toggle('active', isActive);
+        });
     }
 }

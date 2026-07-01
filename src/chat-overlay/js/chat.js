@@ -50,11 +50,19 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const fontSizeSlider = document.getElementById('font-size');
         const fontSizeValue = document.getElementById('font-size-value');
         const bgColorInput = document.getElementById('bg-color');
+        const bgColorHex = document.getElementById('bg-color-hex');
         const bgOpacityInput = document.getElementById('bg-opacity');
         const bgOpacityValue = document.getElementById('bg-opacity-value');
         const borderColorInput = document.getElementById('border-color');
+        const borderColorHex = document.getElementById('border-color-hex');
         const textColorInput = document.getElementById('text-color');
+        const textColorHex = document.getElementById('text-color-hex');
         const usernameColorInput = document.getElementById('username-color');
+        const usernameColorHex = document.getElementById('username-color-hex');
+        const timestampColorInput = document.getElementById('timestamp-color');
+        const timestampColorHex = document.getElementById('timestamp-color-hex');
+        const pronounBadgeColorInput = document.getElementById('pronoun-badge-color');
+        const pronounBadgeColorHex = document.getElementById('pronoun-badge-color-hex');
         const overrideUsernameColorsInput = document.getElementById('override-username-colors');
         const chatWidthInput = document.getElementById('chat-width');
         const chatWidthValue = document.getElementById('chat-width-value');
@@ -81,8 +89,10 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         // --- SHARED DOM REFS BAG ---
         const domRefs = {
-            bgColorInput, bgOpacityInput, bgOpacityValue, borderColorInput,
-            textColorInput, usernameColorInput, overrideUsernameColorsInput,
+            bgColorInput, bgColorHex, bgOpacityInput, bgOpacityValue, borderColorInput, borderColorHex,
+            textColorInput, textColorHex, usernameColorInput, usernameColorHex,
+            timestampColorInput, timestampColorHex, pronounBadgeColorInput, pronounBadgeColorHex,
+            overrideUsernameColorsInput,
             bgImageOpacityInput, bgImageOpacityValue, borderRadiusPresets,
             boxShadowPresets, textShadowPresets, fontWeightPresets,
             fontSizeSlider, fontSizeValue, chatWidthInput, chatWidthValue,
@@ -212,19 +222,35 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         // --- UI EVENT HANDLERS ---
 
+        // Helper to update a swatch div's background color
+        function setSwatchColor(swatch, color) {
+            if (swatch) swatch.style.backgroundColor = color;
+        }
+
         // Background color + opacity
         function updateBgColor() {
-            if (!bgColorInput || !bgOpacityInput) return;
-            const hexColor = bgColorInput.value;
+            if (!bgColorHex || !bgOpacityInput) return;
+            const hexColor = bgColorHex.value.startsWith('#') ? bgColorHex.value : '#' + bgColorHex.value;
             const opacity = parseInt(bgOpacityInput.value) / 100;
             const rgbaColorForCSS = UIHelpers.hexToRgba(hexColor, opacity);
             document.documentElement.style.setProperty('--chat-bg-color', rgbaColorForCSS);
             document.documentElement.style.setProperty('--popup-bg-color', rgbaColorForCSS);
             if (bgOpacityValue) bgOpacityValue.textContent = `${Math.round(opacity * 100)}%`;
+            setSwatchColor(bgColorInput, hexColor);
             themeManager.updateThemePreview();
         }
-        bgColorInput?.addEventListener('input', updateBgColor);
         bgOpacityInput?.addEventListener('input', updateBgColor);
+
+        bgColorHex?.addEventListener('input', () => {
+            let value = bgColorHex.value.trim();
+            if (!value.startsWith('#')) {
+                value = '#' + value;
+            }
+            if (/^#[0-9A-F]{6}$/i.test(value) || /^#[0-9A-F]{3}$/i.test(value)) {
+                setSwatchColor(bgColorInput, value);
+                updateBgColor();
+            }
+        });
 
         // Background image opacity
         function updateBgImageOpacity() {
@@ -240,10 +266,10 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // Color preset button click handlers
         document.querySelectorAll('.color-btn').forEach(button => {
             const color = button.getAttribute('data-color');
-            if (color && color !== 'chroma-key') button.style.backgroundColor = color;
+            if (color && color !== 'chroma-key' && color !== 'timestamp') button.style.backgroundColor = color;
 
-            if (color === 'transparent' || ['#ffffff', '#ffdeec', '#f5f2e6'].includes(color)) {
-                button.style.border = '1px solid #888';
+            if (color === 'transparent' || color === 'timestamp' || ['#ffffff', '#ffdeec', '#f5f2e6'].includes(color)) {
+                button.style.border = color === 'timestamp' ? '1px dashed #888' : '1px solid #888';
             }
             if (['#000000', '#121212', '#1a1a1a', '#0c0c28', '#4e3629'].includes(color)) {
                 button.style.color = 'white';
@@ -267,7 +293,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                             const currentOpacity = bgOpacityInput ? parseInt(bgOpacityInput.value) / 100 : (configManager.config.bgColorOpacity ?? 0.85);
                             configManager.updateConfig('preChromaKeyOpacity', currentOpacity > 0 ? currentOpacity : 0.85);
                             document.body.classList.add('chroma-key');
-                            if (bgColorInput) bgColorInput.value = '#000000';
+                            setSwatchColor(bgColorInput, '#000000');
+                            if (bgColorHex) bgColorHex.value = '#000000';
                             if (bgOpacityInput) bgOpacityInput.value = 0;
                             configManager.updateConfig('chromaKey', true);
                             configManager.updateConfig('bgColorOpacity', 0);
@@ -276,11 +303,13 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                             document.body.classList.remove('chroma-key');
                             configManager.updateConfig('chromaKey', false);
                             if (color === 'transparent') {
-                                if (bgColorInput) bgColorInput.value = '#000000';
+                                setSwatchColor(bgColorInput, '#000000');
+                                if (bgColorHex) bgColorHex.value = '#000000';
                                 if (bgOpacityInput) bgOpacityInput.value = 0;
                                 configManager.updateConfig('bgColorOpacity', 0);
                             } else {
-                                if (bgColorInput) bgColorInput.value = color;
+                                setSwatchColor(bgColorInput, color);
+                                if (bgColorHex) bgColorHex.value = color.toUpperCase();
                                 // Restore opacity when leaving chroma key or transparent
                                 if (wasChromaKey || (bgOpacityInput && parseInt(bgOpacityInput.value) === 0)) {
                                     const restoredOpacity = configManager.config.preChromaKeyOpacity ?? 0.85;
@@ -295,45 +324,104 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                         if (color === 'transparent') {
                             document.documentElement.style.setProperty('--chat-border-color', 'transparent');
                             document.documentElement.style.setProperty('--popup-border-color', 'transparent');
+                            if (borderColorHex) borderColorHex.value = 'TRANSPARENT';
+                            setSwatchColor(borderColorInput, 'transparent');
                         } else {
-                            if (borderColorInput) borderColorInput.value = color;
+                            setSwatchColor(borderColorInput, color);
+                            if (borderColorHex) borderColorHex.value = color.toUpperCase();
                             document.documentElement.style.setProperty('--chat-border-color', color);
                             document.documentElement.style.setProperty('--popup-border-color', color);
                         }
                         break;
                     case 'text':
-                        if (textColorInput) textColorInput.value = color;
+                        setSwatchColor(textColorInput, color);
+                        if (textColorHex) textColorHex.value = color.toUpperCase();
                         document.documentElement.style.setProperty('--chat-text-color', color);
                         document.documentElement.style.setProperty('--popup-text-color', color);
                         break;
                     case 'username':
-                        if (usernameColorInput) usernameColorInput.value = color;
+                        setSwatchColor(usernameColorInput, color);
+                        if (usernameColorHex) usernameColorHex.value = color.toUpperCase();
                         document.documentElement.style.setProperty('--username-color', color);
                         document.documentElement.style.setProperty('--popup-username-color', color);
+                        break;
+                    case 'timestamp':
+                        setSwatchColor(timestampColorInput, color);
+                        if (timestampColorHex) timestampColorHex.value = color.toUpperCase();
+                        document.documentElement.style.setProperty('--timestamp-color', color);
+                        break;
+                    case 'pronounBadge':
+                        if (color === 'timestamp') {
+                            setSwatchColor(pronounBadgeColorInput, timestampColorHex?.value || '#adadb8');
+                            if (pronounBadgeColorHex) pronounBadgeColorHex.value = 'TIMESTAMP';
+                            document.documentElement.style.setProperty('--pronoun-badge-color', 'var(--timestamp-color)');
+                        } else {
+                            setSwatchColor(pronounBadgeColorInput, color);
+                            if (pronounBadgeColorHex) pronounBadgeColorHex.value = color.toUpperCase();
+                            document.documentElement.style.setProperty('--pronoun-badge-color', color);
+                        }
                         break;
                 }
                 themeManager.updateColorPreviews();
             });
         });
 
-        // Direct color input handlers
-        borderColorInput?.addEventListener('input', () => {
-            const value = borderColorInput.value;
-            const finalColor = value === 'transparent' ? 'transparent' : value;
-            document.documentElement.style.setProperty('--chat-border-color', finalColor);
-            document.documentElement.style.setProperty('--popup-border-color', finalColor);
+        // Helper to sync hex text input with color swatch and apply color changes
+        function syncHexInputAndSwatch(swatchEl, hexInput, updateFn) {
+            if (!hexInput) return;
+
+            // Sync text input to swatch on input
+            hexInput.addEventListener('input', () => {
+                let value = hexInput.value.trim();
+                if (!value.startsWith('#')) {
+                    value = '#' + value;
+                }
+                // Validate hex format
+                if (/^#[0-9A-F]{6}$/i.test(value) || /^#[0-9A-F]{3}$/i.test(value)) {
+                    setSwatchColor(swatchEl, value);
+                    updateFn(value);
+                }
+            });
+        }
+
+        // Direct color input handlers (wired up using sync helper)
+        syncHexInputAndSwatch(borderColorInput, borderColorHex, (color) => {
+            document.documentElement.style.setProperty('--chat-border-color', color);
+            document.documentElement.style.setProperty('--popup-border-color', color);
             themeManager.updateColorPreviews();
             themeManager.updateThemePreview();
         });
-        textColorInput?.addEventListener('input', () => {
-            document.documentElement.style.setProperty('--chat-text-color', textColorInput.value);
-            document.documentElement.style.setProperty('--popup-text-color', textColorInput.value);
+
+        syncHexInputAndSwatch(textColorInput, textColorHex, (color) => {
+            document.documentElement.style.setProperty('--chat-text-color', color);
+            document.documentElement.style.setProperty('--popup-text-color', color);
             themeManager.updateColorPreviews();
             themeManager.updateThemePreview();
         });
-        usernameColorInput?.addEventListener('input', () => {
-            document.documentElement.style.setProperty('--username-color', usernameColorInput.value);
-            document.documentElement.style.setProperty('--popup-username-color', usernameColorInput.value);
+
+        syncHexInputAndSwatch(usernameColorInput, usernameColorHex, (color) => {
+            document.documentElement.style.setProperty('--username-color', color);
+            document.documentElement.style.setProperty('--popup-username-color', color);
+            themeManager.updateColorPreviews();
+            themeManager.updateThemePreview();
+        });
+
+        syncHexInputAndSwatch(timestampColorInput, timestampColorHex, (color) => {
+            document.documentElement.style.setProperty('--timestamp-color', color);
+            // If pronoun badge color is linked, update its display color too
+            const pronounBtn = document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]');
+            if (pronounBtn && pronounBtn.classList.contains('active')) {
+                document.documentElement.style.setProperty('--pronoun-badge-color', 'var(--timestamp-color)');
+            }
+            themeManager.updateColorPreviews();
+            themeManager.updateThemePreview();
+        });
+
+        syncHexInputAndSwatch(pronounBadgeColorInput, pronounBadgeColorHex, (color) => {
+            document.documentElement.style.setProperty('--pronoun-badge-color', color);
+            // Remove active state from "Same as TS" if custom color input is used
+            const pronounBtn = document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]');
+            if (pronounBtn) pronounBtn.classList.remove('active');
             themeManager.updateColorPreviews();
             themeManager.updateThemePreview();
         });

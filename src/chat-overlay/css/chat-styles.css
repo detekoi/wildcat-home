@@ -93,6 +93,7 @@
     --chat-bg-image-opacity: 0.55; /* Separate opacity control for background image */
     --username-color: #9147ff; /* Default if no color is specified */
     --timestamp-color: #adadb8;
+    --pronoun-badge-color: var(--timestamp-color);
     --font-size: 14px;
     --font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     --override-username-colors: 0; /* 0 = use Twitch colors, 1 = override */
@@ -427,7 +428,7 @@ body.window-mode.top-fade #chat-scroll-area {
 }
 
 .pronoun-badge {
-    color: var(--timestamp-color);
+    color: var(--pronoun-badge-color);
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     padding: 2px 4px;
@@ -874,6 +875,39 @@ body.chat-page:hover #popup-settings-btn {
     flex-wrap: wrap;
     margin-top: 5px;
     gap: 4px;
+}
+
+.custom-color-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.color-swatch-preview {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #121212;
+}
+
+.custom-color-control input[type="text"] {
+    width: 90px;
+    padding: 5px 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #1a1a1a;
+    color: #efeff1;
+    font-family: monospace;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.custom-color-control input[type="text"]:focus {
+    border-color: #9147ff;
+    outline: none;
 }
 
 /* Config Panel Theme Preview */

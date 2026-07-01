@@ -196,7 +196,7 @@
 
         <div class="config-row">
             <label for="bg-color">Background Color</label>
-            <div class="color-picker">
+            <div class="color-picker-wrapper">
                 <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 5px;">
                     <span>Opacity:</span>
                     <input type="range" id="bg-opacity" min="0" max="100" value="85" style="flex-grow: 1;">
@@ -211,7 +211,10 @@
                     <button type="button" class="color-btn" data-color="#0c0c28" data-target="bg">Cyber</button>
                     <button type="button" class="color-btn chroma-key-btn" data-color="chroma-key" data-target="bg">Chroma</button>
                 </div>
-                <input type="color" id="bg-color" value="#121212" style="visibility: hidden; width: 0; height: 0;">
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="bg-color" style="background-color: #121212;"></div>
+                    <input type="text" id="bg-color-hex" maxlength="7" placeholder="#121212" value="#121212">
+                </div>
             </div>
         </div>
 
@@ -225,7 +228,7 @@
         </div>
         <div class="config-row">
             <label for="border-color">Border:</label>
-            <div class="color-picker">
+            <div class="color-picker-wrapper">
                 <div class="color-buttons">
                     <button type="button" class="color-btn" data-color="#444444" data-target="border">Dark</button>
                     <button type="button" class="color-btn" data-color="#cccccc" data-target="border">Light</button>
@@ -234,12 +237,15 @@
                     <button type="button" class="color-btn" data-color="#00ffb3" data-target="border">Mint</button>
                     <button type="button" class="color-btn" data-color="transparent" data-target="border">None</button>
                 </div>
-                <input type="color" id="border-color" value="#9147ff" style="visibility: hidden; width: 0; height: 0;">
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="border-color" style="background-color: #9147ff;"></div>
+                    <input type="text" id="border-color-hex" maxlength="7" placeholder="#9147FF" value="#9147FF">
+                </div>
             </div>
         </div>
         <div class="config-row">
             <label for="text-color">Text:</label>
-            <div class="color-picker">
+            <div class="color-picker-wrapper">
                 <div class="color-buttons">
                     <button type="button" class="color-btn" data-color="#efeff1" data-target="text">Light</button>
                     <button type="button" class="color-btn" data-color="#1a1a1a" data-target="text">Dark</button>
@@ -247,7 +253,10 @@
                     <button type="button" class="color-btn" data-color="#8e2651" data-target="text">Berry</button>
                     <button type="button" class="color-btn" data-color="#00ffea" data-target="text">Teal</button>
                 </div>
-                <input type="color" id="text-color" value="#efeff1" style="visibility: hidden; width: 0; height: 0;">
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="text-color" style="background-color: #efeff1;"></div>
+                    <input type="text" id="text-color-hex" maxlength="7" placeholder="#EFEFF1" value="#EFEFF1">
+                </div>
             </div>
         </div>
         <div class="config-row">
@@ -255,7 +264,7 @@
                 <input type="checkbox" id="override-username-colors">
                 <label for="username-color">Username Color Override:</label>
             </div>
-            <div class="color-picker">
+            <div class="color-picker-wrapper">
                 <div style="font-size: 12px; color: #888; margin-bottom: 8px;">
                     Use custom color instead of Twitch's colors for all usernames
                 </div>
@@ -267,8 +276,43 @@
                     <button type="button" class="color-btn" data-color="#b81670" data-target="username">Magenta</button>
                     <button type="button" class="color-btn" data-color="#ff2e97" data-target="username">Neon</button>
                 </div>
-                <input type="color" id="username-color" value="#9147ff"
-                    style="visibility: hidden; width: 0; height: 0;">
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="username-color" style="background-color: #9147ff;"></div>
+                    <input type="text" id="username-color-hex" maxlength="7" placeholder="#9147FF" value="#9147FF">
+                </div>
+            </div>
+        </div>
+        <div class="config-row">
+            <label for="timestamp-color">Timestamp Color:</label>
+            <div class="color-picker-wrapper">
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="#adadb8" data-target="timestamp">Subtle</button>
+                    <button type="button" class="color-btn" data-color="#737373" data-target="timestamp">Light</button>
+                    <button type="button" class="color-btn" data-color="#aca192" data-target="timestamp">Warm</button>
+                    <button type="button" class="color-btn" data-color="#d67bb2" data-target="timestamp">Pink</button>
+                    <button type="button" class="color-btn" data-color="#fffd88" data-target="timestamp">Neon</button>
+                </div>
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="timestamp-color" style="background-color: #adadb8;"></div>
+                    <input type="text" id="timestamp-color-hex" maxlength="7" placeholder="#ADADB8" value="#ADADB8">
+                </div>
+            </div>
+        </div>
+        <div class="config-row">
+            <label for="pronoun-badge-color">Pronoun Badge Color:</label>
+            <div class="color-picker-wrapper">
+                <div class="color-buttons">
+                    <button type="button" class="color-btn" data-color="timestamp" data-target="pronounBadge">Same as TS</button>
+                    <button type="button" class="color-btn" data-color="#adadb8" data-target="pronounBadge">Subtle</button>
+                    <button type="button" class="color-btn" data-color="#737373" data-target="pronounBadge">Light</button>
+                    <button type="button" class="color-btn" data-color="#aca192" data-target="pronounBadge">Warm</button>
+                    <button type="button" class="color-btn" data-color="#d67bb2" data-target="pronounBadge">Pink</button>
+                    <button type="button" class="color-btn" data-color="#fffd88" data-target="pronounBadge">Neon</button>
+                </div>
+                <div class="custom-color-control">
+                    <div class="color-swatch-preview" id="pronoun-badge-color" style="background-color: #adadb8;"></div>
+                    <input type="text" id="pronoun-badge-color-hex" maxlength="7" placeholder="#ADADB8" value="#ADADB8">
+                </div>
             </div>
         </div>
 

@@ -89,7 +89,14 @@ export class SettingsPanelManager {
                 return value || defaultValue;
             };
             const getColor = (inputElement, buttonSelector, defaultColor) => {
-                const targetType = buttonSelector.includes('bg') ? 'bg' : buttonSelector.includes('border') ? 'border' : buttonSelector.includes('text') ? 'text' : 'username';
+                const isBg = buttonSelector.includes('bg');
+                const isBorder = buttonSelector.includes('border');
+                const isText = buttonSelector.includes('text');
+                const isUsername = buttonSelector.includes('username');
+                const isTimestamp = buttonSelector.includes('timestamp');
+                const isPronoun = buttonSelector.includes('pronounBadge');
+                
+                const targetType = isBg ? 'bg' : isBorder ? 'border' : isText ? 'text' : isUsername ? 'username' : isTimestamp ? 'timestamp' : 'pronounBadge';
                 const activeButton = document.querySelector(`${buttonSelector}.active`);
                 const activeColor = activeButton?.dataset.color;
 
@@ -100,6 +107,11 @@ export class SettingsPanelManager {
                     if (isTransparentActive && currentOpacity === 0) return '#000000';
                     if (hexFromInput) return hexFromInput;
                     return defaultColor;
+                } else if (targetType === 'pronounBadge') {
+                    if (activeButton) {
+                        return activeColor; // Can be 'timestamp' or hex
+                    }
+                    return inputElement?.value || defaultColor;
                 } else {
                     if (activeButton) {
                         if (targetType === 'border' && activeColor === 'transparent') return 'transparent';
@@ -116,7 +128,7 @@ export class SettingsPanelManager {
 
             const {
                 fontSizeSlider, bgColorInput, bgOpacityInput, borderColorInput, textColorInput,
-                usernameColorInput, overrideUsernameColorsInput, chatWidthInput, chatHeightInput,
+                usernameColorInput, timestampColorInput, pronounBadgeColorInput, overrideUsernameColorsInput, chatWidthInput, chatHeightInput,
                 maxMessagesInput, showTimestampsInput, borderRadiusPresets, boxShadowPresets,
                 textShadowPresets, fontWeightPresets, showBadgesToggle, showPronounsToggle,
                 enlargeSingleEmotesToggle, bgImageOpacityInput
@@ -141,6 +153,8 @@ export class SettingsPanelManager {
                 borderColor: getColor(borderColorInput, '.color-buttons [data-target="border"]', this._configManager.config.borderColor || '#444444'),
                 textColor: getColor(textColorInput, '.color-buttons [data-target="text"]', this._configManager.config.textColor || '#efeff1'),
                 usernameColor: getColor(usernameColorInput, '.color-buttons [data-target="username"]', this._configManager.config.usernameColor || '#9147ff'),
+                timestampColor: getColor(timestampColorInput, '.color-buttons [data-target="timestamp"]', this._configManager.config.timestampColor || '#adadb8'),
+                pronounBadgeColor: getColor(pronounBadgeColorInput, '.color-buttons [data-target="pronounBadge"]', this._configManager.config.pronounBadgeColor || '#adadb8'),
                 overrideUsernameColors: getValue(overrideUsernameColorsInput, this._configManager.config.overrideUsernameColors || false, false, true),
                 bgImage: currentFullTheme.backgroundImage || this._configManager.config.bgImage || null,
                 bgImageOpacity: bgImageOpacityValue,
@@ -213,8 +227,10 @@ export class SettingsPanelManager {
      * Populate all config panel UI controls from the current config state.
      */
     updateConfigPanelFromConfig() {
-        const { configPanel, bgColorInput, bgOpacityInput, bgOpacityValue, borderColorInput,
-            textColorInput, usernameColorInput, overrideUsernameColorsInput, fontSizeSlider,
+        const { configPanel, bgColorInput, bgColorHex, bgOpacityInput, bgOpacityValue, borderColorInput, borderColorHex,
+            textColorInput, textColorHex, usernameColorInput, usernameColorHex,
+            timestampColorInput, timestampColorHex, pronounBadgeColorInput, pronounBadgeColorHex,
+            overrideUsernameColorsInput, fontSizeSlider,
             fontSizeValue, chatWidthInput, chatWidthValue, chatHeightInput, chatHeightValue,
             maxMessagesInput, showTimestampsInput, borderRadiusPresets, boxShadowPresets,
             textShadowPresets, fontWeightPresets, twitchChannelInput, youtubeChannelInput, twitchChannelForm, youtubeChannelForm, twitchDisconnectBtn, youtubeDisconnectBtn, 
@@ -225,15 +241,32 @@ export class SettingsPanelManager {
         const hexColor = this._configManager.config.bgColor || '#121212';
         const isChromaKey = !!this._configManager.config.chromaKey;
         const opacityPercent = isChromaKey ? 0 : Math.round((this._configManager.config.bgColorOpacity ?? 0.85) * 100);
-        if (bgColorInput) bgColorInput.value = isChromaKey ? '#000000' : hexColor;
+        if (bgColorInput) bgColorInput.style.backgroundColor = isChromaKey ? '#000000' : hexColor;
+        if (bgColorHex) bgColorHex.value = (isChromaKey ? '#000000' : hexColor).toUpperCase();
         if (bgOpacityInput && bgOpacityValue) {
             bgOpacityInput.value = opacityPercent;
             bgOpacityValue.textContent = `${opacityPercent}%`;
         }
 
-        if (borderColorInput) borderColorInput.value = this._configManager.config.borderColor === 'transparent' ? '#000000' : this._configManager.config.borderColor;
-        if (textColorInput) textColorInput.value = this._configManager.config.textColor || '#efeff1';
-        if (usernameColorInput) usernameColorInput.value = this._configManager.config.usernameColor || '#9147ff';
+        if (borderColorInput) borderColorInput.style.backgroundColor = this._configManager.config.borderColor === 'transparent' ? 'transparent' : this._configManager.config.borderColor;
+        if (borderColorHex) borderColorHex.value = this._configManager.config.borderColor.toUpperCase();
+        if (textColorInput) textColorInput.style.backgroundColor = this._configManager.config.textColor || '#efeff1';
+        if (textColorHex) textColorHex.value = (this._configManager.config.textColor || '#efeff1').toUpperCase();
+        if (usernameColorInput) usernameColorInput.style.backgroundColor = this._configManager.config.usernameColor || '#9147ff';
+        if (usernameColorHex) usernameColorHex.value = (this._configManager.config.usernameColor || '#9147ff').toUpperCase();
+        
+        const timestampColorVal = this._configManager.config.timestampColor || '#adadb8';
+        if (timestampColorInput) timestampColorInput.style.backgroundColor = timestampColorVal;
+        if (timestampColorHex) timestampColorHex.value = timestampColorVal.toUpperCase();
+
+        const pronounBadgeColorVal = this._configManager.config.pronounBadgeColor || 'timestamp';
+        if (pronounBadgeColorInput) {
+            pronounBadgeColorInput.style.backgroundColor = pronounBadgeColorVal === 'timestamp' ? timestampColorVal : pronounBadgeColorVal;
+        }
+        if (pronounBadgeColorHex) {
+            pronounBadgeColorHex.value = pronounBadgeColorVal.toUpperCase();
+        }
+
         this._themeManager.highlightActiveColorButtons();
 
         UIHelpers.highlightBorderRadiusButton(UIHelpers.getBorderRadiusValue(this._configManager.config.borderRadius), borderRadiusPresets);
