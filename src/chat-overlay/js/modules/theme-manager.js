@@ -394,9 +394,22 @@ export class ThemeManager {
                 isActive = isPronounSameAsTsActive;
                 // Dynamically act as a color swatch for the timestamp color
                 btn.style.backgroundColor = timestampColorValue;
-                const r = parseInt(timestampColorValue.slice(1, 3), 16) || 0;
-                const g = parseInt(timestampColorValue.slice(3, 5), 16) || 0;
-                const b = parseInt(timestampColorValue.slice(5, 7), 16) || 0;
+                let r = 0, g = 0, b = 0;
+                if (timestampColorValue.startsWith('#')) {
+                    const hexStr = timestampColorValue.length === 4 
+                        ? timestampColorValue[1]+timestampColorValue[1]+timestampColorValue[2]+timestampColorValue[2]+timestampColorValue[3]+timestampColorValue[3]
+                        : timestampColorValue.slice(1, 7);
+                    r = parseInt(hexStr.slice(0, 2), 16) || 0;
+                    g = parseInt(hexStr.slice(2, 4), 16) || 0;
+                    b = parseInt(hexStr.slice(4, 6), 16) || 0;
+                } else if (timestampColorValue.startsWith('rgb')) {
+                    const rgbMatch = timestampColorValue.match(/\d+/g);
+                    if (rgbMatch && rgbMatch.length >= 3) {
+                        r = parseInt(rgbMatch[0], 10);
+                        g = parseInt(rgbMatch[1], 10);
+                        b = parseInt(rgbMatch[2], 10);
+                    }
+                }
                 const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                 btn.style.color = luminance > 0.5 ? 'black' : 'white';
             } else {

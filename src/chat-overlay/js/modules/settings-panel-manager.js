@@ -249,7 +249,7 @@ export class SettingsPanelManager {
         }
 
         if (borderColorInput) borderColorInput.style.backgroundColor = this._configManager.config.borderColor === 'transparent' ? 'transparent' : this._configManager.config.borderColor;
-        if (borderColorHex) borderColorHex.value = this._configManager.config.borderColor.toUpperCase();
+        if (borderColorHex) borderColorHex.value = (this._configManager.config.borderColor || '#9147ff').toUpperCase();
         if (textColorInput) textColorInput.style.backgroundColor = this._configManager.config.textColor || '#efeff1';
         if (textColorHex) textColorHex.value = (this._configManager.config.textColor || '#efeff1').toUpperCase();
         if (usernameColorInput) usernameColorInput.style.backgroundColor = this._configManager.config.usernameColor || '#9147ff';

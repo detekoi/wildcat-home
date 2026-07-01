@@ -228,29 +228,26 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         }
 
         // Background color + opacity
-        function updateBgColor() {
+        function updateBgColor(passedColor) {
             if (!bgColorHex || !bgOpacityInput) return;
-            const hexColor = bgColorHex.value.startsWith('#') ? bgColorHex.value : '#' + bgColorHex.value;
+            let hexColor = passedColor || bgColorHex.value.trim();
+            if (!hexColor.startsWith('#')) hexColor = '#' + hexColor;
+            
+            // Allow opacity to update even if color is invalid, but don't flash black
+            const isValidHex = /^#[0-9A-F]{6}$/i.test(hexColor) || /^#[0-9A-F]{3}$/i.test(hexColor);
             const opacity = parseInt(bgOpacityInput.value) / 100;
-            const rgbaColorForCSS = UIHelpers.hexToRgba(hexColor, opacity);
-            document.documentElement.style.setProperty('--chat-bg-color', rgbaColorForCSS);
-            document.documentElement.style.setProperty('--popup-bg-color', rgbaColorForCSS);
             if (bgOpacityValue) bgOpacityValue.textContent = `${Math.round(opacity * 100)}%`;
-            setSwatchColor(bgColorInput, hexColor);
-            themeManager.updateThemePreview();
+            
+            if (isValidHex) {
+                const rgbaColorForCSS = UIHelpers.hexToRgba(hexColor, opacity);
+                document.documentElement.style.setProperty('--chat-bg-color', rgbaColorForCSS);
+                document.documentElement.style.setProperty('--popup-bg-color', rgbaColorForCSS);
+                setSwatchColor(bgColorInput, hexColor);
+                themeManager.updateThemePreview();
+            }
         }
-        bgOpacityInput?.addEventListener('input', updateBgColor);
-
-        bgColorHex?.addEventListener('input', () => {
-            let value = bgColorHex.value.trim();
-            if (!value.startsWith('#')) {
-                value = '#' + value;
-            }
-            if (/^#[0-9A-F]{6}$/i.test(value) || /^#[0-9A-F]{3}$/i.test(value)) {
-                setSwatchColor(bgColorInput, value);
-                updateBgColor();
-            }
-        });
+        bgOpacityInput?.addEventListener('input', () => updateBgColor());
+        syncHexInputAndSwatch(bgColorInput, bgColorHex, updateBgColor);
 
         // Background image opacity
         function updateBgImageOpacity() {
@@ -349,6 +346,12 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                         setSwatchColor(timestampColorInput, color);
                         if (timestampColorHex) timestampColorHex.value = color.toUpperCase();
                         document.documentElement.style.setProperty('--timestamp-color', color);
+                        // If pronoun badge color is linked, update its display color too
+                        const linkedPronounBtn = document.querySelector('.color-btn[data-target="pronounBadge"][data-color="timestamp"]');
+                        if (linkedPronounBtn && linkedPronounBtn.classList.contains('active')) {
+                            document.documentElement.style.setProperty('--pronoun-badge-color', 'var(--timestamp-color)');
+                            setSwatchColor(pronounBadgeColorInput, color);
+                        }
                         break;
                     case 'pronounBadge':
                         if (color === 'timestamp') {
