@@ -392,6 +392,13 @@ export class ThemeManager {
             let isActive;
             if (btnColor === 'timestamp') {
                 isActive = isPronounSameAsTsActive;
+                // Dynamically act as a color swatch for the timestamp color
+                btn.style.backgroundColor = timestampColorValue;
+                const r = parseInt(timestampColorValue.slice(1, 3), 16) || 0;
+                const g = parseInt(timestampColorValue.slice(3, 5), 16) || 0;
+                const b = parseInt(timestampColorValue.slice(5, 7), 16) || 0;
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                btn.style.color = luminance > 0.5 ? 'black' : 'white';
             } else {
                 isActive = (!isPronounSameAsTsActive && btnColor === pronounBadgeColorValue);
             }

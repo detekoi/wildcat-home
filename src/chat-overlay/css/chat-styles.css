@@ -858,7 +858,9 @@ body.chat-page:hover #popup-settings-btn {
 }
 
 .color-btn {
-    width: 60px;
+    min-width: 60px;
+    width: max-content;
+    padding: 0 6px;
     height: 25px;
     margin: 2px;
     border: 1px solid #444;
@@ -868,6 +870,7 @@ body.chat-page:hover #popup-settings-btn {
     align-items: center;
     justify-content: center;
     text-align: center;
+    white-space: nowrap;
 }
 
 .color-buttons {
