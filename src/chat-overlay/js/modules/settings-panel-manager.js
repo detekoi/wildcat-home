@@ -127,8 +127,8 @@ export class SettingsPanelManager {
             };
 
             const {
-                fontSizeSlider, bgColorInput, bgOpacityInput, borderColorInput, textColorInput,
-                usernameColorInput, timestampColorInput, pronounBadgeColorInput, overrideUsernameColorsInput, chatWidthInput, chatHeightInput,
+                fontSizeSlider, bgColorHex, bgOpacityInput, borderColorHex, textColorHex,
+                usernameColorHex, timestampColorHex, pronounBadgeColorHex, overrideUsernameColorsInput, chatWidthInput, chatHeightInput,
                 maxMessagesInput, showTimestampsInput, borderRadiusPresets, boxShadowPresets,
                 textShadowPresets, fontWeightPresets, showBadgesToggle, showPronounsToggle,
                 enlargeSingleEmotesToggle, bgImageOpacityInput
@@ -139,7 +139,7 @@ export class SettingsPanelManager {
             const currentFontValue = this._fontManager.getCurrentFontValue();
             const currentThemeValue = this._themeManager.lastAppliedThemeValue;
             const bgImageOpacityValue = getOpacity(bgImageOpacityInput, this._configManager.config.bgImageOpacity ?? 0.55);
-            const currentBgColorHex = getColor(bgColorInput, '.color-buttons [data-target="bg"]', this._configManager.config.bgColor || '#121212');
+            const currentBgColorHex = getColor(bgColorHex, '.color-buttons [data-target="bg"]', this._configManager.config.bgColor || '#121212');
             const currentBgOpacity = getOpacity(bgOpacityInput, this._configManager.config.bgColorOpacity ?? 0.85);
             const currentFullTheme = window.availableThemes?.find(t => t.value === currentThemeValue) || {};
 
@@ -150,11 +150,11 @@ export class SettingsPanelManager {
                 fontSize: getValue(fontSizeSlider, this._configManager.config.fontSize || 14, true),
                 bgColor: currentBgColorHex,
                 bgColorOpacity: currentBgOpacity,
-                borderColor: getColor(borderColorInput, '.color-buttons [data-target="border"]', this._configManager.config.borderColor || '#444444'),
-                textColor: getColor(textColorInput, '.color-buttons [data-target="text"]', this._configManager.config.textColor || '#efeff1'),
-                usernameColor: getColor(usernameColorInput, '.color-buttons [data-target="username"]', this._configManager.config.usernameColor || '#9147ff'),
-                timestampColor: getColor(timestampColorInput, '.color-buttons [data-target="timestamp"]', this._configManager.config.timestampColor || '#adadb8'),
-                pronounBadgeColor: getColor(pronounBadgeColorInput, '.color-buttons [data-target="pronounBadge"]', this._configManager.config.pronounBadgeColor || '#adadb8'),
+                borderColor: getColor(borderColorHex, '.color-buttons [data-target="border"]', this._configManager.config.borderColor || '#444444'),
+                textColor: getColor(textColorHex, '.color-buttons [data-target="text"]', this._configManager.config.textColor || '#efeff1'),
+                usernameColor: getColor(usernameColorHex, '.color-buttons [data-target="username"]', this._configManager.config.usernameColor || '#9147ff'),
+                timestampColor: getColor(timestampColorHex, '.color-buttons [data-target="timestamp"]', this._configManager.config.timestampColor || '#adadb8'),
+                pronounBadgeColor: getColor(pronounBadgeColorHex, '.color-buttons [data-target="pronounBadge"]', this._configManager.config.pronounBadgeColor || '#adadb8'),
                 overrideUsernameColors: getValue(overrideUsernameColorsInput, this._configManager.config.overrideUsernameColors || false, false, true),
                 bgImage: currentFullTheme.backgroundImage || this._configManager.config.bgImage || null,
                 bgImageOpacity: bgImageOpacityValue,
