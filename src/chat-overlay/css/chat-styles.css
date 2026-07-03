@@ -382,13 +382,22 @@ body.window-mode.top-fade #chat-scroll-area {
     display: none;
 }
 
+/* Clips the glide transform on #chat-messages: a downward translate would
+   otherwise extend the scroll area's scrollable overflow, making scrollHeight
+   grow mid-animation and the auto-scroll pin jump into the phantom space */
+#chat-glide-clip {
+    min-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Add specific styles for #chat-messages container */
 #chat-messages {
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-height: 100%;
-    margin-top: auto;
+    flex: 1 0 auto; /* Fill the clip box so messages stay bottom-anchored */
     justify-content: flex-end;
 }
 

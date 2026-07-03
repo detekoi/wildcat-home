@@ -60,7 +60,7 @@ export class ChatRenderer {
         messageElement.appendChild(contentSpan);
 
         this.chatMessages.appendChild(messageElement);
-        this._animateEntry(messageElement);
+        this._glideWindowEntry(messageElement);
 
         // Keep sentinel as the last element
         this.scrollManager.ensureSentinelLast();
@@ -90,7 +90,7 @@ export class ChatRenderer {
         const itemContainer = document.createElement('div');
         itemContainer.className = isPopup ? 'popup-message superchat-message' : 'chat-message superchat-message';
         if (isPopup) itemContainer.classList.add(this.config.popup?.direction || 'from-bottom');
-        
+
         const superChatEl = document.createElement('div');
         superChatEl.className = 'superchat';
         if (data.bodyColor) superChatEl.style.setProperty('--body-color', data.bodyColor);
@@ -98,12 +98,12 @@ export class ChatRenderer {
 
         const headerEl = document.createElement('div');
         headerEl.className = 'superchat-header';
-        
+
         const authorEl = document.createElement('span');
         authorEl.className = 'superchat-author';
         authorEl.textContent = data.username;
         headerEl.appendChild(authorEl);
-        
+
         if (data.amount) {
             const amountEl = document.createElement('span');
             amountEl.className = 'superchat-amount';
@@ -134,12 +134,12 @@ export class ChatRenderer {
 
         const memEl = document.createElement('div');
         memEl.className = 'membership';
-        
+
         const textEl = document.createElement('span');
         textEl.className = 'membership-text';
         textEl.textContent = `⭐ ${data.username} changed memberships: ${data.subtext || "Join"}`;
         memEl.appendChild(textEl);
-        
+
         itemContainer.appendChild(memEl);
         this._finalizeAppend(itemContainer, container, isPopup);
     }
@@ -236,7 +236,7 @@ export class ChatRenderer {
         if (isPopup) {
             this.handlePopupMessage(itemContainer, container);
         } else {
-            this._animateEntry(itemContainer);
+            this._glideWindowEntry(itemContainer);
             this.scrollManager.ensureSentinelLast();
             this.limitMessages();
             if (this.scrollManager.autoFollow) {
@@ -320,11 +320,11 @@ export class ChatRenderer {
             const badgesHtml = data.tags?.badges
                 ? this.badgeManager.generateBadgeHTML(data.tags.badges, this.currentBroadcasterId)
                 : '';
-            
+
             if (badgesHtml) {
                 const bWrapper = document.createElement('span');
                 bWrapper.innerHTML = badgesHtml;
-                while(bWrapper.firstChild) messageElement.appendChild(bWrapper.firstChild);
+                while (bWrapper.firstChild) messageElement.appendChild(bWrapper.firstChild);
             }
 
             if (this.config.showPronouns !== false) {
@@ -332,7 +332,7 @@ export class ChatRenderer {
                 if (cachedPronoun) {
                     const pSpan = document.createElement('span');
                     pSpan.className = 'pronoun-badge';
-                    pSpan.textContent = cachedPronoun; 
+                    pSpan.textContent = cachedPronoun;
                     messageElement.appendChild(pSpan);
                 } else if (this.pronounManager) {
                     const boxId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -377,7 +377,7 @@ export class ChatRenderer {
             targetContainer.appendChild(messageElement);
 
             if (this.config.chatMode !== 'popup') {
-                this._animateEntry(messageElement);
+                this._glideWindowEntry(messageElement);
             }
 
             // After message added, listen for image loads to adjust scroll if needed
@@ -385,8 +385,8 @@ export class ChatRenderer {
                 const imgs = messageElement.querySelectorAll('img');
                 imgs.forEach(img => {
                     if (!img.complete) {
-                        img.addEventListener('load', () => this.scrollManager.stickToBottomSoon(), { once: true });
-                        img.addEventListener('error', () => this.scrollManager.stickToBottomSoon(), { once: true });
+                        img.addEventListener('load', () => this._glideOnContentGrowth(), { once: true });
+                        img.addEventListener('error', () => this._glideOnContentGrowth(), { once: true });
                     }
                 });
             }
@@ -414,7 +414,7 @@ export class ChatRenderer {
      */
     buildMessageContentDOM(message, emotes, hasBits = false) {
         const frag = document.createDocumentFragment();
-        
+
         let emotePositions = [];
         if (emotes && typeof emotes === 'object') {
             for (const emoteId in emotes) {
@@ -541,8 +541,8 @@ export class ChatRenderer {
                     } else if (!pos.id.startsWith('http')) {
                         const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(pos.id)}/default/dark`;
                         img.src = `${baseUrl}/3.0`;
-                        img.onerror = function() {
-                            this.onerror = function() { this.src = `${baseUrl}/1.0`; };
+                        img.onerror = function () {
+                            this.onerror = function () { this.src = `${baseUrl}/1.0`; };
                             this.src = `${baseUrl}/2.0`;
                         };
                     } else {
@@ -561,7 +561,7 @@ export class ChatRenderer {
                 appendTextWithUrls(message.slice(lastIndex));
             }
         }
-        
+
         return frag;
     }
 
@@ -590,7 +590,7 @@ export class ChatRenderer {
      */
     handlePopupMessage(messageElement, targetContainer) {
         void messageElement.offsetWidth; // Force reflow for transition
-        this._animateEntry(messageElement);
+        this._animatePopupEntry(messageElement);
         messageElement.classList.add('visible');
 
         // Limit popup messages
@@ -612,7 +612,7 @@ export class ChatRenderer {
         }
     }
 
-    _animateEntry(el) {
+    _animatePopupEntry(el) {
         if (motionDisabled(el)) return;
         const h = el.offsetHeight;
         if (!h) return;
@@ -624,19 +624,78 @@ export class ChatRenderer {
 
         const onFinish = () => {
             el.style.overflow = '';
-            if (this.config.chatMode !== 'popup' && this.scrollManager) {
-                this.scrollManager.stickToBottomSoon();
-            }
         };
 
         anim.onfinish = onFinish;
         anim.oncancel = onFinish;
     }
 
+    /**
+     * Glide the whole window-mode message list when new content pushes it up.
+     * Animating the newcomer's height forces layout + scroll re-pinning every
+     * frame (visible jitter); instead, pin the scroller to the bottom once,
+     * offset the list downward by the added height, and let the compositor
+     * animate the offset back to zero.
+     */
+    _glideWindowBy(offsetPx) {
+        const container = this.chatMessages;
+        const scroller = this.scrollManager?.scrollArea;
+        if (!container || !scroller || !offsetPx) return false;
+        if (motionDisabled(container)) return false;
+
+        // Pin scroll and apply the offset in the same synchronous block so no
+        // intermediate state is ever painted
+        this.scrollManager.setScrollTop(scroller, scroller.scrollHeight);
+
+        let start = offsetPx;
+        if (this._glideAnim) {
+            // A glide is already running (message burst): continue from the
+            // list's current visual offset instead of snapping
+            const current = getComputedStyle(container).transform;
+            if (current && current !== 'none') {
+                try { start += new DOMMatrixReadOnly(current).m42; } catch (e) { /* keep start */ }
+            }
+            this._glideAnim.cancel();
+        }
+
+        const anim = container.animate([
+            { transform: `translateY(${start}px)` },
+            { transform: 'translateY(0px)' }
+        ], { duration: ENTRY_MS, easing: 'ease-out' });
+
+        const clear = () => { if (this._glideAnim === anim) this._glideAnim = null; };
+        anim.onfinish = clear;
+        anim.oncancel = clear;
+        this._glideAnim = anim;
+        return true;
+    }
+
+    _glideWindowEntry(el) {
+        if (this.config.chatMode === 'popup') return;
+        if (!this.scrollManager?.autoFollow) return;
+        const marginBottom = parseFloat(getComputedStyle(el).marginBottom) || 0;
+        this._glideWindowBy(el.offsetHeight + marginBottom);
+    }
+
+    /**
+     * Late content growth (e.g. an emote image finishing its load) pushes the
+     * pinned scroll away from the bottom; glide over the gap instead of the
+     * instant re-pin jump.
+     */
+    _glideOnContentGrowth() {
+        if (this.config.chatMode === 'popup' || !this.scrollManager?.autoFollow) return;
+        const scroller = this.scrollManager.scrollArea;
+        if (!scroller) return;
+        const gap = scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop;
+        if (!(gap > 1 && this._glideWindowBy(gap))) {
+            this.scrollManager.stickToBottomSoon();
+        }
+    }
+
     removePopup(el) {
         if (el.dataset.removing) return;
         el.dataset.removing = 'true';
-        
+
         if (el._expiryTimer) {
             clearTimeout(el._expiryTimer);
             el._expiryTimer = null;

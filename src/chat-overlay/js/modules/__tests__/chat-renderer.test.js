@@ -52,7 +52,7 @@ describe('ChatRenderer - Security Mitigations', () => {
         it('should transform safe http/https URLs into <a> links', () => {
             const message = "Check out this link: https://google.com";
             const frag = renderer.buildMessageContentDOM(message, null);
-            
+
             const link = frag.querySelector('a');
             expect(link).not.toBeNull();
             expect(link.href).toBe('https://google.com/');
@@ -64,12 +64,12 @@ describe('ChatRenderer - Security Mitigations', () => {
             // But if it somehow does, we verify the new URL().protocol logic catches it.
             // We simulate a regex match bypass by feeding a malicious string that somehow passes the initial test
             // Note: The app's regex actually prevents javascript:, but we pretend we passed a string that matched.
-            
+
             // Actually, we can test the fallback functionality by passing a broken URL to see if it safely handles the catch block.
             // A more accurate test is checking if a malformed URL like http://foo:badport gets caught
-            const message = "Check this http://%malformed_url"; 
+            const message = "Check this http://%malformed_url";
             const frag = renderer.buildMessageContentDOM(message, null);
-            
+
             // It should fall back to a text node, no <a> node
             const link = frag.querySelector('a');
             expect(link).toBeNull();
@@ -87,7 +87,7 @@ describe('ChatRenderer - Security Mitigations', () => {
 
             const frag = renderer.buildMessageContentDOM(message, emotes);
             const img = frag.querySelector('img.yt-emoji');
-            
+
             expect(img).not.toBeNull();
             expect(img.src).toBe('https://yt3.ggpht.com/emote_id');
         });
@@ -99,7 +99,7 @@ describe('ChatRenderer - Security Mitigations', () => {
             };
 
             const frag = renderer.buildMessageContentDOM(message, emotes);
-            
+
             // Should NOT render an img node because attacker.com fails hostname validation
             // It will fall back to just text/unknown branch or nothing
             const img = frag.querySelector('img.yt-emoji');
@@ -128,11 +128,11 @@ describe('ChatRenderer - Security Mitigations', () => {
             const container = document.getElementById('popup-messages');
             const el = container.firstElementChild;
             expect(el).not.toBeNull();
-            
+
             vi.advanceTimersByTime(5000);
             expect(el.classList.contains('removing')).toBe(true);
             expect(el.dataset.removing).toBe('true');
-            
+
             expect(container.contains(el)).toBe(false);
         });
 
@@ -155,10 +155,10 @@ describe('ChatRenderer - Security Mitigations', () => {
             const container = document.getElementById('popup-messages');
             // Mark the first one as removing manually to simulate an expired one
             renderer.removePopup(container.children[0]);
-            
+
             // Add a 4th one. Since one is removing, the count of active is 2, so it shouldn't trim another
             renderer.addChatMessage({ username: 'test', message: 'msg 3' });
-            
+
             // Total children should be 4 (1 removing, 3 active)
             expect(container.children.length).toBe(4);
             const removingCount = Array.from(container.children).filter(el => el.dataset.removing === 'true').length;
@@ -172,13 +172,13 @@ describe('ChatRenderer - Security Mitigations', () => {
             renderer.addChatMessage({ username: 'test', message: 'hello' });
             const container = document.getElementById('popup-messages');
             const el = container.firstElementChild;
-            
+
             renderer.removePopup(el);
             renderer.removePopup(el); // double call
-            
+
             // Advance time past the original 5s expiry
             vi.advanceTimersByTime(5000);
-            
+
             // Should just be handled gracefully without errors
             expect(container.contains(el)).toBe(false);
         });
@@ -186,7 +186,7 @@ describe('ChatRenderer - Security Mitigations', () => {
         it('WAAPI path with mocked el.animate + defined offsetHeight: correct keyframes; onfinish restores overflow (entry) / detaches (exit)', () => {
             // Mock WAAPI
             let animEntry, animExit;
-            Element.prototype.animate = vi.fn(function(keyframes, options) {
+            Element.prototype.animate = vi.fn(function (keyframes, options) {
                 const anim = {
                     onfinish: null,
                     oncancel: null,
@@ -197,26 +197,26 @@ describe('ChatRenderer - Security Mitigations', () => {
             });
             // Mock offsetHeight getter
             vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(50);
-            
+
             renderer.addChatMessage({ username: 'test', message: 'hello' });
             const container = document.getElementById('popup-messages');
             const el = container.firstElementChild;
-            
+
             expect(Element.prototype.animate).toHaveBeenCalled();
             expect(el.style.overflow).toBe('hidden');
-            
+
             // Finish entry animation
             animEntry.onfinish();
             expect(el.style.overflow).toBe('');
-            
+
             // Trigger exit
             renderer.removePopup(el);
             expect(animExit).toBeDefined();
-            
+
             // Finish exit animation
             animExit.onfinish();
             expect(container.contains(el)).toBe(false);
-            
+
             delete Element.prototype.animate;
         });
 
@@ -226,12 +226,57 @@ describe('ChatRenderer - Security Mitigations', () => {
             window.matchMedia = vi.fn().mockImplementation(query => ({
                 matches: query === '(prefers-reduced-motion: reduce)'
             }));
-            
+
             renderer.addChatMessage({ username: 'test', message: 'hello' });
             expect(Element.prototype.animate).not.toHaveBeenCalled();
-            
+
             window.matchMedia = originalMatchMedia;
             delete Element.prototype.animate;
+        });
+    });
+
+    describe('window mode glide', () => {
+        beforeEach(() => {
+            document.body.innerHTML = `<div id="chat-scroll-area"><div id="chat-messages"></div></div>`;
+            mockScrollManager.scrollArea = document.getElementById('chat-scroll-area');
+            mockScrollManager.autoFollow = true;
+            const config = { chatMode: 'window', showTimestamps: false };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+            delete Element.prototype.animate;
+        });
+
+        it('pins the scroller and glides the message list down from the newcomer height, not the message itself', () => {
+            const calls = [];
+            Element.prototype.animate = vi.fn(function (keyframes, options) {
+                calls.push({ el: this, keyframes, options });
+                return { onfinish: null, oncancel: null, cancel: vi.fn() };
+            });
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(50);
+
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+
+            const container = document.getElementById('chat-messages');
+            const glide = calls.find(c => c.el === container);
+            expect(glide).toBeDefined();
+            expect(glide.keyframes[0].transform).toBe('translateY(50px)');
+            expect(glide.keyframes[1].transform).toBe('translateY(0px)');
+            expect(mockScrollManager.setScrollTop).toHaveBeenCalled();
+            // Window-mode messages are no longer height-animated (that caused jitter)
+            expect(calls.every(c => c.el === container)).toBe(true);
+        });
+
+        it('does not glide when the user has scrolled up (autoFollow false)', () => {
+            Element.prototype.animate = vi.fn(() => ({ onfinish: null, oncancel: null, cancel: vi.fn() }));
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(50);
+            mockScrollManager.autoFollow = false;
+
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+
+            expect(Element.prototype.animate).not.toHaveBeenCalled();
         });
     });
 });
