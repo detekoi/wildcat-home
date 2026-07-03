@@ -5,6 +5,14 @@
 
 import { UIHelpers } from './ui-helpers.js';
 
+const ENTRY_MS = 350;
+const EXIT_MS = 400;
+
+function motionDisabled(el) {
+    if (typeof el.animate !== 'function') return true;
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 export class ChatRenderer {
     constructor(config, scrollManager, badgeManager, pronounManager, cheermoteManager) {
         this.config = config;
@@ -52,6 +60,7 @@ export class ChatRenderer {
         messageElement.appendChild(contentSpan);
 
         this.chatMessages.appendChild(messageElement);
+        this._animateEntry(messageElement);
 
         // Keep sentinel as the last element
         this.scrollManager.ensureSentinelLast();
@@ -227,6 +236,7 @@ export class ChatRenderer {
         if (isPopup) {
             this.handlePopupMessage(itemContainer, container);
         } else {
+            this._animateEntry(itemContainer);
             this.scrollManager.ensureSentinelLast();
             this.limitMessages();
             if (this.scrollManager.autoFollow) {
@@ -365,6 +375,10 @@ export class ChatRenderer {
             }
 
             targetContainer.appendChild(messageElement);
+
+            if (this.config.chatMode !== 'popup') {
+                this._animateEntry(messageElement);
+            }
 
             // After message added, listen for image loads to adjust scroll if needed
             if (this.config.chatMode !== 'popup' && currentScrollArea && this.scrollManager.isUserScrolledToBottom(currentScrollArea)) {
@@ -576,16 +590,17 @@ export class ChatRenderer {
      */
     handlePopupMessage(messageElement, targetContainer) {
         void messageElement.offsetWidth; // Force reflow for transition
+        this._animateEntry(messageElement);
         messageElement.classList.add('visible');
 
         // Limit popup messages
-        const popupMsgs = Array.from(targetContainer.querySelectorAll('.popup-message'));
+        const popupMsgs = Array.from(targetContainer.querySelectorAll('.popup-message:not([data-removing])'));
         const maxMessages = this.config.popup?.maxMessages;
         if (popupMsgs.length > maxMessages && maxMessages > 0) {
             try {
                 const removeCount = popupMsgs.length - maxMessages;
                 for (let i = 0; i < removeCount; i++) {
-                    popupMsgs[i]?.parentNode?.removeChild(popupMsgs[i]);
+                    this.removePopup(popupMsgs[i]);
                 }
             } catch (err) { console.error('Error removing excess popup messages:', err); }
         }
@@ -593,17 +608,60 @@ export class ChatRenderer {
         // Auto-remove timer
         const duration = (this.config.popup?.duration || 5) * 1000;
         if (duration > 0 && duration < 60000) { // Validate duration
-            setTimeout(() => {
-                messageElement.classList.remove('visible'); // Start slide-out
-                requestAnimationFrame(() => { // Ensure transition starts
-                    void messageElement.offsetWidth; // Force reflow
-                    messageElement.classList.add('removing');
-                    setTimeout(() => { // Remove after transition
-                        messageElement.parentNode?.removeChild(messageElement);
-                    }, 300); // Match CSS transition duration
-                });
-            }, duration);
+            messageElement._expiryTimer = setTimeout(() => this.removePopup(messageElement), duration);
         }
+    }
+
+    _animateEntry(el) {
+        if (motionDisabled(el)) return;
+        const h = el.offsetHeight;
+        if (!h) return;
+
+        el.style.overflow = 'hidden';
+        const anim = el.animate([
+            { height: '0px', paddingTop: '0px', paddingBottom: '0px', marginBottom: '0px', borderTopWidth: '0px', borderBottomWidth: '0px', offset: 0 }
+        ], { duration: ENTRY_MS, easing: 'ease-out' });
+
+        const onFinish = () => {
+            el.style.overflow = '';
+            if (this.config.chatMode !== 'popup' && this.scrollManager) {
+                this.scrollManager.stickToBottomSoon();
+            }
+        };
+
+        anim.onfinish = onFinish;
+        anim.oncancel = onFinish;
+    }
+
+    removePopup(el) {
+        if (el.dataset.removing) return;
+        el.dataset.removing = 'true';
+        
+        if (el._expiryTimer) {
+            clearTimeout(el._expiryTimer);
+            el._expiryTimer = null;
+        }
+
+        el.classList.remove('visible');
+        void el.offsetWidth; // Force reflow
+        el.classList.add('removing');
+
+        if (motionDisabled(el)) {
+            setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+            return;
+        }
+
+        const anim = el.animate([
+            { height: '0px', paddingTop: '0px', paddingBottom: '0px', marginBottom: '0px', borderTopWidth: '0px', borderBottomWidth: '0px' }
+        ], { duration: EXIT_MS, easing: 'ease-out', fill: 'forwards' });
+
+        const finish = () => {
+            if (el.parentNode) el.remove();
+        };
+
+        anim.onfinish = finish;
+        anim.oncancel = finish;
+        setTimeout(finish, EXIT_MS + 100);
     }
 
     /**

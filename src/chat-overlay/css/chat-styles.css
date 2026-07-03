@@ -68,10 +68,7 @@
     --chat-text-shadow: none; /* Default text shadow */
 
     /* Popup Specifics */
-    --popup-animation-direction: from-bottom; /* from-top, from-left, from-bottom, from-right */
-    --popup-animation-duration: 0.5s; /* Base animation speed */
-    --popup-message-display-duration: 5s; /* How long each message stays visible */
-    --popup-max-messages: 3;
+
     
     /* Internal Spacing */
     --chat-padding: 10px;
@@ -404,8 +401,8 @@ body.window-mode.top-fade #chat-scroll-area {
 }
 
  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .chat-message .timestamp {
@@ -530,7 +527,6 @@ body.window-mode.top-fade #chat-scroll-area {
 #popup-messages {
     display: flex;
     flex-direction: column;
-    gap: 8px;
     padding: 10px;
     width: 100%;
     box-sizing: border-box;
@@ -571,7 +567,7 @@ body.window-mode.top-fade #chat-scroll-area {
     box-shadow: var(--chat-box-shadow, 0 2px 8px rgba(0, 0, 0, 0.2));
     padding: 8px 12px;
     width: 100%;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -591,7 +587,6 @@ body.window-mode.top-fade #chat-scroll-area {
     font-weight: var(--font-weight, normal);
 }
 
-/* Note: Gliding animation now handled via inline styles for precise positioning */
 
 .popup-message::before {
     content: "";
@@ -616,9 +611,6 @@ body.window-mode.top-fade #chat-scroll-area {
     pointer-events: none;
 }
 
-.popup-message.exiting {
-    animation-delay: 0s;
-}
 
 .popup-settings-area {
     position: absolute;
@@ -655,11 +647,11 @@ body.chat-page:hover #popup-settings-btn {
 
 /* Set INITIAL transform based on direction */
 .popup-message.from-top {
-    transform: translateY(-100%);
+    transform: translateY(-24px);
 }
 
 .popup-message.from-bottom {
-    transform: translateY(100%);
+    transform: translateY(24px);
 }
 
 .popup-message.from-left {
@@ -1561,4 +1553,13 @@ body.chat-page:hover #popup-settings-btn {
 .twitch-event--unknown {
     --event-accent: #888;
     background: rgba(136, 136, 136, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-message {
+        animation: none !important;
+    }
+    .popup-message {
+        transition-duration: 0.01ms !important;
+    }
 }

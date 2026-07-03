@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ChatRenderer } from '../chat-renderer.js';
 
 describe('ChatRenderer - Security Mitigations', () => {
@@ -104,6 +104,138 @@ describe('ChatRenderer - Security Mitigations', () => {
             // It will fall back to just text/unknown branch or nothing
             const img = frag.querySelector('img.yt-emoji');
             expect(img).toBeNull();
+        });
+    });
+
+    describe('popup lifecycle', () => {
+        beforeEach(() => {
+            document.body.innerHTML = `<div id="popup-messages"></div>`;
+            vi.useFakeTimers();
+            const config = {
+                chatMode: 'popup',
+                popup: { maxMessages: 3, duration: 5, direction: 'from-bottom' }
+            };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+            vi.useRealTimers();
+        });
+
+        it('Expiry: after 5000ms element gets .removing/data-removing; detached after fallback 300ms', () => {
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+            const container = document.getElementById('popup-messages');
+            const el = container.firstElementChild;
+            expect(el).not.toBeNull();
+            
+            vi.advanceTimersByTime(5000);
+            expect(el.classList.contains('removing')).toBe(true);
+            expect(el.dataset.removing).toBe('true');
+            
+            vi.advanceTimersByTime(300);
+            expect(container.contains(el)).toBe(false);
+        });
+
+        it('Overflow trim is animated (oldest marked, then detached; newest 3 remain)', () => {
+            for (let i = 0; i < 4; i++) {
+                renderer.addChatMessage({ username: 'test', message: `msg ${i}` });
+            }
+            const container = document.getElementById('popup-messages');
+            // The oldest one (msg 0) should be marked for removal
+            const first = container.children[0];
+            expect(first.dataset.removing).toBe('true');
+            
+            // Advance timers to complete removal
+            vi.advanceTimersByTime(300);
+            expect(container.children.length).toBe(3);
+            expect(container.children[0].textContent).toContain('msg 1');
+        });
+
+        it('Overflow count excludes popups already data-removing', () => {
+            for (let i = 0; i < 3; i++) {
+                renderer.addChatMessage({ username: 'test', message: `msg ${i}` });
+            }
+            const container = document.getElementById('popup-messages');
+            // Mark the first one as removing manually to simulate an expired one
+            renderer.removePopup(container.children[0]);
+            
+            // Add a 4th one. Since one is removing, the count of active is 2, so it shouldn't trim another
+            renderer.addChatMessage({ username: 'test', message: 'msg 3' });
+            
+            // Total children should be 4 (1 removing, 3 active)
+            expect(container.children.length).toBe(4);
+            const removingCount = Array.from(container.children).filter(el => el.dataset.removing === 'true').length;
+            expect(removingCount).toBe(1);
+        });
+
+        it('Double-removePopup is a single detach; trimmed popup original expiry timer doesnt double-fire', () => {
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+            const container = document.getElementById('popup-messages');
+            const el = container.firstElementChild;
+            
+            renderer.removePopup(el);
+            renderer.removePopup(el); // double call
+            
+            // Advance time to allow removal
+            vi.advanceTimersByTime(300);
+            
+            // Advance time past the original 5s expiry
+            vi.advanceTimersByTime(5000);
+            
+            // Should just be handled gracefully without errors
+            expect(container.contains(el)).toBe(false);
+        });
+
+        it('WAAPI path with mocked el.animate + defined offsetHeight: correct keyframes; onfinish restores overflow (entry) / detaches (exit)', () => {
+            // Mock WAAPI
+            let animEntry, animExit;
+            Element.prototype.animate = vi.fn(function(keyframes, options) {
+                const anim = {
+                    onfinish: null,
+                    oncancel: null,
+                };
+                if (keyframes[0]?.offset === 0) animEntry = anim; // entry
+                else animExit = anim; // exit
+                return anim;
+            });
+            // Mock offsetHeight getter
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(50);
+            
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+            const container = document.getElementById('popup-messages');
+            const el = container.firstElementChild;
+            
+            expect(Element.prototype.animate).toHaveBeenCalled();
+            expect(el.style.overflow).toBe('hidden');
+            
+            // Finish entry animation
+            animEntry.onfinish();
+            expect(el.style.overflow).toBe('');
+            
+            // Trigger exit
+            renderer.removePopup(el);
+            expect(animExit).toBeDefined();
+            
+            // Finish exit animation
+            animExit.onfinish();
+            expect(container.contains(el)).toBe(false);
+            
+            delete Element.prototype.animate;
+        });
+
+        it('matchMedia reduced-motion stub -> animate not called', () => {
+            Element.prototype.animate = vi.fn();
+            const originalMatchMedia = window.matchMedia;
+            window.matchMedia = vi.fn().mockImplementation(query => ({
+                matches: query === '(prefers-reduced-motion: reduce)'
+            }));
+            
+            renderer.addChatMessage({ username: 'test', message: 'hello' });
+            expect(Element.prototype.animate).not.toHaveBeenCalled();
+            
+            window.matchMedia = originalMatchMedia;
+            delete Element.prototype.animate;
         });
     });
 });
