@@ -123,7 +123,7 @@ describe('ChatRenderer - Security Mitigations', () => {
             vi.useRealTimers();
         });
 
-        it('Expiry: after 5000ms element gets .removing/data-removing; detached after fallback 300ms', () => {
+        it('Expiry: after 5000ms element gets .removing/data-removing; detached immediately fallback', () => {
             renderer.addChatMessage({ username: 'test', message: 'hello' });
             const container = document.getElementById('popup-messages');
             const el = container.firstElementChild;
@@ -133,7 +133,6 @@ describe('ChatRenderer - Security Mitigations', () => {
             expect(el.classList.contains('removing')).toBe(true);
             expect(el.dataset.removing).toBe('true');
             
-            vi.advanceTimersByTime(300);
             expect(container.contains(el)).toBe(false);
         });
 
@@ -142,17 +141,14 @@ describe('ChatRenderer - Security Mitigations', () => {
                 renderer.addChatMessage({ username: 'test', message: `msg ${i}` });
             }
             const container = document.getElementById('popup-messages');
-            // The oldest one (msg 0) should be marked for removal
-            const first = container.children[0];
-            expect(first.dataset.removing).toBe('true');
-            
-            // Advance timers to complete removal
-            vi.advanceTimersByTime(300);
             expect(container.children.length).toBe(3);
             expect(container.children[0].textContent).toContain('msg 1');
         });
 
         it('Overflow count excludes popups already data-removing', () => {
+            Element.prototype.animate = vi.fn(() => ({ onfinish: null, oncancel: null }));
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(50);
+
             for (let i = 0; i < 3; i++) {
                 renderer.addChatMessage({ username: 'test', message: `msg ${i}` });
             }
@@ -167,6 +163,9 @@ describe('ChatRenderer - Security Mitigations', () => {
             expect(container.children.length).toBe(4);
             const removingCount = Array.from(container.children).filter(el => el.dataset.removing === 'true').length;
             expect(removingCount).toBe(1);
+
+            delete Element.prototype.animate;
+            vi.restoreAllMocks();
         });
 
         it('Double-removePopup is a single detach; trimmed popup original expiry timer doesnt double-fire', () => {
@@ -176,9 +175,6 @@ describe('ChatRenderer - Security Mitigations', () => {
             
             renderer.removePopup(el);
             renderer.removePopup(el); // double call
-            
-            // Advance time to allow removal
-            vi.advanceTimersByTime(300);
             
             // Advance time past the original 5s expiry
             vi.advanceTimersByTime(5000);

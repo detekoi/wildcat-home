@@ -647,10 +647,11 @@ export class ChatRenderer {
         el.classList.add('removing');
 
         if (motionDisabled(el)) {
-            setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+            if (el.parentNode) el.remove();
             return;
         }
 
+        el.style.overflow = 'hidden';
         const anim = el.animate([
             { height: '0px', paddingTop: '0px', paddingBottom: '0px', marginBottom: '0px', borderTopWidth: '0px', borderBottomWidth: '0px' }
         ], { duration: EXIT_MS, easing: 'ease-out', fill: 'forwards' });
