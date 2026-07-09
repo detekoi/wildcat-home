@@ -25,7 +25,7 @@ This ensures timers only fire when your stream is active and chat is moving, and
 
 You can manage your timers directly from the [web dashboard](https://bot.wildcat.chat) under the new **Timers** section, or you can manage them on the fly in your Twitch chat:
 
-- `!timer add <name> <interval> <lines> <message>`
+- `!timer add <name> <interval> <message>`
 - `!timer edit <name> <new message>`
 - `!timer interval <name> <minutes>`
 - `!timer lines <name> <number>`
