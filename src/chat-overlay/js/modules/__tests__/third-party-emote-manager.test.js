@@ -280,4 +280,69 @@ describe('ThirdPartyEmoteManager', () => {
             expect(manager.globalSets.bttv.has('FreshEmote')).toBe(true);
         });
     });
+
+    describe('Content Safety Filters', () => {
+        const CONTENT_SEXUAL = 1 << 16;
+        const CONTENT_EDGY = 1 << 18;
+        const CONTENT_TWITCH_DISALLOWED = 1 << 24;
+
+        it('filters 7TV emote with CONTENT_TWITCH_DISALLOWED when config is true', () => {
+            manager.config = { thirdPartyFilter7tvTwitchDisallowed: true };
+            const payload = {
+                emotes: [
+                    { name: 'DisallowedEmote', data: { host: { url: '//cdn.7tv.app/emote/1' }, flags: CONTENT_TWITCH_DISALLOWED } },
+                    { name: 'SafeEmote', data: { host: { url: '//cdn.7tv.app/emote/2' }, flags: 0 } }
+                ]
+            };
+            const result = manager._transformPayload('seventv', payload);
+            expect(result).not.toHaveProperty('DisallowedEmote');
+            expect(result).toHaveProperty('SafeEmote');
+        });
+
+        it('passes 7TV emote with CONTENT_SEXUAL flag when filter is false', () => {
+            manager.config = { thirdPartyFilter7tvSexual: false };
+            const payload = {
+                emotes: [
+                    { name: 'SexualEmote', data: { host: { url: '//cdn.7tv.app/emote/1' }, flags: CONTENT_SEXUAL } }
+                ]
+            };
+            const result = manager._transformPayload('seventv', payload);
+            expect(result).toHaveProperty('SexualEmote');
+        });
+
+        it('filters 7TV emote with CONTENT_SEXUAL flag when filter is true', () => {
+            manager.config = { thirdPartyFilter7tvSexual: true };
+            const payload = {
+                emotes: [
+                    { name: 'SexualEmote', data: { host: { url: '//cdn.7tv.app/emote/1' }, flags: CONTENT_SEXUAL } }
+                ]
+            };
+            const result = manager._transformPayload('seventv', payload);
+            expect(result).not.toHaveProperty('SexualEmote');
+        });
+
+        it('filters emote with multiple flags if at least one filter is enabled', () => {
+            manager.config = { thirdPartyFilter7tvSexual: false, thirdPartyFilter7tvEdgy: true };
+            const payload = {
+                emotes: [
+                    { name: 'MultiFlagEmote', data: { host: { url: '//cdn.7tv.app/emote/1' }, flags: CONTENT_SEXUAL | CONTENT_EDGY } }
+                ]
+            };
+            const result = manager._transformPayload('seventv', payload);
+            expect(result).not.toHaveProperty('MultiFlagEmote');
+        });
+
+        it('fetchChannelEmotes is a no-op when thirdPartyChannelEmotes is false', async () => {
+            manager.config = { thirdPartyChannelEmotes: false };
+            const fetchSpy = vi.fn();
+            vi.stubGlobal('fetch', fetchSpy);
+            
+            manager.channelSets.bttv.set('OldEmote', { u: 'url', z: false });
+            
+            await manager.fetchChannelEmotes('123');
+            
+            expect(fetchSpy).not.toHaveBeenCalled();
+            expect(manager.channelSets.bttv.size).toBe(0); // Should be cleared
+        });
+    });
 });

@@ -189,6 +189,11 @@ export class SettingsPanelManager {
                 cheermoteEndpointUrl: this._configManager.config.cheermoteEndpointUrl,
                 cheermoteCacheTTL: this._configManager.config.cheermoteCacheTTL,
                 thirdPartyEmotes: getValue(document.getElementById('third-party-emotes-toggle'), this._configManager.config.thirdPartyEmotes ?? true, false, true),
+                thirdPartyChannelEmotes: getValue(document.getElementById('third-party-channel-emotes-toggle'), this._configManager.config.thirdPartyChannelEmotes ?? true, false, true),
+                thirdPartyFilter7tvTwitchDisallowed: getValue(document.getElementById('third-party-filter-7tv-twitch-disallowed-toggle'), this._configManager.config.thirdPartyFilter7tvTwitchDisallowed ?? true, false, true),
+                thirdPartyFilter7tvSexual: getValue(document.getElementById('third-party-filter-7tv-sexual-toggle'), this._configManager.config.thirdPartyFilter7tvSexual ?? false, false, true),
+                thirdPartyFilter7tvEpilepsy: getValue(document.getElementById('third-party-filter-7tv-epilepsy-toggle'), this._configManager.config.thirdPartyFilter7tvEpilepsy ?? false, false, true),
+                thirdPartyFilter7tvEdgy: getValue(document.getElementById('third-party-filter-7tv-edgy-toggle'), this._configManager.config.thirdPartyFilter7tvEdgy ?? false, false, true),
                 thirdPartyEmoteCacheGlobalTTL: this._configManager.config.thirdPartyEmoteCacheGlobalTTL,
                 thirdPartyEmoteCacheChannelTTL: this._configManager.config.thirdPartyEmoteCacheChannelTTL,
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
@@ -361,6 +366,21 @@ export class SettingsPanelManager {
 
         const thirdPartyEmotesToggle = document.getElementById('third-party-emotes-toggle');
         if (thirdPartyEmotesToggle) thirdPartyEmotesToggle.checked = this._configManager.config.thirdPartyEmotes ?? true;
+
+        const thirdPartyChannelEmotesToggle = document.getElementById('third-party-channel-emotes-toggle');
+        if (thirdPartyChannelEmotesToggle) thirdPartyChannelEmotesToggle.checked = this._configManager.config.thirdPartyChannelEmotes ?? true;
+
+        const thirdPartyFilter7tvTwitchDisallowedToggle = document.getElementById('third-party-filter-7tv-twitch-disallowed-toggle');
+        if (thirdPartyFilter7tvTwitchDisallowedToggle) thirdPartyFilter7tvTwitchDisallowedToggle.checked = this._configManager.config.thirdPartyFilter7tvTwitchDisallowed ?? true;
+
+        const thirdPartyFilter7tvSexualToggle = document.getElementById('third-party-filter-7tv-sexual-toggle');
+        if (thirdPartyFilter7tvSexualToggle) thirdPartyFilter7tvSexualToggle.checked = this._configManager.config.thirdPartyFilter7tvSexual ?? false;
+
+        const thirdPartyFilter7tvEpilepsyToggle = document.getElementById('third-party-filter-7tv-epilepsy-toggle');
+        if (thirdPartyFilter7tvEpilepsyToggle) thirdPartyFilter7tvEpilepsyToggle.checked = this._configManager.config.thirdPartyFilter7tvEpilepsy ?? false;
+
+        const thirdPartyFilter7tvEdgyToggle = document.getElementById('third-party-filter-7tv-edgy-toggle');
+        if (thirdPartyFilter7tvEdgyToggle) thirdPartyFilter7tvEdgyToggle.checked = this._configManager.config.thirdPartyFilter7tvEdgy ?? false;
 
         this._themeManager.updateThemePreview();
     }

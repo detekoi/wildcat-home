@@ -9,6 +9,12 @@ const ALLOWED_CDN_HOSTS = new Set([
     'cdn.7tv.app'
 ]);
 
+// 7TV Content Flags
+const CONTENT_SEXUAL = 1 << 16;
+const CONTENT_EPILEPSY = 1 << 17;
+const CONTENT_EDGY = 1 << 18;
+const CONTENT_TWITCH_DISALLOWED = 1 << 24;
+
 const BTTV_ZERO_WIDTH_SET = new Set([
     'SoSnowy', 'IceCold', 'SantaHat', 'TopHat',
     'ReinDeer', 'CandyCane', 'cvMask', 'cvHazmat'
@@ -85,6 +91,11 @@ export class ThirdPartyEmoteManager {
             this.channelBroadcasterId = broadcasterId;
         }
 
+        if (this.config.thirdPartyChannelEmotes === false) {
+            this.clearChannelEmotes();
+            return;
+        }
+
         const providers = ['bttv', 'ffz', 'seventv'];
         await Promise.allSettled(providers.map(p => this._fetchOne(p, broadcasterId)));
     }
@@ -95,6 +106,21 @@ export class ThirdPartyEmoteManager {
     clearChannelEmotes() {
         this.channelSets = { bttv: new Map(), ffz: new Map(), seventv: new Map() };
         this.channelBroadcasterId = null;
+        this._rebuildCombined();
+    }
+
+    /**
+     * Clear 7TV cache from localStorage and memory (used when safety filters change)
+     */
+    clear7tvCache() {
+        try {
+            localStorage.removeItem('thirdPartyEmotes_seventv_global');
+            if (this.channelBroadcasterId) {
+                localStorage.removeItem(`thirdPartyEmotes_seventv_${this.channelBroadcasterId}`);
+            }
+        } catch (e) {}
+        this.globalSets.seventv.clear();
+        this.channelSets.seventv.clear();
         this._rebuildCombined();
     }
 
@@ -265,11 +291,19 @@ export class ThirdPartyEmoteManager {
                 ? json.emotes
                 : (json.emote_set?.emotes || []);
 
+            let contentMask = 0;
+            if (this.config.thirdPartyFilter7tvTwitchDisallowed) contentMask |= CONTENT_TWITCH_DISALLOWED;
+            if (this.config.thirdPartyFilter7tvSexual) contentMask |= CONTENT_SEXUAL;
+            if (this.config.thirdPartyFilter7tvEpilepsy) contentMask |= CONTENT_EPILEPSY;
+            if (this.config.thirdPartyFilter7tvEdgy) contentMask |= CONTENT_EDGY;
+
             for (const item of emoteList) {
                 if (!item?.name || !item?.data?.host?.url) continue;
                 const hostUrl = item.data.host.url;
                 const fullUrl = `https:${hostUrl}/3x.webp`;
                 if (!this._isHostAllowed(fullUrl)) continue;
+
+                if ((item.data.flags & contentMask) !== 0) continue;
 
                 const isZero1 = (item.flags & 1) !== 0;
                 const isZero2 = (item.data?.flags & (1 << 8)) !== 0;

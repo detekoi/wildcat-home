@@ -86,6 +86,11 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const showPronounsToggle = document.getElementById('show-pronouns-toggle');
         const enlargeSingleEmotesToggle = document.getElementById('enlarge-single-emotes-toggle');
         const thirdPartyEmotesToggle = document.getElementById('third-party-emotes-toggle');
+        const thirdPartyChannelEmotesToggle = document.getElementById('third-party-channel-emotes-toggle');
+        const thirdPartyFilter7tvTwitchDisallowedToggle = document.getElementById('third-party-filter-7tv-twitch-disallowed-toggle');
+        const thirdPartyFilter7tvSexualToggle = document.getElementById('third-party-filter-7tv-sexual-toggle');
+        const thirdPartyFilter7tvEpilepsyToggle = document.getElementById('third-party-filter-7tv-epilepsy-toggle');
+        const thirdPartyFilter7tvEdgyToggle = document.getElementById('third-party-filter-7tv-edgy-toggle');
         const bgImageOpacityInput = document.getElementById('bg-image-opacity');
         const bgImageOpacityValue = document.getElementById('bg-image-opacity-value');
 
@@ -100,7 +105,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
             fontSizeSlider, fontSizeValue, chatWidthInput, chatWidthValue,
             chatHeightInput, chatHeightValue, maxMessagesInput, showTimestampsInput,
             themePreview, chatWrapper, showBadgesToggle, showPronounsToggle,
-            enlargeSingleEmotesToggle, thirdPartyEmotesToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
+            enlargeSingleEmotesToggle, thirdPartyEmotesToggle, thirdPartyChannelEmotesToggle, thirdPartyFilter7tvTwitchDisallowedToggle, thirdPartyFilter7tvSexualToggle, thirdPartyFilter7tvEpilepsyToggle, thirdPartyFilter7tvEdgyToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
             twitchDisconnectBtn, youtubeDisconnectBtn, twitchChannelInput, youtubeChannelInput
         };
 
@@ -606,6 +611,41 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                 }
             });
         }
+
+        // Sub-toggles for third-party emotes
+        [
+            { el: thirdPartyChannelEmotesToggle, key: 'thirdPartyChannelEmotes' },
+            { el: thirdPartyFilter7tvTwitchDisallowedToggle, key: 'thirdPartyFilter7tvTwitchDisallowed' },
+            { el: thirdPartyFilter7tvSexualToggle, key: 'thirdPartyFilter7tvSexual' },
+            { el: thirdPartyFilter7tvEpilepsyToggle, key: 'thirdPartyFilter7tvEpilepsy' },
+            { el: thirdPartyFilter7tvEdgyToggle, key: 'thirdPartyFilter7tvEdgy' }
+        ].forEach(({ el, key }) => {
+            if (el) {
+                el.addEventListener('change', () => {
+                    configManager.updateConfig(key, el.checked);
+                    thirdPartyEmoteManager.config = configManager.config;
+                    
+                    if (!configManager.config.thirdPartyEmotes) return;
+
+                    if (key === 'thirdPartyChannelEmotes') {
+                        if (el.checked) {
+                            if (chatConnection.currentBroadcasterId) {
+                                thirdPartyEmoteManager.fetchChannelEmotes(chatConnection.currentBroadcasterId).catch(err => console.warn('Failed to fetch channel third-party emotes:', err));
+                            }
+                        } else {
+                            thirdPartyEmoteManager.clearChannelEmotes();
+                        }
+                    } else if (key.startsWith('thirdPartyFilter7tv')) {
+                        // For 7TV content filters, we must clear the cache so the next fetch applies the new filter
+                        thirdPartyEmoteManager.clear7tvCache();
+                        thirdPartyEmoteManager._fetchOne('seventv', null).catch(err => console.warn('Failed to fetch global 7TV emotes:', err));
+                        if (chatConnection.currentBroadcasterId) {
+                            thirdPartyEmoteManager._fetchOne('seventv', chatConnection.currentBroadcasterId).catch(err => console.warn('Failed to fetch channel 7TV emotes:', err));
+                        }
+                    }
+                });
+            }
+        });
 
         // --- SETTINGS PANEL BUTTON HANDLERS ---
 
