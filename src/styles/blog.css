@@ -12,8 +12,19 @@
   padding: 0 var(--spacing-medium);
 }
 
+/* =====================================================
+   BLOG LISTING PAGE
+   ===================================================== */
+.blog-listing {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-medium);
+}
+
 .blog-listing-title {
-  font-size: var(--font-size-huge);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   margin-bottom: var(--spacing-small);
 }
 
@@ -66,7 +77,8 @@
 }
 
 .post-card-title {
-  font-size: var(--font-size-medium);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  line-height: 1.25;
   font-weight: 800;
   margin: 0 0 var(--spacing-small) 0;
   text-transform: uppercase;
@@ -109,10 +121,13 @@
 }
 
 .post-title {
-  font-size: var(--font-size-large);
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   font-weight: 800;
   margin: 0 0 var(--spacing-medium) 0;
   text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
 .post-date {
@@ -133,7 +148,9 @@
 
 /* Post body content typography */
 .post-content h2 {
-  font-size: var(--font-size-medium);
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  line-height: 1.25;
+  font-weight: 800;
   margin-top: var(--spacing-large);
   margin-bottom: var(--spacing-medium);
   padding-bottom: var(--spacing-small);
@@ -141,9 +158,19 @@
 }
 
 .post-content h3 {
-  font-size: 1.25rem;
+  font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+  line-height: 1.3;
+  font-weight: 700;
   margin-top: var(--spacing-large);
   margin-bottom: var(--spacing-medium);
+}
+
+.post-content h4 {
+  font-size: 1.1rem;
+  line-height: 1.35;
+  font-weight: 700;
+  margin-top: var(--spacing-medium);
+  margin-bottom: var(--spacing-small);
 }
 
 .post-content p {
@@ -216,25 +243,7 @@
    RESPONSIVE ADJUSTMENTS
    ===================================================== */
 @media (max-width: 768px) {
-  .blog-listing-title {
-    font-size: var(--font-size-large);
-  }
-
   .blog-post-card {
     padding: var(--spacing-medium);
-  }
-
-  .post-title {
-    font-size: var(--font-size-medium);
-  }
-}
-
-@media (max-width: 575px) {
-  .blog-listing-title {
-    font-size: var(--font-size-medium);
-  }
-
-  .post-title {
-    font-size: 1.5rem;
   }
 }
