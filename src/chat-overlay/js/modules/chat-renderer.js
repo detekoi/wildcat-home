@@ -76,11 +76,7 @@ export class ChatRenderer {
 
         // Auto-remove temporary messages so they don't linger on stream
         if (autoRemove) {
-            setTimeout(() => {
-                if (messageElement && messageElement.parentNode) {
-                    messageElement.remove();
-                }
-            }, removeDelayMs);
+            setTimeout(() => this._fadeOutAndRemove(messageElement), removeDelayMs);
         }
     }
 
@@ -770,6 +766,32 @@ export class ChatRenderer {
         if (!(gap > 1 && this._glideWindowBy(gap))) {
             this.scrollManager.stickToBottomSoon();
         }
+    }
+
+    /**
+     * Fade an auto-removed message out before dropping it from the DOM, so it doesn't
+     * blink off a live stream. Falls back to an immediate remove when motion is disabled.
+     */
+    _fadeOutAndRemove(el) {
+        if (!el || !el.parentNode) return;
+
+        const finish = () => {
+            if (el.parentNode) el.remove();
+        };
+
+        if (motionDisabled(el)) {
+            finish();
+            return;
+        }
+
+        const anim = el.animate(
+            [{ opacity: 1 }, { opacity: 0 }],
+            { duration: EXIT_MS, easing: 'ease-out', fill: 'forwards' }
+        );
+
+        anim.onfinish = finish;
+        anim.oncancel = finish;
+        setTimeout(finish, EXIT_MS + 100);
     }
 
     removePopup(el) {

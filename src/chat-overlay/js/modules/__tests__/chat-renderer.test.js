@@ -61,6 +61,8 @@ describe('ChatRenderer - Security Mitigations', () => {
             expect(systemMessageCount()).toBe(1);
         });
 
+        // jsdom has no Element.animate, so motionDisabled() short-circuits these to an
+        // immediate remove — i.e. they cover the reduced-motion fallback path.
         it('should remove an auto-removing message after the default 3 seconds', () => {
             renderer.addSystemMessage('Connecting to chat...', true);
 
@@ -80,6 +82,42 @@ describe('ChatRenderer - Security Mitigations', () => {
 
             vi.advanceTimersByTime(5000);
             expect(systemMessageCount()).toBe(0);
+        });
+
+        it('should fade the message out before removing it when motion is available', () => {
+            const anim = {};
+            const animate = vi.fn(() => anim);
+            Element.prototype.animate = animate;
+
+            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
+            vi.advanceTimersByTime(8000);
+
+            // Fade starts at the delay; the element must still be on screen
+            expect(animate).toHaveBeenCalledTimes(1);
+            const [keyframes, options] = animate.mock.calls[0];
+            expect(keyframes).toEqual([{ opacity: 1 }, { opacity: 0 }]);
+            expect(options.duration).toBeGreaterThan(0);
+            expect(systemMessageCount()).toBe(1);
+
+            // Removal happens when the animation reports finished
+            anim.onfinish();
+            expect(systemMessageCount()).toBe(0);
+
+            delete Element.prototype.animate;
+        });
+
+        it('should still remove the message if the fade animation never fires', () => {
+            Element.prototype.animate = vi.fn(() => ({}));
+
+            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
+            vi.advanceTimersByTime(8000);
+            expect(systemMessageCount()).toBe(1);
+
+            // Safety net: onfinish/oncancel never called (e.g. hidden tab)
+            vi.advanceTimersByTime(1000);
+            expect(systemMessageCount()).toBe(0);
+
+            delete Element.prototype.animate;
         });
     });
 
