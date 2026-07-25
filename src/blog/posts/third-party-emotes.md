@@ -24,6 +24,19 @@ Third-party emote support is enabled by default for all Twitch channels. Simply 
 
 If you ever wish to disable third-party emotes, you can easily toggle them off in the overlay's settings panel under **Third-Party Emotes (BTTV, FFZ, 7TV)**.
 
+## Content Safety & Granular Control
+
+You may not want every unmoderated emote showing up on stream. The Chat Overlay now includes explicit support for **7TV's content safety flags**.
+
+By default, the overlay safely filters out emotes flagged by 7TV as **"Twitch Disallowed"**. You can further customize these safety filters directly in the settings panel by selectively turning on filters for:
+
+- Twitch Disallowed
+- Sexual Content
+- Epilepsy / Flashing
+- Edgy / Offensive
+
+Additionally, if you only want to use global emotes and prefer to ignore all channel-specific uploads, you can use the **Show Channel Emotes** master toggle to restrict all third-party emotes to global sets only.
+
 ## Built for Speed & Reliability
 
 - **Instant Local Caching**: Emote sets are cached locally in your browser to minimize startup delay and reduce external API calls.
