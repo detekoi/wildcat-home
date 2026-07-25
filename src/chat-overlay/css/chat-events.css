@@ -1,0 +1,118 @@
+/* Superchat and Memberships */
+.superchat {
+    border-radius: var(--chat-border-radius, 8px);
+    overflow: hidden;
+    margin-bottom: 8px;
+    background-color: var(--body-color, #ffffff);
+    color: #111;
+}
+.superchat-header {
+    background-color: var(--header-color, #1565c0);
+    padding: 8px 12px;
+    color: #fff;
+    font-weight: 800;
+}
+.superchat-body {
+    padding: 8px 12px;
+}
+.superchat-author {
+    opacity: 0.9;
+}
+.superchat-amount {
+    font-weight: 800;
+}
+.membership {
+    background-color: #0f9d58;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: var(--chat-border-radius, 8px);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+/* Twitch Native Events (sub, resub, gift, raid, announcement, etc.) */
+.twitch-event {
+    --event-accent: #9147ff;
+    border-left: 3px solid var(--event-accent);
+    background: rgba(145, 71, 255, 0.08);
+    border-radius: 0 var(--chat-border-radius, 6px) var(--chat-border-radius, 6px) 0;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+}
+
+.twitch-event-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--chat-text-color);
+}
+
+.twitch-event-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    color: var(--event-accent);
+}
+
+.twitch-event-icon-svg,
+.twitch-event-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.5;
+    color: inherit;
+}
+
+.twitch-event-text {
+    line-height: 1.4;
+}
+
+.twitch-event-body {
+    margin-top: 4px;
+    padding-left: 24px;
+    font-weight: 400;
+    font-size: 0.9em;
+    color: var(--chat-text-color);
+    opacity: 0.9;
+}
+
+.twitch-event-body .emote {
+    height: calc(var(--font-size) * 1.3);
+}
+
+/* Event type accent colors */
+.twitch-event--sub,
+.twitch-event--resub,
+.twitch-event--giftpaidupgrade,
+.twitch-event--primepaidupgrade {
+    --event-accent: #9147ff;
+    background: rgba(145, 71, 255, 0.08);
+}
+
+.twitch-event--subgift,
+.twitch-event--submysterygift {
+    --event-accent: #e91e8a;
+    background: rgba(233, 30, 138, 0.08);
+}
+
+.twitch-event--raid {
+    --event-accent: #eb0400;
+    background: rgba(235, 4, 0, 0.08);
+}
+
+.twitch-event--announcement {
+    border-left-width: 4px;
+    background: rgba(145, 71, 255, 0.1);
+}
+
+.twitch-event--bitsbadgetier {
+    --event-accent: #1db8a8;
+    background: rgba(29, 184, 168, 0.08);
+}
+
+.twitch-event--unknown {
+    --event-accent: #888;
+    background: rgba(136, 136, 136, 0.06);
+}

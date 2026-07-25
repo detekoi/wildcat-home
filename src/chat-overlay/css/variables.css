@@ -1,0 +1,86 @@
+:root {
+    /* Core Layout - Adjusted Defaults */
+    --chat-width: 95%;
+    --chat-height: 95%;
+    --chat-max-messages: 50; /* Example default, controlled by JS */
+    --chat-bg-color: rgba(18, 18, 18, 0.85); /* Dark BG with opacity */
+    --chat-border-color: #9147ff; /* Twitch purple */
+    --chat-border-width: 1px;
+    --chat-border-radius: 8px; /* Subtle rounding */
+    --chat-box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; /* Soft shadow */
+
+    /* Typography */
+    --chat-text-color: #efeff1; /* Light grey text */
+    --chat-font-size: 14px;
+    --chat-font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --username-color-override: none; /* Default: use Twitch colors */
+    --show-timestamps: 1; /* 1 for true, 0 for false */
+    --chat-text-shadow: none; /* Default text shadow */
+
+    /* Popup Specifics */
+
+    
+    /* Internal Spacing */
+    --chat-padding: 10px;
+    --message-spacing: 5px;
+    
+    /* Background Image */
+    --chat-bg-image: none; /* Default to no image */
+    --chat-bg-image-opacity: 0.55; /* Default opacity */
+    
+    /* Accent Colors (for themes) */
+    --accent-color-1: #9147ff;
+    --accent-color-2: #ff7f50;
+    --accent-color-3: #32cd32;
+    --accent-color-4: #1e90ff;
+    --accent-color-5: #ff69b4;
+
+    /* Default Theme (Dark) */
+    --chat-bg-opacity: 0.85; /* Separate opacity control for background color */
+    --chat-bg-image-opacity: 0.55; /* Separate opacity control for background image */
+    --username-color: #9147ff; /* Default if no color is specified */
+    --timestamp-color: #adadb8;
+    --pronoun-badge-color: var(--timestamp-color);
+    --font-size: 14px;
+    --font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --override-username-colors: 0; /* 0 = use Twitch colors, 1 = override */
+    --chat-bg-image: none; /* Default: no background image */
+    
+    /* Animation colors */
+    --spinner-color: var(--primary-color); /* Primary color for the spinner */
+    --spinner-accent: var(--primary-dark); /* Darker variant of primary color for accent */
+   
+    /* Popup Theme (same as chat by default) */
+    --popup-bg-color: var(--chat-bg-color, #1e1e1e);
+    --popup-bg-opacity: var(--chat-bg-opacity, 0.85);
+    --popup-bg-image-opacity: var(--chat-bg-image-opacity, 0.55);
+    --popup-border-color: var(--chat-border-color);
+    --popup-text-color: var(--chat-text-color);
+    --popup-username-color: var(--username-color);
+    --popup-bg-image: var(--chat-bg-image, none);
+    
+    /* Config Panel specific styles - not affected by chat themes */
+    --config-bg-color: rgba(35, 35, 35, 0.85);
+    --config-text-color: #ffffff;
+    --config-border-color: #6c757d; /* A neutral gray color */
+    --config-font-family: 'Atkinson Hyperlegible Next', sans-serif;
+    
+    /* Base colors for light mode */
+    --primary-color: #9147ff;
+    --primary-dark: #772ce8;
+    --primary-light: #a970ff;
+    --secondary-color: #f0f0f0;
+    --text-color: #18181b;
+    --background-color: #f7f7f8;
+    --panel-color: #ffffff;
+    --border-color: #e5e5e5;
+    --success-color: #00b300;
+    --danger-color: #ff3e3e;
+    --warning-color: #ffb300;
+    --info-color: #3ea6ff;
+    --card-bg-color: #ffffff;
+    --card-text-color: #18181b;
+    --header-color: #18181b;
+    --link-color: #9147ff;
+    --button-text-color: #ffffff;
+}

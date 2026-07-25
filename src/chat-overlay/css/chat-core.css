@@ -1,0 +1,157 @@
+/* Lucide Icon Utilities */
+.lucide-inline {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+button .lucide-inline,
+a .lucide-inline {
+    margin-right: 4px;
+}
+
+/* Lucide icons inside nav and carousel buttons */
+.theme-nav-btn i[data-lucide],
+.font-nav-btn i[data-lucide] {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/* Common Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.chat-page {
+    background-color: transparent;
+    color: var(--chat-text-color);
+    font-family: var(--font-family);
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    
+    /* Better font rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chroma Key (Green Screen) Mode */
+.chat-page.chroma-key {
+    background-color: #00b140;
+}
+
+/* Wrapper & Container Layout */
+#chat-wrapper {
+    width: var(--chat-width);
+    height: var(--chat-height);
+    position: relative; /* For positioning #chat-container */
+    border-radius: var(--chat-border-radius);
+    overflow: hidden; /* Clip contents like #chat-container */
+    box-shadow: var(--chat-box-shadow, none);
+    background-color: var(--chat-bg-color); /* Directly use the variable with RGBA */
+    z-index: 0; /* Establish stacking context */
+}
+
+#chat-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--chat-bg-image, none);
+    background-repeat: repeat;
+    background-size: contain;
+    opacity: var(--chat-bg-image-opacity, 0.55);
+    z-index: 1; /* Above background color, below container */
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+#chat-container {
+    position: absolute; /* Position relative to wrapper */
+    inset: 0; /* Fill the wrapper */
+    border-radius: inherit; /* Match wrapper radius */
+    border: 2px solid;
+    border-color: var(--chat-border-color);
+    overflow: hidden; /* Still needed for scroll area clipping */
+    background: transparent; /* Make container transparent */
+    z-index: 2; /* Above wrapper's ::before pseudo-element */
+}
+
+/* Styles for the scrolling inner container */
+#chat-scroll-area {
+    height: 100%;
+    overflow-y: scroll;
+    padding: 10px;
+    position: relative; /* Keep relative */
+    z-index: 1; /* z-index relative to #chat-container now */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-sizing: border-box;
+    color: var(--chat-text-color); /* Apply text color here */
+    font-family: var(--font-family); /* Apply font family here */
+    font-size: var(--font-size); /* Apply font size here */
+    font-weight: var(--font-weight, normal); /* Apply font weight here */
+    /* Disable browser scroll anchoring; we manage scroll manually */
+    overflow-anchor: none;
+}
+
+/* Top fade-out effect in windowed mode - toggled via .top-fade class on body */
+body.window-mode.top-fade #chat-scroll-area {
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.4) 6%,
+        black 15%
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.4) 6%,
+        black 15%
+    );
+}
+
+#chat-scroll-area::-webkit-scrollbar {
+    display: none;
+}
+
+/* Clips the glide transform on #chat-messages */
+#chat-glide-clip {
+    min-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-messages {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1 0 auto; /* Fill the clip box so messages stay bottom-anchored */
+    justify-content: flex-end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-message {
+        animation: none !important;
+    }
+    .popup-message {
+        transition-duration: 0.01ms !important;
+    }
+}

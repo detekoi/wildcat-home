@@ -1,0 +1,155 @@
+.chat-message {
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease-in-out;
+    font-family: inherit;
+    text-shadow: var(--chat-text-shadow);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.chat-message .timestamp {
+    color: var(--timestamp-color);
+    font-size: 0.85em;
+    margin-right: 5px;
+}
+
+.chat-message .username {
+    color: var(--username-color);
+    font-weight: bold;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.emote {
+    height: calc(var(--font-size) * 1.5);
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.pronoun-badge {
+    color: var(--pronoun-badge-color);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Enlarged emotes for single-emote messages */
+.single-emote-message .emote {
+    height: calc(var(--font-size) * 4);
+    margin: 5px;
+}
+
+/* Zero-width emote stacking */
+.emote-stack { display: inline-grid; vertical-align: middle; margin: 0 2px; }
+.emote-stack .emote { grid-area: 1 / 1; justify-self: center; align-self: center; margin: 0; }
+.single-emote-message .emote-stack { margin: 5px; }
+
+/* Cheermote styles (animated bit emotes) */
+.cheermote {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.cheermote-img {
+    height: calc(var(--font-size) * 1.8);
+    vertical-align: middle;
+}
+
+.cheermote-bits {
+    font-weight: 800;
+    font-size: 0.9em;
+    margin-left: 1px;
+    vertical-align: middle;
+    text-shadow: 0 0 3px currentColor;
+}
+
+.system-message {
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    color: var(--timestamp-color);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+/* /me action messages - italicized like native Twitch */
+.action-text {
+    font-style: italic;
+}
+
+/* Container for badges */
+.badges {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* Individual badge image */
+.chat-badge {
+    height: calc(var(--font-size) * 1.3);
+    width: auto;
+    margin-right: 3px;
+    vertical-align: middle;
+}
+.chat-badge:last-child {
+    margin-right: 0;
+}
+
+/* Placeholder for badges if image fails or for testing */
+.chat-badge-placeholder {
+    display: inline-block;
+    padding: 0px 4px;
+    margin-right: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--chat-text-color);
+    background-color: rgba(128, 128, 128, 0.3);
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 3px;
+    vertical-align: middle;
+}
+.chat-badge-placeholder:last-child {
+    margin-right: 0;
+}
+
+/* Platform Badges */
+.platform-badge {
+    display: inline-block;
+    width: calc(var(--font-size) * 1.3);
+    height: calc(var(--font-size) * 1.3);
+    vertical-align: middle;
+    margin-right: 4px;
+    background-color: var(--chat-text-color, #fff);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+.platform-twitch {
+    mask-image: url('../assets/icons/twitch.svg');
+    -webkit-mask-image: url('../assets/icons/twitch.svg');
+    background-color: #9146FF;
+}
+
+.platform-youtube {
+    mask-image: url('../assets/icons/youtube.svg');
+    -webkit-mask-image: url('../assets/icons/youtube.svg');
+    background-color: #FF0000;
+}
