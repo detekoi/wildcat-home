@@ -44,4 +44,4 @@ Additionally, if you only want to use global emotes and prefer to ignore all cha
 
 [Launch the Chat Overlay](https://wildcat.chat/chat-overlay/)
 
-[Read the setup documentation](https://docs.wildcat.chat/chatoverlay.html)
+[Read the full documentation on emotes](https://docs.wildcat.chat/chatoverlay.html?#emotes)
