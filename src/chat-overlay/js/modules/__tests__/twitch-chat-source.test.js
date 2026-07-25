@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TwitchChatSource } from '../twitch-chat-source.js';
 
 describe('TwitchChatSource - Protocol Parsing', () => {
@@ -60,5 +60,62 @@ describe('TwitchChatSource - Protocol Parsing', () => {
             // The method converts the raw "123:0-4" string into a structured emotes array mapping object
             expect(dispatchData.emotes).toEqual({ '123': ['0-4'] });
         });
+    });
+});
+
+describe('TwitchChatSource - Channel emote lifecycle on reconnect', () => {
+    let source;
+    let mockThirdPartyEmoteManager;
+
+    class FakeWebSocket {
+        static OPEN = 1;
+        static CONNECTING = 0;
+        constructor() { this.readyState = FakeWebSocket.CONNECTING; }
+        close() {}
+    }
+
+    beforeEach(() => {
+        vi.stubGlobal('WebSocket', FakeWebSocket);
+        vi.useFakeTimers();
+
+        const mockChatRenderer = { addSystemMessage: vi.fn(), addChatMessage: vi.fn(), setCurrentBroadcasterId: vi.fn() };
+        const mockConfigManager = { config: {}, updateConfig: vi.fn(), saveLastChannelOnly: vi.fn() };
+        const mockBadgeManager = { fetchChannelBadges: vi.fn(), fetchGlobalBadges: vi.fn().mockResolvedValue() };
+        mockThirdPartyEmoteManager = {
+            clearChannelEmotes: vi.fn(),
+            fetchGlobalEmotes: vi.fn().mockResolvedValue(),
+            fetchChannelEmotes: vi.fn().mockResolvedValue()
+        };
+
+        source = new TwitchChatSource(mockConfigManager, mockChatRenderer, mockBadgeManager, null, mockThirdPartyEmoteManager);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    const simulateUncleanClose = () => {
+        source.handleSocketClose({ code: 1006, reason: '', wasClean: false });
+        clearTimeout(source.reconnectTimer); // Cancel the scheduled auto-reconnect; tests call connect() directly
+    };
+
+    it('preserves channel emotes when reconnecting to the same channel after a socket drop', async () => {
+        await source.connect('somechannel');
+        expect(mockThirdPartyEmoteManager.clearChannelEmotes).toHaveBeenCalledTimes(1);
+
+        simulateUncleanClose();
+        await source.connect('somechannel');
+
+        expect(mockThirdPartyEmoteManager.clearChannelEmotes).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears channel emotes when connecting to a different channel', async () => {
+        await source.connect('somechannel');
+        simulateUncleanClose();
+        await source.connect('otherchannel');
+
+        expect(mockThirdPartyEmoteManager.clearChannelEmotes).toHaveBeenCalledTimes(2);
+        expect(source.currentBroadcasterId).toBeNull();
     });
 });

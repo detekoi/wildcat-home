@@ -16,6 +16,7 @@ export class TwitchChatSource extends ChatSource {
         this.thirdPartyEmoteManager = thirdPartyEmoteManager;
         this.socket = null;
         this.channel = '';
+        this.lastJoinedChannel = ''; // Survives socket close so same-channel reconnects keep channel emotes
         this.currentBroadcasterId = null;
         this.isConnecting = false;
         this.isExplicitDisconnect = false;
@@ -48,15 +49,19 @@ export class TwitchChatSource extends ChatSource {
         // Ensure any existing socket is closed before creating a new one
         if (this.socket) this.socket.close();
 
-        this.channel = channelName.trim().toLowerCase();
-        if (!this.channel) {
+        const normalizedChannel = channelName.trim().toLowerCase();
+        if (!normalizedChannel) {
             this.chatRenderer.addSystemMessage('Please enter a valid channel name');
             this.isConnecting = false;
             return;
         }
 
-        this.currentBroadcasterId = null; // Reset broadcaster ID on new connection
-        this.thirdPartyEmoteManager?.clearChannelEmotes();
+        if (this.lastJoinedChannel !== normalizedChannel) {
+            this.currentBroadcasterId = null; // Reset broadcaster ID on channel change
+            this.thirdPartyEmoteManager?.clearChannelEmotes();
+        }
+        this.channel = normalizedChannel;
+        this.lastJoinedChannel = normalizedChannel;
 
         this.chatRenderer.addSystemMessage(`Connecting to ${this.channel}'s chat...`, true);
         this.socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');

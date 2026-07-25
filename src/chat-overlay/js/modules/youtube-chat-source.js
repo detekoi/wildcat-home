@@ -130,7 +130,7 @@ export class YouTubeChatSource extends ChatSource {
                         this.seenIds = new Set(arr);
                     }
                 }
-                this.chatRenderer.addChatMessage(data);
+                this.chatRenderer.addChatMessage({ ...data, platform: 'youtube' });
             }
         } catch (err) {
             console.error('Failed to parse YouTube message:', err);

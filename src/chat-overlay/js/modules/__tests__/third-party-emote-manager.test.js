@@ -37,12 +37,20 @@ describe('ThirdPartyEmoteManager', () => {
             });
         });
 
-        it('transforms FFZ payload skipping modifier === true entries', () => {
+        it('transforms FFZ payload preferring animated URLs over static URLs and skipping modifier === true entries', () => {
             const ffzJson = {
                 sets: {
                     123: {
                         emoticons: [
-                            { name: 'Zrekn', urls: { '1': '//cdn.frankerfacez.com/emoticon/1/1', '2': '//cdn.frankerfacez.com/emoticon/1/2' } },
+                            {
+                                name: 'AnimatedFFZ',
+                                animated: { '2': '//cdn.frankerfacez.com/animated/2' },
+                                urls: { '2': '//cdn.frankerfacez.com/static/2' }
+                            },
+                            {
+                                name: 'StaticFFZ',
+                                urls: { '1': '//cdn.frankerfacez.com/static/1' }
+                            },
                             { name: 'HiddenMod', modifier: true, urls: { '2': '//cdn.frankerfacez.com/emoticon/2/2' } }
                         ]
                     }
@@ -50,8 +58,12 @@ describe('ThirdPartyEmoteManager', () => {
             };
             const result = manager._transformPayload('ffz', ffzJson);
 
-            expect(result.Zrekn).toEqual({
-                u: 'https://cdn.frankerfacez.com/emoticon/1/2',
+            expect(result.AnimatedFFZ).toEqual({
+                u: 'https://cdn.frankerfacez.com/animated/2',
+                z: false
+            });
+            expect(result.StaticFFZ).toEqual({
+                u: 'https://cdn.frankerfacez.com/static/1',
                 z: false
             });
             expect(result.HiddenMod).toBeUndefined();
@@ -206,6 +218,66 @@ describe('ThirdPartyEmoteManager', () => {
             const matches = manager.parseThirdPartyEmotes(msg, []);
 
             expect(matches).toHaveLength(0);
+        });
+    });
+
+    describe('localStorage Cache & Host Security Validation', () => {
+        it('validates cached entries against host allowlist and shape when loading from cache', async () => {
+            const cacheKey = 'thirdPartyEmotes_bttv_global';
+            const cacheData = {
+                timestamp: Date.now(),
+                data: {
+                    ValidEmote: { u: 'https://cdn.betterttv.net/emote/valid/3x.webp', z: false },
+                    EvilEmote: { u: 'https://attacker.com/evil.png', z: false },
+                    BadShape1: { u: 12345, z: false },
+                    BadShape2: { u: 'https://cdn.betterttv.net/emote/bad/3x.webp', z: 'not-bool' }
+                }
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
+            const fetchSpy = vi.fn();
+            vi.stubGlobal('fetch', fetchSpy);
+
+            await manager._doFetchOne('bttv', null);
+
+            // Fetch should NOT be called because cache hit
+            expect(fetchSpy).not.toHaveBeenCalled();
+
+            // Valid emote loaded, evil/malformed entries filtered out
+            expect(manager.globalSets.bttv.has('ValidEmote')).toBe(true);
+            expect(manager.globalSets.bttv.has('EvilEmote')).toBe(false);
+            expect(manager.globalSets.bttv.has('BadShape1')).toBe(false);
+            expect(manager.globalSets.bttv.has('BadShape2')).toBe(false);
+        });
+
+        it('triggers fresh network fetch when cached entry is expired', async () => {
+            const cacheKey = 'thirdPartyEmotes_bttv_global';
+            const expiredData = {
+                timestamp: Date.now() - (13 * 60 * 60 * 1000), // 13 hours ago (TTL is 12 hours)
+                data: { OldEmote: { u: 'https://cdn.betterttv.net/emote/old/3x.webp', z: false } }
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(expiredData));
+
+            const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([{ id: 'new', code: 'NewEmote' }]), { status: 200 }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await manager._doFetchOne('bttv', null);
+
+            expect(fetchMock).toHaveBeenCalled();
+            expect(manager.globalSets.bttv.has('NewEmote')).toBe(true);
+        });
+
+        it('handles corrupted JSON in localStorage gracefully by attempting fresh fetch', async () => {
+            const cacheKey = 'thirdPartyEmotes_bttv_global';
+            localStorage.setItem(cacheKey, '{corrupted-json-data');
+
+            const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([{ id: 'fresh', code: 'FreshEmote' }]), { status: 200 }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await manager._doFetchOne('bttv', null);
+
+            expect(fetchMock).toHaveBeenCalled();
+            expect(manager.globalSets.bttv.has('FreshEmote')).toBe(true);
         });
     });
 });

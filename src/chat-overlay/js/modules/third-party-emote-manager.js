@@ -131,7 +131,14 @@ export class ThirdPartyEmoteManager {
             if (cached) {
                 const { data, timestamp } = JSON.parse(cached);
                 if (cacheTTL > 0 && Date.now() - timestamp < cacheTTL) {
-                    const emoteMap = new Map(Object.entries(data || {}));
+                    const emoteMap = new Map();
+                    if (data && typeof data === 'object') {
+                        for (const [code, entry] of Object.entries(data)) {
+                            if (entry && typeof entry.u === 'string' && typeof entry.z === 'boolean' && this._isHostAllowed(entry.u)) {
+                                emoteMap.set(code, entry);
+                            }
+                        }
+                    }
                     if (this._storeProviderMap(provider, broadcasterId, emoteMap)) {
                         this._rebuildCombined();
                     }
@@ -242,8 +249,10 @@ export class ThirdPartyEmoteManager {
 
                 for (const item of emoticons) {
                     if (!item?.name || item.modifier === true) continue;
-                    const urls = item.urls || {};
-                    let rawUrl = urls['2'] || urls['4'] || urls['1'] || '';
+                    const animatedUrls = item.animated || {};
+                    const staticUrls = item.urls || {};
+                    let rawUrl = animatedUrls['2'] || animatedUrls['4'] || animatedUrls['1']
+                        || staticUrls['2'] || staticUrls['4'] || staticUrls['1'] || '';
                     if (!rawUrl) continue;
                     if (rawUrl.startsWith('//')) rawUrl = `https:${rawUrl}`;
 
