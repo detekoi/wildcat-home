@@ -64,6 +64,72 @@ describe('ConfigManager - State Persistence', () => {
         });
     });
 
+    describe('loadSavedConfig - third-party emote upgrade migration', () => {
+        it('should grandfather third-party emotes off for configs saved before the feature shipped', () => {
+            localStorage.setItem('chatConfig-default', JSON.stringify({ theme: 'dracula', fontSize: 18 }));
+
+            configManager.loadSavedConfig('default');
+
+            expect(configManager.config.thirdPartyEmotes).toBe(false);
+            expect(configManager.config.configVersion).toBe(2);
+            expect(configManager.pendingUpgradeNotice).toBe(true);
+
+            // Migration must be persisted so it only ever runs once per scene
+            const persisted = JSON.parse(localStorage.getItem('chatConfig-default'));
+            expect(persisted.thirdPartyEmotes).toBe(false);
+            expect(persisted.configVersion).toBe(2);
+
+            // Unrelated customizations survive untouched
+            expect(configManager.config.theme).toBe('dracula');
+            expect(configManager.config.fontSize).toBe(18);
+        });
+
+        it('should not run the migration twice or re-announce the feature on reload', () => {
+            localStorage.setItem('chatConfig-default', JSON.stringify({ theme: 'dracula' }));
+            configManager.loadSavedConfig('default');
+
+            const reloaded = new ConfigManager();
+            reloaded.loadSavedConfig('default');
+
+            expect(reloaded.config.thirdPartyEmotes).toBe(false);
+            expect(reloaded.pendingUpgradeNotice).toBe(false);
+        });
+
+        it('should preserve an explicit third-party emote choice rather than clobbering it', () => {
+            localStorage.setItem('chatConfig-default', JSON.stringify({ thirdPartyEmotes: true }));
+
+            configManager.loadSavedConfig('default');
+
+            expect(configManager.config.thirdPartyEmotes).toBe(true);
+            expect(configManager.config.configVersion).toBe(2);
+            expect(configManager.pendingUpgradeNotice).toBe(false);
+        });
+
+        it('should give brand new users third-party emotes on with protective 7TV filters', () => {
+            configManager.loadSavedConfig('default');
+
+            expect(configManager.config.thirdPartyEmotes).toBe(true);
+            expect(configManager.config.thirdPartyFilter7tvTwitchDisallowed).toBe(true);
+            expect(configManager.config.thirdPartyFilter7tvEpilepsy).toBe(true);
+
+            // Filters the streamer owns as a taste call stay opt-in
+            expect(configManager.config.thirdPartyFilter7tvSexual).toBe(false);
+            expect(configManager.config.thirdPartyFilter7tvEdgy).toBe(false);
+
+            expect(configManager.pendingUpgradeNotice).toBe(false);
+        });
+
+        it('should migrate configs with an older numeric configVersion (e.g. version 1)', () => {
+            localStorage.setItem('chatConfig-default', JSON.stringify({ configVersion: 1, theme: 'pink' }));
+
+            configManager.loadSavedConfig('default');
+
+            expect(configManager.config.thirdPartyEmotes).toBe(false);
+            expect(configManager.config.configVersion).toBe(2);
+            expect(configManager.pendingUpgradeNotice).toBe(true);
+        });
+    });
+
     describe('saveConfig', () => {
         it('should correctly serialize updated configuration components to localStorage', () => {
             configManager.updateConfig('theme', 'matrix');

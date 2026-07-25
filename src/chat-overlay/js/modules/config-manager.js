@@ -5,12 +5,17 @@
 
 import { UIHelpers } from './ui-helpers.js';
 
+// Bumped whenever a default changes in a way that would visibly alter an existing overlay.
+// Stored configs without a version predate third-party emote support.
+export const CONFIG_VERSION = 2;
+
 export class ConfigManager {
     constructor() {
         this.config = this.getDefaultConfig();
         this.lastAppliedThemeValue = 'default';
         this.currentFontIndex = 0;
         this.switchChatModeCallback = null;
+        this.pendingUpgradeNotice = false;
     }
 
     /**
@@ -25,6 +30,7 @@ export class ConfigManager {
      */
     getDefaultConfig() {
         return {
+            configVersion: CONFIG_VERSION,
             chatMode: 'window',
             bgColor: '#121212',
             borderColor: '#9147ff',
@@ -63,7 +69,7 @@ export class ConfigManager {
             thirdPartyChannelEmotes: true,
             thirdPartyFilter7tvTwitchDisallowed: true,
             thirdPartyFilter7tvSexual: false,
-            thirdPartyFilter7tvEpilepsy: false,
+            thirdPartyFilter7tvEpilepsy: true,
             thirdPartyFilter7tvEdgy: false,
             thirdPartyEmoteCacheGlobalTTL: 12 * 60 * 60 * 1000,
             thirdPartyEmoteCacheChannelTTL: 60 * 60 * 1000,
@@ -165,6 +171,21 @@ export class ConfigManager {
                 const loadedConfig = JSON.parse(savedConfig);
                 const defaultConfigForMerge = this.getDefaultConfig();
                 this.config = { ...defaultConfigForMerge, ...loadedConfig };
+
+                // Migration ladder. Each step owns the version predicate it applies to, so a
+                // future CONFIG_VERSION bump doesn't re-run steps that already ran.
+                const storedVersion = loadedConfig.configVersion ?? 0;
+                if (storedVersion < CONFIG_VERSION) {
+                    // v2: third-party emotes ship on by default. For an overlay that predates
+                    // them, turning them on would swap text for images in a look the user already
+                    // tuned, so grandfather them off and announce the feature once instead.
+                    if (storedVersion < 2 && loadedConfig.thirdPartyEmotes === undefined) {
+                        this.config.thirdPartyEmotes = false;
+                        this.pendingUpgradeNotice = true;
+                    }
+                    this.config.configVersion = CONFIG_VERSION;
+                    this.saveConfig(sceneName);
+                }
             }
             return this.config;
         } catch (e) {

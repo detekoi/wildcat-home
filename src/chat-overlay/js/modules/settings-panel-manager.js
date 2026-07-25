@@ -4,6 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
+import { CONFIG_VERSION } from './config-manager.js';
 
 export class SettingsPanelManager {
     /**
@@ -146,6 +147,9 @@ export class SettingsPanelManager {
             const currentFullTheme = window.availableThemes?.find(t => t.value === currentThemeValue) || {};
 
             const newConfig = {
+                // newConfig replaces the config wholesale, so the schema version has to be carried
+                // through explicitly or saving from the panel would silently unversion the config.
+                configVersion: this._configManager.config.configVersion ?? CONFIG_VERSION,
                 theme: currentThemeValue,
                 fontFamily: currentFontValue,
                 googleFontFamily: this._configManager.config.googleFontFamily || null,
@@ -192,7 +196,7 @@ export class SettingsPanelManager {
                 thirdPartyChannelEmotes: getValue(document.getElementById('third-party-channel-emotes-toggle'), this._configManager.config.thirdPartyChannelEmotes ?? true, false, true),
                 thirdPartyFilter7tvTwitchDisallowed: getValue(document.getElementById('third-party-filter-7tv-twitch-disallowed-toggle'), this._configManager.config.thirdPartyFilter7tvTwitchDisallowed ?? true, false, true),
                 thirdPartyFilter7tvSexual: getValue(document.getElementById('third-party-filter-7tv-sexual-toggle'), this._configManager.config.thirdPartyFilter7tvSexual ?? false, false, true),
-                thirdPartyFilter7tvEpilepsy: getValue(document.getElementById('third-party-filter-7tv-epilepsy-toggle'), this._configManager.config.thirdPartyFilter7tvEpilepsy ?? false, false, true),
+                thirdPartyFilter7tvEpilepsy: getValue(document.getElementById('third-party-filter-7tv-epilepsy-toggle'), this._configManager.config.thirdPartyFilter7tvEpilepsy ?? true, false, true),
                 thirdPartyFilter7tvEdgy: getValue(document.getElementById('third-party-filter-7tv-edgy-toggle'), this._configManager.config.thirdPartyFilter7tvEdgy ?? false, false, true),
                 thirdPartyEmoteCacheGlobalTTL: this._configManager.config.thirdPartyEmoteCacheGlobalTTL,
                 thirdPartyEmoteCacheChannelTTL: this._configManager.config.thirdPartyEmoteCacheChannelTTL,
@@ -377,7 +381,7 @@ export class SettingsPanelManager {
         if (thirdPartyFilter7tvSexualToggle) thirdPartyFilter7tvSexualToggle.checked = this._configManager.config.thirdPartyFilter7tvSexual ?? false;
 
         const thirdPartyFilter7tvEpilepsyToggle = document.getElementById('third-party-filter-7tv-epilepsy-toggle');
-        if (thirdPartyFilter7tvEpilepsyToggle) thirdPartyFilter7tvEpilepsyToggle.checked = this._configManager.config.thirdPartyFilter7tvEpilepsy ?? false;
+        if (thirdPartyFilter7tvEpilepsyToggle) thirdPartyFilter7tvEpilepsyToggle.checked = this._configManager.config.thirdPartyFilter7tvEpilepsy ?? true;
 
         const thirdPartyFilter7tvEdgyToggle = document.getElementById('third-party-filter-7tv-edgy-toggle');
         if (thirdPartyFilter7tvEdgyToggle) thirdPartyFilter7tvEdgyToggle.checked = this._configManager.config.thirdPartyFilter7tvEdgy ?? false;

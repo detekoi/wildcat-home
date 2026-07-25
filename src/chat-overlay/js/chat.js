@@ -764,6 +764,11 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         chatRenderer.config = configManager.config;
         themeManager.lastAppliedThemeValue = configManager.config.theme || 'default';
 
+        if (configManager.pendingUpgradeNotice) {
+            configManager.pendingUpgradeNotice = false;
+            chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.');
+        }
+
         UIHelpers.fixCssVariables();
 
         settingsPanel.updateConfigPanelFromConfig();
