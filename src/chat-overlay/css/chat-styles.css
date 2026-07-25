@@ -305,6 +305,13 @@ button:hover {
     color: var(--config-text-color);
 }
 
+.config-sublabel {
+    font-size: 0.9em;
+    color: var(--config-text-color);
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
 /* New Wrapper Styles */
 #chat-wrapper {
     width: var(--chat-width);
