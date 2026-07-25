@@ -453,6 +453,11 @@ body.window-mode.top-fade #chat-scroll-area {
     margin: 5px;
 }
 
+/* Zero-width emote stacking */
+.emote-stack { display: inline-grid; vertical-align: middle; margin: 0 2px; }
+.emote-stack .emote { grid-area: 1 / 1; justify-self: center; align-self: center; margin: 0; }
+.single-emote-message .emote-stack { margin: 5px; }
+
 /* Cheermote styles (animated bit emotes) */
 .cheermote {
     display: inline-flex;

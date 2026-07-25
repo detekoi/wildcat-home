@@ -7,6 +7,7 @@ import { ConfigManager } from './modules/config-manager.js';
 import { ChatRenderer } from './modules/chat-renderer.js';
 import { CheermoteManager } from './modules/cheermote-manager.js';
 import { ChatConnection } from './modules/chat-connection.js';
+import { ThirdPartyEmoteManager } from './modules/third-party-emote-manager.js';
 import { FontManager } from './modules/font-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
 import { SettingsPanelManager } from './modules/settings-panel-manager.js';
@@ -84,6 +85,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const showBadgesToggle = document.getElementById('show-badges-toggle');
         const showPronounsToggle = document.getElementById('show-pronouns-toggle');
         const enlargeSingleEmotesToggle = document.getElementById('enlarge-single-emotes-toggle');
+        const thirdPartyEmotesToggle = document.getElementById('third-party-emotes-toggle');
         const bgImageOpacityInput = document.getElementById('bg-image-opacity');
         const bgImageOpacityValue = document.getElementById('bg-image-opacity-value');
 
@@ -98,7 +100,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
             fontSizeSlider, fontSizeValue, chatWidthInput, chatWidthValue,
             chatHeightInput, chatHeightValue, maxMessagesInput, showTimestampsInput,
             themePreview, chatWrapper, showBadgesToggle, showPronounsToggle,
-            enlargeSingleEmotesToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
+            enlargeSingleEmotesToggle, thirdPartyEmotesToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
             twitchDisconnectBtn, youtubeDisconnectBtn, twitchChannelInput, youtubeChannelInput
         };
 
@@ -108,11 +110,12 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         const scrollManager = new ScrollManager(scrollArea, chatMessages);
         const badgeManager = new BadgeManager(configManager.config);
         const cheermoteManager = new CheermoteManager(configManager.config);
+        const thirdPartyEmoteManager = new ThirdPartyEmoteManager(configManager.config);
         const pronounManager = new PronounManager();
         pronounManager.loadDefinitions();
 
-        const chatRenderer = new ChatRenderer(configManager.config, scrollManager, badgeManager, pronounManager, cheermoteManager);
-        const chatConnection = new ChatConnection(configManager, chatRenderer, badgeManager, cheermoteManager);
+        const chatRenderer = new ChatRenderer(configManager.config, scrollManager, badgeManager, pronounManager, cheermoteManager, thirdPartyEmoteManager);
+        const chatConnection = new ChatConnection(configManager, chatRenderer, badgeManager, cheermoteManager, thirdPartyEmoteManager);
 
         const fontManager = new FontManager({
             fontSearchInput, fontSearchResults, prevFontBtn, nextFontBtn,
@@ -126,7 +129,7 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         const settingsPanel = new SettingsPanelManager({
             configManager, chatRenderer, chatConnection, badgeManager,
-            fontManager, themeManager, domRefs
+            fontManager, themeManager, thirdPartyEmoteManager, domRefs
         });
 
         // --- GLOBAL BRIDGES ---
@@ -585,6 +588,22 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
                 configManager.updateConfig('showPronouns', showPronounsToggle.checked);
                 chatRenderer.config = configManager.config;
                 themeManager.updateThemePreview();
+            });
+        }
+
+        // Third-party emotes toggle
+        if (thirdPartyEmotesToggle) {
+            thirdPartyEmotesToggle.addEventListener('change', () => {
+                const checked = thirdPartyEmotesToggle.checked;
+                configManager.updateConfig('thirdPartyEmotes', checked);
+                chatRenderer.config = configManager.config;
+                thirdPartyEmoteManager.config = configManager.config;
+                if (checked) {
+                    thirdPartyEmoteManager.fetchGlobalEmotes().catch(err => console.warn('Failed to fetch global third-party emotes:', err));
+                    if (chatConnection.currentBroadcasterId) {
+                        thirdPartyEmoteManager.fetchChannelEmotes(chatConnection.currentBroadcasterId).catch(err => console.warn('Failed to fetch channel third-party emotes:', err));
+                    }
+                }
             });
         }
 

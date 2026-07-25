@@ -2,8 +2,8 @@ import { TwitchChatSource } from './twitch-chat-source.js';
 import { YouTubeChatSource } from './youtube-chat-source.js';
 
 export class ChatConnection {
-    constructor(configManager, chatRenderer, badgeManager, cheermoteManager) {
-        this.twitch = new TwitchChatSource(configManager, chatRenderer, badgeManager, cheermoteManager);
+    constructor(configManager, chatRenderer, badgeManager, cheermoteManager, thirdPartyEmoteManager = null) {
+        this.twitch = new TwitchChatSource(configManager, chatRenderer, badgeManager, cheermoteManager, thirdPartyEmoteManager);
         this.youtube = new YouTubeChatSource(configManager, chatRenderer);
         this.callbacks = [];
         this.twitch.onConnectionChange((c, t) => this.emit('twitch', c, t));

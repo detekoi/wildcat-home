@@ -14,12 +14,13 @@ function motionDisabled(el) {
 }
 
 export class ChatRenderer {
-    constructor(config, scrollManager, badgeManager, pronounManager, cheermoteManager) {
+    constructor(config, scrollManager, badgeManager, pronounManager, cheermoteManager, thirdPartyEmoteManager = null) {
         this.config = config;
         this.scrollManager = scrollManager;
         this.badgeManager = badgeManager;
         this.pronounManager = pronounManager;
         this.cheermoteManager = cheermoteManager;
+        this.thirdPartyEmoteManager = thirdPartyEmoteManager;
         this.chatMessages = document.getElementById('chat-messages');
         this.currentBroadcasterId = null;
     }
@@ -112,7 +113,7 @@ export class ChatRenderer {
         }
         superChatEl.appendChild(headerEl);
 
-        const contentNodes = this.buildMessageContentDOM(data.message || "", data.emotes);
+        const contentNodes = this.buildMessageContentDOM(data.message || "", data.emotes, false, 'youtube');
         if (contentNodes.childNodes.length > 0) {
             const bodyEl = document.createElement('div');
             bodyEl.className = 'superchat-body chat-text';
@@ -203,7 +204,7 @@ export class ChatRenderer {
 
             // Use buildMessageContentDOM for emote support in the user message
             const hasBits = !!(data.tags?.bits);
-            const contentNodes = this.buildMessageContentDOM(data.userMessage, data.emotes, hasBits);
+            const contentNodes = this.buildMessageContentDOM(data.userMessage, data.emotes, hasBits, 'twitch');
             bodyEl.appendChild(contentNodes);
 
             eventEl.appendChild(bodyEl);
@@ -298,7 +299,7 @@ export class ChatRenderer {
 
             // Build node tree dynamically instead of via innerHTML
             const hasBits = !!(data.tags?.bits);
-            const contentNodes = this.buildMessageContentDOM(data.message, data.emotes, hasBits);
+            const contentNodes = this.buildMessageContentDOM(data.message, data.emotes, hasBits, data.platform || 'twitch');
             const isSingleEmote = this.checkSingleEmoteNodes(contentNodes);
 
             if (timestamp) {
@@ -412,7 +413,7 @@ export class ChatRenderer {
     /**
      * Build secure DOM fragment for message content parsing emotes and URLs
      */
-    buildMessageContentDOM(message, emotes, hasBits = false) {
+    buildMessageContentDOM(message, emotes, hasBits = false, platform = 'twitch') {
         const frag = document.createDocumentFragment();
 
         let emotePositions = [];
@@ -439,10 +440,23 @@ export class ChatRenderer {
             cheermotePositions = this.cheermoteManager.parseCheermotes(message);
         }
 
-        // Merge emote positions and cheermote positions into a unified list
+        // Native emote + cheermote occupied ranges for third-party emote exclusion
+        const occupiedRanges = [
+            ...emotePositions.map(e => ({ start: e.start, end: e.end })),
+            ...cheermotePositions.map(c => ({ start: c.start, end: c.end }))
+        ];
+
+        // Parse third-party emotes (BTTV / FFZ / 7TV) if Twitch and enabled
+        let thirdPartyPositions = [];
+        if (platform === 'twitch' && this.config.thirdPartyEmotes !== false && this.thirdPartyEmoteManager) {
+            thirdPartyPositions = this.thirdPartyEmoteManager.parseThirdPartyEmotes(message, occupiedRanges);
+        }
+
+        // Merge emote positions, cheermote positions, and third-party emote positions into a unified list
         const allPositions = [
             ...emotePositions.map(e => ({ ...e, type: 'emote' })),
-            ...cheermotePositions.map(c => ({ ...c, type: 'cheermote' }))
+            ...cheermotePositions.map(c => ({ ...c, type: 'cheermote' })),
+            ...thirdPartyPositions.map(t => ({ ...t, type: 'thirdparty' }))
         ].sort((a, b) => a.start - b.start);
 
         // URL detection helper for text segments
@@ -483,12 +497,55 @@ export class ChatRenderer {
             appendTextWithUrls(message);
         } else {
             let lastIndex = 0;
+            let lastEmote = null; // { node: HTMLElement, end: number }
+
             for (const pos of allPositions) {
                 // Skip if this position overlaps with a previous one
                 if (pos.start < lastIndex) continue;
 
+                // Check zero-width attach condition
+                const isZeroWidthAttach = pos.type === 'thirdparty'
+                    && pos.zeroWidth
+                    && lastEmote
+                    && pos.start === lastEmote.end + 2
+                    && message[lastEmote.end + 1] === ' ';
+
+                if (isZeroWidthAttach) {
+                    // Attach zero-width emote to preceding emote (swallow separating space)
+                    let stackNode;
+                    if (lastEmote.node.classList && lastEmote.node.classList.contains('emote-stack')) {
+                        stackNode = lastEmote.node;
+                    } else {
+                        stackNode = document.createElement('span');
+                        stackNode.className = 'emote-stack';
+                        frag.replaceChild(stackNode, lastEmote.node);
+                        stackNode.appendChild(lastEmote.node);
+                    }
+
+                    const overlayImg = document.createElement('img');
+                    overlayImg.className = 'emote emote-overlay';
+                    overlayImg.src = pos.imageUrl;
+                    overlayImg.alt = pos.code;
+                    overlayImg.title = pos.code;
+                    if (pos.imageUrl.includes('3x.webp')) {
+                        overlayImg.onerror = function () {
+                            this.onerror = function () { this.src = this.src.replace('2x.webp', '1x.webp'); };
+                            this.src = this.src.replace('3x.webp', '2x.webp');
+                        };
+                    }
+                    stackNode.appendChild(overlayImg);
+
+                    lastEmote = { node: stackNode, end: pos.end };
+                    lastIndex = pos.end + 1;
+                    continue;
+                }
+
                 if (pos.start > lastIndex) {
-                    appendTextWithUrls(message.slice(lastIndex, pos.start));
+                    const textChunk = message.slice(lastIndex, pos.start);
+                    appendTextWithUrls(textChunk);
+                    if (textChunk.length > 0) {
+                        lastEmote = null;
+                    }
                 }
 
                 if (pos.type === 'cheermote') {
@@ -510,12 +567,27 @@ export class ChatRenderer {
                     wrapper.appendChild(bitsSpan);
 
                     frag.appendChild(wrapper);
+                    lastEmote = null; // Zero-width cannot attach to cheermotes
+                    lastIndex = pos.end + 1;
+                } else if (pos.type === 'thirdparty') {
+                    const img = document.createElement('img');
+                    img.className = 'emote third-party-emote';
+                    img.src = pos.imageUrl;
+                    img.alt = pos.code;
+                    img.title = pos.code;
+                    if (pos.imageUrl.includes('3x.webp')) {
+                        img.onerror = function () {
+                            this.onerror = function () { this.src = this.src.replace('2x.webp', '1x.webp'); };
+                            this.src = this.src.replace('3x.webp', '2x.webp');
+                        };
+                    }
+                    frag.appendChild(img);
+                    lastEmote = { node: img, end: pos.end };
                     lastIndex = pos.end + 1;
                 } else {
-                    // Render emote (existing logic)
+                    // Render native Twitch / YT emote
                     const emoteCode = message.substring(pos.start, pos.end + 1);
 
-                    // Restrict YT emoji URLs to trusted domains
                     let isYtEmoji = false;
                     if (pos.id.startsWith('http')) {
                         try {
@@ -528,9 +600,7 @@ export class ChatRenderer {
                                 host === 'gstatic.com' || host.endsWith('.gstatic.com')) {
                                 isYtEmoji = true;
                             }
-                        } catch (e) {
-                            // Invalid URL
-                        }
+                        } catch (e) {}
                     }
 
                     const img = document.createElement('img');
@@ -538,6 +608,10 @@ export class ChatRenderer {
                     if (isYtEmoji) {
                         img.classList.add('yt-emoji');
                         img.src = pos.id;
+                        img.alt = emoteCode;
+                        img.title = emoteCode;
+                        frag.appendChild(img);
+                        lastEmote = null;
                     } else if (!pos.id.startsWith('http')) {
                         const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(pos.id)}/default/dark`;
                         img.src = `${baseUrl}/3.0`;
@@ -545,15 +619,14 @@ export class ChatRenderer {
                             this.onerror = function () { this.src = `${baseUrl}/1.0`; };
                             this.src = `${baseUrl}/2.0`;
                         };
+                        img.alt = emoteCode;
+                        img.title = emoteCode;
+                        frag.appendChild(img);
+                        lastEmote = { node: img, end: pos.end };
                     } else {
-                        // Fallback for malicious or unrecognized HTTP IDs
                         frag.appendChild(document.createTextNode(emoteCode));
-                        lastIndex = pos.end + 1;
-                        continue;
+                        lastEmote = null;
                     }
-                    img.alt = emoteCode;
-                    img.title = emoteCode;
-                    frag.appendChild(img);
                     lastIndex = pos.end + 1;
                 }
             }
@@ -576,10 +649,17 @@ export class ChatRenderer {
             if (child.nodeType === Node.TEXT_NODE) {
                 if (child.textContent.trim() !== '') hasText = true;
             } else if (child.nodeName.toLowerCase() === 'img' && child.classList.contains('emote')) {
-                if (hasOneEmote) return false; // More than one
+                if (hasOneEmote) return false;
+                hasOneEmote = true;
+            } else if (child.nodeName.toLowerCase() === 'span' && child.classList.contains('emote-stack')) {
+                if (hasOneEmote) return false;
+                const children = Array.from(child.childNodes);
+                if (children.length === 0 || !children.every(c => c.nodeName.toLowerCase() === 'img' && c.classList.contains('emote'))) {
+                    return false;
+                }
                 hasOneEmote = true;
             } else {
-                return false; // Other element types
+                return false;
             }
         }
         return hasOneEmote && !hasText;

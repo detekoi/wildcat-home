@@ -16,13 +16,14 @@ export class SettingsPanelManager {
      * @param {Object} opts.themeManager - ThemeManager instance
      * @param {Object} opts.domRefs - Bag of DOM element references
      */
-    constructor({ configManager, chatRenderer, chatConnection, badgeManager, fontManager, themeManager, domRefs }) {
+    constructor({ configManager, chatRenderer, chatConnection, badgeManager, fontManager, themeManager, thirdPartyEmoteManager, domRefs }) {
         this._configManager = configManager;
         this._chatRenderer = chatRenderer;
         this._chatConnection = chatConnection;
         this._badgeManager = badgeManager;
         this._fontManager = fontManager;
         this._themeManager = themeManager;
+        this._thirdPartyEmoteManager = thirdPartyEmoteManager;
         this._dom = domRefs;
 
         // Snapshot for cancel/revert
@@ -61,6 +62,7 @@ export class SettingsPanelManager {
                 this._configManager.applyConfiguration(this._configManager.config);
                 this._badgeManager.config = this._configManager.config;
                 this._chatRenderer.config = this._configManager.config;
+                if (this._thirdPartyEmoteManager) this._thirdPartyEmoteManager.config = this._configManager.config;
                 this.updateConfigPanelFromConfig();
             } catch (error) {
                 console.error("Error during revert:", error);
@@ -184,6 +186,11 @@ export class SettingsPanelManager {
                 badgeCacheGlobalTTL: this._configManager.config.badgeCacheGlobalTTL,
                 badgeCacheChannelTTL: this._configManager.config.badgeCacheChannelTTL,
                 badgeFallbackHide: true,
+                cheermoteEndpointUrl: this._configManager.config.cheermoteEndpointUrl,
+                cheermoteCacheTTL: this._configManager.config.cheermoteCacheTTL,
+                thirdPartyEmotes: getValue(document.getElementById('third-party-emotes-toggle'), this._configManager.config.thirdPartyEmotes ?? true, false, true),
+                thirdPartyEmoteCacheGlobalTTL: this._configManager.config.thirdPartyEmoteCacheGlobalTTL,
+                thirdPartyEmoteCacheChannelTTL: this._configManager.config.thirdPartyEmoteCacheChannelTTL,
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
                 topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
                 chromaKey: this._configManager.config.chromaKey ?? false,
@@ -193,6 +200,7 @@ export class SettingsPanelManager {
             this._configManager.applyConfiguration(this._configManager.config);
             this._badgeManager.config = this._configManager.config;
             this._chatRenderer.config = this._configManager.config;
+            if (this._thirdPartyEmoteManager) this._thirdPartyEmoteManager.config = this._configManager.config;
 
             const scene = UIHelpers.getUrlParameter('scene') || 'default';
             this._configManager.saveConfig(scene);
@@ -221,6 +229,7 @@ export class SettingsPanelManager {
         this._configManager.resetToDefaults();
         this._badgeManager.config = this._configManager.config;
         this._chatRenderer.config = this._configManager.config;
+        if (this._thirdPartyEmoteManager) this._thirdPartyEmoteManager.config = this._configManager.config;
     }
 
     /**
@@ -349,6 +358,9 @@ export class SettingsPanelManager {
         if (showMembershipsToggle) showMembershipsToggle.checked = this._configManager.config.showMembershipEvents ?? true;
         const showPlatformBadgesToggle = document.getElementById('show-platform-badges-toggle');
         if (showPlatformBadgesToggle) showPlatformBadgesToggle.checked = this._configManager.config.showPlatformBadges ?? true;
+
+        const thirdPartyEmotesToggle = document.getElementById('third-party-emotes-toggle');
+        if (thirdPartyEmotesToggle) thirdPartyEmotesToggle.checked = this._configManager.config.thirdPartyEmotes ?? true;
 
         this._themeManager.updateThemePreview();
     }

@@ -7,12 +7,13 @@ import { ChatSource } from './chat-source.js';
 import { UIHelpers } from './ui-helpers.js';
 
 export class TwitchChatSource extends ChatSource {
-    constructor(configManager, chatRenderer, badgeManager, cheermoteManager) {
+    constructor(configManager, chatRenderer, badgeManager, cheermoteManager, thirdPartyEmoteManager = null) {
         super();
         this.configManager = configManager;
         this.chatRenderer = chatRenderer;
         this.badgeManager = badgeManager;
         this.cheermoteManager = cheermoteManager;
+        this.thirdPartyEmoteManager = thirdPartyEmoteManager;
         this.socket = null;
         this.channel = '';
         this.currentBroadcasterId = null;
@@ -55,6 +56,7 @@ export class TwitchChatSource extends ChatSource {
         }
 
         this.currentBroadcasterId = null; // Reset broadcaster ID on new connection
+        this.thirdPartyEmoteManager?.clearChannelEmotes();
 
         this.chatRenderer.addSystemMessage(`Connecting to ${this.channel}'s chat...`, true);
         this.socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
@@ -98,7 +100,12 @@ export class TwitchChatSource extends ChatSource {
 
             // Fetch global badges on successful connection
             await this.badgeManager.fetchGlobalBadges();
-            // Channel badges and cheermotes will be fetched on ROOMSTATE with the broadcaster ID
+            if (this.configManager.config.thirdPartyEmotes !== false && this.thirdPartyEmoteManager) {
+                this.thirdPartyEmoteManager.fetchGlobalEmotes().catch(err =>
+                    console.warn('Failed to fetch global third-party emotes:', err)
+                );
+            }
+            // Channel badges, cheermotes, and third-party emotes will be fetched on ROOMSTATE with the broadcaster ID
         }, 50); // Small delay can sometimes help ensure readiness
     }
 
@@ -161,6 +168,11 @@ export class TwitchChatSource extends ChatSource {
                     if (this.cheermoteManager) {
                         this.cheermoteManager.fetchCheermotes(this.currentBroadcasterId).catch(err =>
                             console.warn('Failed to fetch channel cheermotes:', err)
+                        );
+                    }
+                    if (this.thirdPartyEmoteManager && this.configManager.config.thirdPartyEmotes !== false) {
+                        this.thirdPartyEmoteManager.fetchChannelEmotes(this.currentBroadcasterId).catch(err =>
+                            console.warn('Failed to fetch channel third-party emotes:', err)
                         );
                     }
                 }
@@ -260,6 +272,11 @@ export class TwitchChatSource extends ChatSource {
             console.log(`Got broadcaster ID from PRIVMSG: ${this.currentBroadcasterId}`);
             this.chatRenderer.setCurrentBroadcasterId(this.currentBroadcasterId);
             this.badgeManager.fetchChannelBadges(this.currentBroadcasterId);
+            if (this.thirdPartyEmoteManager && this.configManager.config.thirdPartyEmotes !== false) {
+                this.thirdPartyEmoteManager.fetchChannelEmotes(this.currentBroadcasterId).catch(err =>
+                    console.warn('Failed to fetch channel third-party emotes:', err)
+                );
+            }
         }
 
         // Detect /me (ACTION) messages: IRC format is \x01ACTION <msg>\x01

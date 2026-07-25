@@ -279,4 +279,113 @@ describe('ChatRenderer - Security Mitigations', () => {
             expect(Element.prototype.animate).not.toHaveBeenCalled();
         });
     });
+
+    describe('Third-Party Emotes & Stacking', () => {
+        let mockThirdPartyEmoteManager;
+
+        beforeEach(() => {
+            mockThirdPartyEmoteManager = {
+                parseThirdPartyEmotes: vi.fn((message, occupied) => {
+                    if (message.includes('catJAM')) {
+                        return [
+                            { start: message.indexOf('catJAM'), end: message.indexOf('catJAM') + 5, code: 'catJAM', imageUrl: 'https://cdn.betterttv.net/catjam.webp', zeroWidth: false }
+                        ];
+                    }
+                    return [];
+                })
+            };
+        });
+
+        it('renders third-party emote images with intact surrounding text', () => {
+            const config = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('hello catJAM world', null, false, 'twitch');
+            const img = frag.querySelector('img.third-party-emote');
+
+            expect(img).not.toBeNull();
+            expect(img.src).toBe('https://cdn.betterttv.net/catjam.webp');
+            expect(frag.textContent).toBe('hello  world');
+        });
+
+        it('stacks zero-width emote on preceding emote and swallows single separating space', () => {
+            mockThirdPartyEmoteManager.parseThirdPartyEmotes = vi.fn(() => [
+                { start: 0, end: 5, code: 'catJAM', imageUrl: 'https://cdn.betterttv.net/catjam.webp', zeroWidth: false },
+                { start: 7, end: 14, code: 'cvHazmat', imageUrl: 'https://cdn.betterttv.net/hazmat.webp', zeroWidth: true }
+            ]);
+
+            const config = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('catJAM cvHazmat', null, false, 'twitch');
+            const stack = frag.querySelector('.emote-stack');
+
+            expect(stack).not.toBeNull();
+            expect(stack.children.length).toBe(2);
+            expect(stack.children[0].alt).toBe('catJAM');
+            expect(stack.children[1].alt).toBe('cvHazmat');
+            expect(stack.children[1].classList.contains('emote-overlay')).toBe(true);
+            expect(frag.textContent).toBe('');
+        });
+
+        it('chains 3 emotes into a single stack when zero-widths follow', () => {
+            mockThirdPartyEmoteManager.parseThirdPartyEmotes = vi.fn(() => [
+                { start: 0, end: 5, code: 'catJAM', imageUrl: 'https://cdn.betterttv.net/catjam.webp', zeroWidth: false },
+                { start: 7, end: 14, code: 'cvHazmat', imageUrl: 'https://cdn.betterttv.net/hazmat.webp', zeroWidth: true },
+                { start: 16, end: 23, code: 'SantaHat', imageUrl: 'https://cdn.betterttv.net/santa.webp', zeroWidth: true }
+            ]);
+
+            const config = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('catJAM cvHazmat SantaHat', null, false, 'twitch');
+            const stack = frag.querySelector('.emote-stack');
+
+            expect(stack).not.toBeNull();
+            expect(stack.children.length).toBe(3);
+        });
+
+        it('renders zero-width inline if unattached (preceded by text or separated by two spaces)', () => {
+            mockThirdPartyEmoteManager.parseThirdPartyEmotes = vi.fn(() => [
+                { start: 6, end: 13, code: 'cvHazmat', imageUrl: 'https://cdn.betterttv.net/hazmat.webp', zeroWidth: true }
+            ]);
+
+            const config = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('hello cvHazmat', null, false, 'twitch');
+            const stack = frag.querySelector('.emote-stack');
+            const img = frag.querySelector('img.third-party-emote');
+
+            expect(stack).toBeNull();
+            expect(img).not.toBeNull();
+        });
+
+        it('respects config gating and platform gating', () => {
+            const config = { thirdPartyEmotes: false };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            renderer.buildMessageContentDOM('catJAM', null, false, 'twitch');
+            expect(mockThirdPartyEmoteManager.parseThirdPartyEmotes).not.toHaveBeenCalled();
+
+            const configOn = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(configOn, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            renderer.buildMessageContentDOM('catJAM', null, false, 'youtube');
+            expect(mockThirdPartyEmoteManager.parseThirdPartyEmotes).not.toHaveBeenCalled();
+        });
+
+        it('evaluates checkSingleEmoteNodes as true for single emote-stack messages', () => {
+            mockThirdPartyEmoteManager.parseThirdPartyEmotes = vi.fn(() => [
+                { start: 0, end: 5, code: 'catJAM', imageUrl: 'https://cdn.betterttv.net/catjam.webp', zeroWidth: false },
+                { start: 7, end: 14, code: 'cvHazmat', imageUrl: 'https://cdn.betterttv.net/hazmat.webp', zeroWidth: true }
+            ]);
+
+            const config = { thirdPartyEmotes: true, enlargeSingleEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('catJAM cvHazmat', null, false, 'twitch');
+            expect(renderer.checkSingleEmoteNodes(frag)).toBe(true);
+        });
+    });
 });
