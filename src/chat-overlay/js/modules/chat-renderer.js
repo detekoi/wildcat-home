@@ -35,7 +35,7 @@ export class ChatRenderer {
     /**
      * Add a system message to the chat
      */
-    addSystemMessage(message, autoRemove = false) {
+    addSystemMessage(message, autoRemove = false, removeDelayMs = 3000) {
         if (!this.chatMessages) {
             console.error("Chat messages container not found for system message.");
             return;
@@ -74,13 +74,13 @@ export class ChatRenderer {
             this.scrollManager.scrollToBottom();
         }
 
-        // Auto-remove temporary messages after 3 seconds
+        // Auto-remove temporary messages so they don't linger on stream
         if (autoRemove) {
             setTimeout(() => {
                 if (messageElement && messageElement.parentNode) {
                     messageElement.remove();
                 }
-            }, 3000);
+            }, removeDelayMs);
         }
     }
 

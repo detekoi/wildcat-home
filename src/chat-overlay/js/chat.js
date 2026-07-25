@@ -766,7 +766,8 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         if (configManager.pendingUpgradeNotice) {
             configManager.pendingUpgradeNotice = false;
-            chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.');
+            // Long enough to read, short enough that it clears itself off a live stream.
+            chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.', true, 8000);
         }
 
         UIHelpers.fixCssVariables();

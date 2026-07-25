@@ -48,6 +48,41 @@ describe('ChatRenderer - Security Mitigations', () => {
         });
     });
 
+    describe('addSystemMessage (auto-removal)', () => {
+        beforeEach(() => vi.useFakeTimers());
+        afterEach(() => vi.useRealTimers());
+
+        const systemMessageCount = () => document.querySelectorAll('#chat-messages .system-message').length;
+
+        it('should keep a system message on screen indefinitely by default', () => {
+            renderer.addSystemMessage('Settings reset to default.');
+
+            vi.advanceTimersByTime(60000);
+            expect(systemMessageCount()).toBe(1);
+        });
+
+        it('should remove an auto-removing message after the default 3 seconds', () => {
+            renderer.addSystemMessage('Connecting to chat...', true);
+
+            vi.advanceTimersByTime(2999);
+            expect(systemMessageCount()).toBe(1);
+
+            vi.advanceTimersByTime(1);
+            expect(systemMessageCount()).toBe(0);
+        });
+
+        it('should honour a custom removal delay so stream-facing notices clear themselves', () => {
+            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
+
+            // Must outlive the 3s default — this notice needs to be readable
+            vi.advanceTimersByTime(3000);
+            expect(systemMessageCount()).toBe(1);
+
+            vi.advanceTimersByTime(5000);
+            expect(systemMessageCount()).toBe(0);
+        });
+    });
+
     describe('buildMessageContentDOM (URL Redirection Mitigation)', () => {
         it('should transform safe http/https URLs into <a> links', () => {
             const message = "Check out this link: https://google.com";
