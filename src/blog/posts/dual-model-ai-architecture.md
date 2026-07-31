@@ -20,25 +20,7 @@ Different stream features have different requirements. Real-time chat translatio
 
 By pairing specialized models for different tasks, WildcatSage automatically routes every request through two optimized performance tiers:
 
-```
-                          ┌───────────────────────────┐
-                          │   WildcatSage AI Engine   │
-                          └─────────────┬─────────────┘
-                                        │
-                 ┌──────────────────────┴──────────────────────┐
-                 ▼                                             ▼
-  ┌─────────────────────────────┐               ┌─────────────────────────────┐
-  │         Speed Tier          │               │      Intelligence Tier      │
-  │    Gemini 3.5 Flash Lite    │               │       GPT-5.6 Luna          │
-  ├─────────────────────────────┤               ├─────────────────────────────┤
-  │ • Real-time Chat Translation│               │ • !ask & @WildcatSage Chat  │
-  │ • Emote Visual Descriptions │               │ • Live Web Search (!search) │
-  │ • Conversation Summaries    │               │ • AI Commands & AI Timers   │
-  │ • Bot Language Detection    │               │ • Daily Check-In Generator  │
-  │                             │               │ • Trivia, Riddle & Geo Games│
-  │                             │               │ • AutoChat & Lurk Send-Offs │
-  └─────────────────────────────┘               └─────────────────────────────┘
-```
+![WildcatSage Dual-Model AI Architecture diagram showing Speed Tier powered by Gemini 3.5 Flash Lite and Intelligence Tier powered by GPT-5.6 Luna](/assets/images/dual-model-architecture.png)
 
 ---
 
