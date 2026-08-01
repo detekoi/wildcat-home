@@ -11,13 +11,13 @@ describe('Live Preview Background Selector', () => {
     beforeEach(() => {
         localStorage.clear();
         document.body.innerHTML = `
-            <div id="previewIframeContainer" class="preview-iframe-container">
+            <div id="previewIframeContainer" class="preview-iframe-container bg-checkerboard">
                 <iframe id="previewIframe"></iframe>
             </div>
             <div id="previewBgPicker">
-                <button type="button" class="preview-bg-btn active" data-bg-type="dark">Dark</button>
+                <button type="button" class="preview-bg-btn" data-bg-type="dark">Dark</button>
                 <button type="button" class="preview-bg-btn" data-bg-type="light">Light</button>
-                <button type="button" class="preview-bg-btn" data-bg-type="checkerboard">Grid</button>
+                <button type="button" class="preview-bg-btn active" data-bg-type="checkerboard">Grid</button>
                 <button type="button" class="preview-bg-btn" data-bg-type="custom"><span id="previewCustomSwatch"></span> Custom</button>
                 <input type="color" id="previewBgColorInput" value="#121212">
             </div>
@@ -41,9 +41,9 @@ describe('Live Preview Background Selector', () => {
             const getSavedBg = () => {
                 try {
                     const saved = localStorage.getItem(STORAGE_KEY);
-                    return saved ? JSON.parse(saved) : { type: 'dark', color: '#121212' };
+                    return saved ? JSON.parse(saved) : { type: 'checkerboard', color: '#121212' };
                 } catch (e) {
-                    return { type: 'dark', color: '#121212' };
+                    return { type: 'checkerboard', color: '#121212' };
                 }
             };
 
@@ -65,17 +65,17 @@ describe('Live Preview Background Selector', () => {
                 container.classList.remove('bg-checkerboard');
                 container.style.backgroundImage = '';
 
-                if (type === 'light') {
+                if (type === 'dark') {
+                    container.style.backgroundColor = '#000000';
+                } else if (type === 'light') {
                     container.style.backgroundColor = '#ffffff';
-                } else if (type === 'checkerboard') {
-                    container.classList.add('bg-checkerboard');
                 } else if (type === 'custom') {
                     const hex = customColor || colorInput.value || '#121212';
                     container.style.backgroundColor = hex;
                     if (customSwatch) customSwatch.style.background = hex;
                 } else {
-                    type = 'dark';
-                    container.style.backgroundColor = '#000000';
+                    type = 'checkerboard';
+                    container.classList.add('bg-checkerboard');
                 }
 
                 btns.forEach(btn => {
@@ -87,35 +87,45 @@ describe('Live Preview Background Selector', () => {
             };
 
             btns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const type = btn.dataset.bgType;
-                    if (type === 'custom') {
-                        if (btn.classList.contains('active')) {
-                            colorInput.click();
-                        } else {
-                            applyBg('custom', colorInput.value);
-                        }
-                    } else {
-                        applyBg(type);
-                    }
-                });
+                const type = btn.dataset.bgType;
+                if (type !== 'custom') {
+                    btn.addEventListener('click', () => applyBg(type));
+                }
             });
 
-            colorInput.addEventListener('input', (e) => {
-                const hex = e.target.value;
-                if (customSwatch) customSwatch.style.background = hex;
-                applyBg('custom', hex);
-            });
+            if (colorInput) {
+                const handleCustomInput = (e) => {
+                    const hex = e.target.value;
+                    if (customSwatch) customSwatch.style.background = hex;
+                    applyBg('custom', hex);
+                };
+                colorInput.addEventListener('input', handleCustomInput);
+                colorInput.addEventListener('change', handleCustomInput);
+                colorInput.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyBg('custom', colorInput.value);
+                });
+            }
 
             applyBg(currentBg.type, currentBg.color);
         };
     });
 
-    it('defaults to dark background on initial setup', () => {
+    it('defaults to checkerboard (grid) background on initial setup', () => {
         setupPreviewBgSelector();
-        expect(container.style.backgroundColor).toBe('rgb(0, 0, 0)');
+        expect(container.classList.contains('bg-checkerboard')).toBe(true);
         const activeBtn = document.querySelector('.preview-bg-btn.active');
-        expect(activeBtn.dataset.bgType).toBe('dark');
+        expect(activeBtn.dataset.bgType).toBe('checkerboard');
+    });
+
+    it('switches to dark background when Dark button is clicked', () => {
+        setupPreviewBgSelector();
+        const darkBtn = document.querySelector('[data-bg-type="dark"]');
+        darkBtn.click();
+
+        expect(container.style.backgroundColor).toBe('rgb(0, 0, 0)');
+        expect(darkBtn.classList.contains('active')).toBe(true);
+        expect(JSON.parse(localStorage.getItem('chat_overlay_preview_bg')).type).toBe('dark');
     });
 
     it('switches to light background when Light button is clicked', () => {
@@ -126,16 +136,6 @@ describe('Live Preview Background Selector', () => {
         expect(container.style.backgroundColor).toBe('rgb(255, 255, 255)');
         expect(lightBtn.classList.contains('active')).toBe(true);
         expect(JSON.parse(localStorage.getItem('chat_overlay_preview_bg')).type).toBe('light');
-    });
-
-    it('switches to checkerboard pattern when Grid button is clicked', () => {
-        setupPreviewBgSelector();
-        const gridBtn = document.querySelector('[data-bg-type="checkerboard"]');
-        gridBtn.click();
-
-        expect(container.classList.contains('bg-checkerboard')).toBe(true);
-        expect(gridBtn.classList.contains('active')).toBe(true);
-        expect(JSON.parse(localStorage.getItem('chat_overlay_preview_bg')).type).toBe('checkerboard');
     });
 
     it('switches to custom background color on color input change', () => {

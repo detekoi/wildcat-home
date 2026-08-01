@@ -434,9 +434,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const getSavedBg = () => {
                 try {
                     const saved = localStorage.getItem(STORAGE_KEY);
-                    return saved ? JSON.parse(saved) : { type: 'dark', color: '#121212' };
+                    return saved ? JSON.parse(saved) : { type: 'checkerboard', color: '#121212' };
                 } catch (e) {
-                    return { type: 'dark', color: '#121212' };
+                    return { type: 'checkerboard', color: '#121212' };
                 }
             };
 
@@ -458,17 +458,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.classList.remove('bg-checkerboard');
                 container.style.backgroundImage = '';
 
-                if (type === 'light') {
+                if (type === 'dark') {
+                    container.style.backgroundColor = '#000000';
+                } else if (type === 'light') {
                     container.style.backgroundColor = '#ffffff';
-                } else if (type === 'checkerboard') {
-                    container.classList.add('bg-checkerboard');
                 } else if (type === 'custom') {
                     const hex = customColor || colorInput.value || '#121212';
                     container.style.backgroundColor = hex;
                     if (customSwatch) customSwatch.style.background = hex;
                 } else {
-                    type = 'dark';
-                    container.style.backgroundColor = '#000000';
+                    type = 'checkerboard';
+                    container.classList.add('bg-checkerboard');
                 }
 
                 btns.forEach(btn => {

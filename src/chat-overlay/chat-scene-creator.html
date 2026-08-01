@@ -171,13 +171,13 @@
                                 <div class="preview-bg-picker" id="previewBgPicker">
                                     <span class="preview-bg-label">Background:</span>
                                     <div class="preview-bg-options">
-                                        <button type="button" class="preview-bg-btn active" data-bg-type="dark" title="Dark Background">
+                                        <button type="button" class="preview-bg-btn" data-bg-type="dark" title="Dark Background">
                                             <span class="bg-swatch dark-swatch"></span> Dark
                                         </button>
                                         <button type="button" class="preview-bg-btn" data-bg-type="light" title="Light Background">
                                             <span class="bg-swatch light-swatch"></span> Light
                                         </button>
-                                        <button type="button" class="preview-bg-btn" data-bg-type="checkerboard" title="Checkerboard Grid (Transparent)">
+                                        <button type="button" class="preview-bg-btn active" data-bg-type="checkerboard" title="Checkerboard Grid (Transparent)">
                                             <span class="bg-swatch checkerboard-swatch"></span> Grid
                                         </button>
                                         <button type="button" class="preview-bg-btn" data-bg-type="custom" title="Custom Background Color">
@@ -188,7 +188,7 @@
                                 </div>
                             </div>
                             <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Form changes stream into the preview in real-time.</p>
-                            <div id="previewIframeContainer" class="preview-iframe-container" style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #000; height: 500px; transition: background 0.2s ease;">
+                            <div id="previewIframeContainer" class="preview-iframe-container bg-checkerboard" style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 500px; transition: background 0.2s ease;">
                                 <!-- No default src: chat-scene-creator.js sets this to the selected
                                      scene's URL (chat.html?demo=1&scene=...) as soon as a scene is
                                      selected, so the preview never briefly loads the default scene's
