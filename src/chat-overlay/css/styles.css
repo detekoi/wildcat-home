@@ -492,6 +492,7 @@ input[type="color"]:disabled::-webkit-color-swatch,
     top: calc(var(--nav-height, 60px) + 20px);
     max-height: calc(100vh - var(--nav-height, 60px) - 40px);
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);

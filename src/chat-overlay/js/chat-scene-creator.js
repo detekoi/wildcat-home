@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.formRenderer.renderSchemaForm(document.getElementById('generatedSchemaForm'));
             this.instanceManager.loadInstances();
             this.setupEventListeners();
+            this.setupPreviewBgSelector();
             this.formRenderer.setupFormLivePreview();
             this.dragHandler.attach();
 
@@ -98,6 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 copyUrlBtnConfig: document.getElementById('copyUrlBtnConfig'),
                 copyUrlBtnSetup: document.getElementById('copyUrlBtnSetup'),
                 previewIframe: document.getElementById('previewIframe'),
+                previewIframeContainer: document.getElementById('previewIframeContainer'),
+                previewBgBtns: document.querySelectorAll('.preview-bg-btn'),
+                previewBgColorInput: document.getElementById('previewBgColorInput'),
+                previewCustomSwatch: document.getElementById('previewCustomSwatch'),
                 instanceModal: document.getElementById('instanceModal'),
                 modalTitle: document.getElementById('modalTitle'),
                 modalInstanceName: document.getElementById('modalInstanceName'),
@@ -415,7 +420,90 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.dom.disableSyncBtn) this.dom.disableSyncBtn.addEventListener('click', () => this.disableSync());
             if (this.dom.linkExistingTokenBtn) this.dom.linkExistingTokenBtn.addEventListener('click', () => this.linkExistingToken());
         }
+
+        setupPreviewBgSelector() {
+            const container = this.dom.previewIframeContainer;
+            const btns = this.dom.previewBgBtns;
+            const colorInput = this.dom.previewBgColorInput;
+            const customSwatch = this.dom.previewCustomSwatch;
+
+            if (!container || !btns || !btns.length || !colorInput) return;
+
+            const STORAGE_KEY = 'chat_overlay_preview_bg';
+
+            const getSavedBg = () => {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    return saved ? JSON.parse(saved) : { type: 'dark', color: '#121212' };
+                } catch (e) {
+                    return { type: 'dark', color: '#121212' };
+                }
+            };
+
+            const saveBg = (bgState) => {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(bgState));
+                } catch (e) {
+                    // silent fallback
+                }
+            };
+
+            let currentBg = getSavedBg();
+            if (colorInput && currentBg.color) {
+                colorInput.value = currentBg.color;
+                if (customSwatch) customSwatch.style.background = currentBg.color;
+            }
+
+            const applyBg = (type, customColor) => {
+                container.classList.remove('bg-checkerboard');
+                container.style.backgroundImage = '';
+
+                if (type === 'light') {
+                    container.style.backgroundColor = '#ffffff';
+                } else if (type === 'checkerboard') {
+                    container.classList.add('bg-checkerboard');
+                } else if (type === 'custom') {
+                    const hex = customColor || colorInput.value || '#121212';
+                    container.style.backgroundColor = hex;
+                    if (customSwatch) customSwatch.style.background = hex;
+                } else {
+                    type = 'dark';
+                    container.style.backgroundColor = '#000000';
+                }
+
+                btns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.bgType === type);
+                });
+
+                currentBg = { type, color: colorInput.value };
+                saveBg(currentBg);
+            };
+
+            btns.forEach(btn => {
+                const type = btn.dataset.bgType;
+                if (type !== 'custom') {
+                    btn.addEventListener('click', () => applyBg(type));
+                }
+            });
+
+            if (colorInput) {
+                const handleCustomInput = (e) => {
+                    const hex = e.target.value;
+                    if (customSwatch) customSwatch.style.background = hex;
+                    applyBg('custom', hex);
+                };
+                colorInput.addEventListener('input', handleCustomInput);
+                colorInput.addEventListener('change', handleCustomInput);
+                colorInput.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyBg('custom', colorInput.value);
+                });
+            }
+
+            applyBg(currentBg.type, currentBg.color);
+        }
     }
 
     window.chatSceneCreatorApp = new ChatSceneCreatorApp();
 });
+
