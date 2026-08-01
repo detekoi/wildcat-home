@@ -251,7 +251,10 @@ export const CONFIG_SCHEMA = [
         group: 'message_elements',
         label: 'Show User Pronouns',
         control: 'checkbox',
-        default: true
+        default: true,
+        helpText: 'Users can set theirs at',
+        helpUrl: 'https://pr.alejo.io/',
+        helpLinkText: 'pr.alejo.io'
     },
     {
         key: 'enlargeSingleEmotes',
@@ -265,7 +268,8 @@ export const CONFIG_SCHEMA = [
         group: 'message_elements',
         label: 'Top Gradient Fade',
         control: 'checkbox',
-        default: false
+        default: false,
+        helpText: 'Fades out messages at the top border'
     },
 
     // --- Display Mode ---

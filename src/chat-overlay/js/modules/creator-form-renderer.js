@@ -296,6 +296,22 @@ export class CreatorFormRenderer {
                 }
 
                 groupDiv.appendChild(row);
+
+                if (item.helpText || item.helpUrl) {
+                    const helpDiv = document.createElement('div');
+                    helpDiv.className = 'help-text';
+                    if (item.indent) {
+                        const indentPx = item.indent === 1 ? 20 : 35;
+                        helpDiv.style.marginLeft = `${indentPx}px`;
+                    }
+                    if (item.helpUrl) {
+                        const linkText = item.helpLinkText || item.helpUrl;
+                        helpDiv.innerHTML = `${item.helpText ? item.helpText + ' ' : ''}<a href="${item.helpUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-light, #a970ff); text-decoration: underline;">${linkText}</a>`;
+                    } else {
+                        helpDiv.textContent = item.helpText;
+                    }
+                    groupDiv.appendChild(helpDiv);
+                }
             });
 
             if (group.id === 'theme_colors') {

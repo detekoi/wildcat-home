@@ -190,3 +190,18 @@ input[type="color"]:disabled::-webkit-color-swatch,
     text-transform: uppercase;
     text-align: center;
 }
+
+.help-text {
+    font-size: 0.8em;
+    opacity: 0.75;
+    color: var(--text-muted, #a1a1aa);
+    margin-top: -4px;
+    margin-bottom: 8px;
+    margin-left: 196px;
+}
+
+@media (max-width: 768px) {
+    .help-text {
+        margin-left: 0;
+    }
+}
