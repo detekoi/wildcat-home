@@ -446,8 +446,8 @@ export class CreatorFormRenderer {
             const input = document.getElementById(`schema-input-${item.key}`);
             if (!input) return;
 
-            const eventType = input.type === 'checkbox' || input.type === 'range' || input.tagName === 'SELECT' ? 'change' : 'input';
-            input.addEventListener(eventType, () => {
+            const eventTypes = input.type === 'range' ? ['input', 'change'] : [input.type === 'checkbox' || input.tagName === 'SELECT' ? 'change' : 'input'];
+            const handleUpdate = () => {
                 if (item.control === 'range') {
                     const valDisplay = document.getElementById(`schema-val-${item.key}`);
                     if (valDisplay) {
@@ -487,7 +487,8 @@ export class CreatorFormRenderer {
                 }
 
                 this.sendPreviewUpdate();
-            });
+            };
+            eventTypes.forEach(eventType => input.addEventListener(eventType, handleUpdate));
         });
 
         ['schema-popup-direction', 'schema-popup-duration', 'schema-popup-maxMessages'].forEach(id => {
