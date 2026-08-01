@@ -17,7 +17,7 @@ export class SettingsPanelManager {
      * @param {Object} opts.themeManager - ThemeManager instance
      * @param {Object} opts.domRefs - Bag of DOM element references
      */
-    constructor({ configManager, chatRenderer, chatConnection, badgeManager, fontManager, themeManager, thirdPartyEmoteManager, domRefs }) {
+    constructor({ configManager, chatRenderer, chatConnection, badgeManager, fontManager, themeManager, thirdPartyEmoteManager, sceneSyncManager, domRefs }) {
         this._configManager = configManager;
         this._chatRenderer = chatRenderer;
         this._chatConnection = chatConnection;
@@ -25,10 +25,18 @@ export class SettingsPanelManager {
         this._fontManager = fontManager;
         this._themeManager = themeManager;
         this._thirdPartyEmoteManager = thirdPartyEmoteManager;
+        this._sceneSyncManager = sceneSyncManager || null;
         this._dom = domRefs;
 
         // Snapshot for cancel/revert
         this._initialConfigBeforeEdit = null;
+    }
+
+    /**
+     * Set SceneSyncManager instance
+     */
+    setSceneSyncManager(sceneSyncManager) {
+        this._sceneSyncManager = sceneSyncManager;
     }
 
     // --- Public API ---
@@ -213,6 +221,9 @@ export class SettingsPanelManager {
 
             const scene = UIHelpers.getUrlParameter('scene') || 'default';
             this._configManager.saveConfig(scene);
+            if (this._sceneSyncManager) {
+                this._sceneSyncManager.pushConfig(newConfig);
+            }
             this.closeConfigPanel(false);
 
             if (this._configManager.config.chatMode === 'popup') {

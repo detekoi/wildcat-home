@@ -89,6 +89,24 @@
                 <div class="config-layout" id="configLayout" style="display: none;">
                     <!-- Settings Column -->
                     <div class="settings-container">
+                        <!-- Sync Management -->
+                        <div class="settings-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0;">Live Sync</h3>
+                                <span id="syncBadge" style="padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #e0e0e0; color: #555;">Web Sync Disabled</span>
+                            </div>
+                            <p style="font-size: 13px; color: #666; margin-bottom: 12px;">
+                                Enable live sync to instantly push edits to your OBS browser source without re-adding URLs.
+                            </p>
+                            <div class="sync-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn btn-primary" id="enableSyncBtn"><i data-lucide="cloud-lightning" class="lucide-inline"></i> Enable Web Customization</button>
+                                <button class="btn btn-secondary" id="regenerateTokenBtn" style="display: none;"><i data-lucide="refresh-cw" class="lucide-inline"></i> Regenerate Token</button>
+                                <button class="btn btn-secondary" id="linkExistingTokenBtn"><i data-lucide="link" class="lucide-inline"></i> Link Existing Scene</button>
+                                <button class="btn btn-danger" id="disableSyncBtn" style="display: none;"><i data-lucide="cloud-off" class="lucide-inline"></i> Disable Sync</button>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information -->
                         <div class="settings-section">
                             <h3>Basic Information</h3>
                             <div class="settings-group">
@@ -96,66 +114,175 @@
                                     <label for="instanceName">Scene Name</label>
                                     <div class="input-group">
                                         <input type="text" id="instanceName" class="form-control">
-                                        <div class="tooltip">
-                                            <span class="tooltip-icon">?</span>
-                                            <span class="tooltip-text">A recognizable name for this instance</span>
-                                        </div>
                                     </div>
                                 </div>
                                 <div class="settings-row">
                                     <label for="instanceId">Scene ID</label>
                                     <div class="input-group">
                                         <input type="text" id="instanceId" class="form-control" disabled>
-                                        <div class="tooltip">
-                                            <span class="tooltip-icon">?</span>
-                                            <span class="tooltip-text">Unique identifier used in the URL parameter</span>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <button class="btn btn-primary" id="saveSettingsBtn" style="align-self: flex-start;"><i data-lucide="save" class="lucide-inline"></i> Save Settings</button>
-                    </div>
-                    
-                    <!-- URL and OBS Info -->
-                    <div class="preview-panel">
-                        <div class="url-generator">
-                            <h3>Chat Scene URL</h3>
-                            <p>Copy this URL to use in your OBS Browser Source:</p>
-                            <div class="url-display">
-                                <div class="url-text" id="instanceUrlConfig">file:///path/to/chat.html?scene=example</div>
-                                <button class="copy-btn" id="copyUrlBtnConfig"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
-                            </div>
-                            <div class="obs-tips-box">
-                                <p><strong>OBS Setup Steps:</strong></p>
-                                <ol style="margin-left: 20px; margin-top: 5px;">
-                                    <li>In OBS, add a <strong>Browser Source</strong>.</li>
-                                    <li>Paste the URL above into the URL field.</li>
-                                    <li><strong>IF YOU CAN'T PASTE:</strong> Uncheck "Local file" option.</li>
-                                    <li>Set Width: 320px and Height: 600px (recommended).</li>
-                                    <li>Click "OK".</li>
-                                </ol>
-                            </div>
-                            
-                            <div class="obs-info-box">
-                                <p><strong><i data-lucide="settings" class="lucide-inline"></i> Configuring in OBS:</strong> This creator only manages the scene's URL. All chat settings (channel, theme, colors, fonts, etc.) are configured <strong>inside OBS</strong>:</p>
-                                <ol style="margin-left: 20px; margin-top: 5px;">
-                                    <li>Right-click -> interact, or click the Interact button with the browser source selected in the monitor/preview.</li>
-                                    <li>In the interaction window:
-                                        <ul>
-                                            <li>Enter your Twitch channel name and click "Connect".</li>
-                                            <li>Hover over the chat and click the settings gear (<i data-lucide="settings" class="lucide-inline"></i>) to customize appearance (themes, colors, fonts, etc.).</li>
-                                        </ul>
-                                    </li>
-                                    <li>Settings are saved automatically within OBS for that specific source.</li>
-                                </ol>
+
+                        <!-- Channel Settings -->
+                        <div class="settings-section">
+                            <h3>Channel Connection</h3>
+                            <div class="settings-group">
+                                <div class="settings-row">
+                                    <label for="creatorTwitchChannel">Twitch Channel</label>
+                                    <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="e.g. shroud">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorYoutubeTarget">YouTube Channel ID / Handle</label>
+                                    <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="e.g. @LofiGirl">
+                                </div>
+                                <div style="margin-top: 10px; text-align: right;">
+                                    <button class="btn btn-secondary" id="applyChannelBtn"><i data-lucide="radio" class="lucide-inline"></i> Apply Channel</button>
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Preview functionality removed as it needs to be tested directly in OBS -->
-                        <div class="preview-info-box">
-                            <p>To preview your chat scene, add it to OBS as a browser source.</p>
+
+                        <!-- Theme & Colors -->
+                        <div class="settings-section">
+                            <h3>Theme & Colors</h3>
+                            <div class="settings-group">
+                                <div class="settings-row">
+                                    <label for="creatorTheme">Theme Preset</label>
+                                    <select id="creatorTheme" class="form-control">
+                                        <option value="default">Default Dark</option>
+                                        <option value="light-theme">Light Theme</option>
+                                        <option value="natural-theme">Natural Theme</option>
+                                        <option value="transparent-theme">Transparent</option>
+                                        <option value="pink-theme">Pink Pastel</option>
+                                        <option value="cyberpunk-theme">Cyberpunk Neon</option>
+                                    </select>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorBgColor">Background Color</label>
+                                    <input type="color" id="creatorBgColor" value="#121212">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorBgOpacity">Background Opacity (<span id="bgOpacityVal">0.8</span>)</label>
+                                    <input type="range" id="creatorBgOpacity" min="0" max="1" step="0.05" value="0.8" class="form-control">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorTextColor">Text Color</label>
+                                    <input type="color" id="creatorTextColor" value="#efeff1">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorUsernameColor">Username Color</label>
+                                    <input type="color" id="creatorUsernameColor" value="#9147ff">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorBorderColor">Border Color</label>
+                                    <input type="color" id="creatorBorderColor" value="#444444">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorTimestampColor">Timestamp Color</label>
+                                    <input type="color" id="creatorTimestampColor" value="#adadb8">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typography & Layout -->
+                        <div class="settings-section">
+                            <h3>Typography & Layout</h3>
+                            <div class="settings-group">
+                                <div class="settings-row">
+                                    <label for="creatorFontFamily">Font Family</label>
+                                    <select id="creatorFontFamily" class="form-control">
+                                        <option value="'Inter', 'Helvetica Neue', Arial, sans-serif">Inter (Default)</option>
+                                        <option value="'Roboto', sans-serif">Roboto</option>
+                                        <option value="'Atkinson Hyperlegible Next', sans-serif">Atkinson Hyperlegible</option>
+                                        <option value="'Courier New', monospace">Monospace</option>
+                                    </select>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorFontSize">Font Size (px)</label>
+                                    <input type="number" id="creatorFontSize" value="14" min="10" max="36" class="form-control">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorFontWeight">Font Weight</label>
+                                    <select id="creatorFontWeight" class="form-control">
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Bold</option>
+                                    </select>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorChatWidth">Width (%)</label>
+                                    <input type="number" id="creatorChatWidth" value="95" min="50" max="100" class="form-control">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorChatHeight">Height (%)</label>
+                                    <input type="number" id="creatorChatHeight" value="95" min="50" max="100" class="form-control">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorBorderRadius">Border Radius</label>
+                                    <select id="creatorBorderRadius" class="form-control">
+                                        <option value="0px">None (0px)</option>
+                                        <option value="4px">Small (4px)</option>
+                                        <option value="8px">Medium (8px)</option>
+                                        <option value="16px">Large (16px)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options & Toggles -->
+                        <div class="settings-section">
+                            <h3>Message Elements & Effects</h3>
+                            <div class="settings-group">
+                                <div class="settings-row">
+                                    <label for="creatorShowTimestamps">Show Timestamps</label>
+                                    <input type="checkbox" id="creatorShowTimestamps" checked>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorShowBadges">Show Badges</label>
+                                    <input type="checkbox" id="creatorShowBadges" checked>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorShowPronouns">Show Pronouns</label>
+                                    <input type="checkbox" id="creatorShowPronouns" checked>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorThirdPartyEmotes">Third-Party Emotes (BTTV/FFZ/7TV)</label>
+                                    <input type="checkbox" id="creatorThirdPartyEmotes" checked>
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorTopFade">Top Fade Gradient</label>
+                                    <input type="checkbox" id="creatorTopFade">
+                                </div>
+                                <div class="settings-row">
+                                    <label for="creatorChromaKey">Green Screen / Chroma Key</label>
+                                    <input type="checkbox" id="creatorChromaKey">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" id="saveSettingsBtn" style="width: 100%; font-size: 16px; padding: 12px;"><i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings</button>
+                        </div>
+                    </div>
+                    
+                    <!-- URL and Preview Panel -->
+                    <div class="preview-panel">
+                        <div class="url-generator">
+                            <h3>Chat Scene OBS URL</h3>
+                            <p>Paste this URL into your OBS Browser Source:</p>
+                            <div class="url-display">
+                                <div class="url-text" id="instanceUrlConfig">chat.html?scene=example</div>
+                                <button class="copy-btn" id="copyUrlBtnConfig"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
+                            </div>
+                        </div>
+
+                        <!-- Live Preview Frame -->
+                        <div class="live-preview-box" style="margin-top: 20px;">
+                            <h3>Live Preview</h3>
+                            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Form changes stream into the preview in real-time.</p>
+                            <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #000; height: 500px;">
+                                <iframe id="previewIframe" src="chat.html?demo=1" style="width: 100%; height: 100%; border: none;"></iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -295,7 +422,7 @@
     <!-- Notification container -->
     <div id="notification-container"></div>
 
-    <script src="js/chat-scene-creator.js"></script>
+    <script type="module" src="js/chat-scene-creator.js"></script>
     <script>lucide.createIcons();</script>
 </body>
 </html>

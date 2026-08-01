@@ -11,6 +11,7 @@ import { ThirdPartyEmoteManager } from './modules/third-party-emote-manager.js';
 import { FontManager } from './modules/font-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
 import { SettingsPanelManager } from './modules/settings-panel-manager.js';
+import { SceneSyncManager } from './modules/scene-sync-manager.js';
 
 // Wait for DOM ready to run this code
 (function () {
@@ -758,13 +759,15 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
         // --- INITIALIZATION ---
 
         const sceneName = UIHelpers.getUrlParameter('scene') || 'default';
+        const isDemoMode = UIHelpers.getUrlParameter('demo') === '1';
+
         configManager.loadSavedConfig(sceneName);
         configManager.applyConfiguration(configManager.config);
         badgeManager.config = configManager.config;
         chatRenderer.config = configManager.config;
         themeManager.lastAppliedThemeValue = configManager.config.theme || 'default';
 
-        if (configManager.pendingUpgradeNotice) {
+        if (configManager.pendingUpgradeNotice && !isDemoMode) {
             configManager.pendingUpgradeNotice = false;
             // Long enough to read, short enough that it clears itself off a live stream.
             chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.', true, 8000);
@@ -772,29 +775,82 @@ import { SettingsPanelManager } from './modules/settings-panel-manager.js';
 
         UIHelpers.fixCssVariables();
 
+        // Instantiate and wire SceneSyncManager
+        const sceneSyncManager = new SceneSyncManager();
+        settingsPanel.setSceneSyncManager(sceneSyncManager);
+
         settingsPanel.updateConfigPanelFromConfig();
 
-        // Auto-connect if last channel is saved
-        const savedTwitch = configManager.config.lastTwitchChannel || configManager.config.lastChannel;
-        const savedYouTube = configManager.config.lastYouTubeTarget;
+        if (isDemoMode) {
+            // Demo Mode: suppress connection prompts, disable auto-connect, listen for postMessage
+            if (initialConnectionPrompt) {
+                initialConnectionPrompt.style.display = 'none';
+            }
 
-        if (savedTwitch || savedYouTube) {
-            updateConnectionStateUI(true);
-            if (savedTwitch) {
-                if (twitchChannelInput) twitchChannelInput.value = savedTwitch;
-                if (initialTwitchInput) initialTwitchInput.value = savedTwitch;
-            }
-            if (savedYouTube) {
-                if (youtubeChannelInput) youtubeChannelInput.value = savedYouTube;
-                if (initialYoutubeInput) initialYoutubeInput.value = savedYouTube;
-            }
-            connectToChat();
+            const demoMessages = [
+                { username: 'StreamFan', message: 'Hello! Loving the overlay design! ✨', color: '#9147ff' },
+                { username: 'PixelMaster', message: 'That style looks super clean 🔥', color: '#00f0ff' },
+                { username: 'CozyVibes', message: 'Great color palette!', color: '#ff79c6' },
+                { username: 'NightOwl', message: 'Customization works live! 🎉', color: '#50fa7b' }
+            ];
+
+            let demoIndex = 0;
+            // Initial sample message
+            chatRenderer.addChatMessage(demoMessages[0]);
+            demoIndex++;
+
+            setInterval(() => {
+                const msg = demoMessages[demoIndex % demoMessages.length];
+                chatRenderer.addChatMessage({ username: msg.username, message: msg.message, color: msg.color, tags: {} });
+                demoIndex++;
+            }, 3500);
+
+            // Listen to postMessage for live preview from Creator form
+            window.addEventListener('message', (event) => {
+                // Only the same-origin scene creator may drive the preview
+                if (event.origin !== window.location.origin) return;
+                if (event.data && event.data.type === 'PREVIEW_CONFIG_UPDATE' && event.data.config) {
+                    configManager.applyConfiguration(event.data.config);
+                    badgeManager.config = configManager.config;
+                    chatRenderer.config = configManager.config;
+                    if (thirdPartyEmoteManager) thirdPartyEmoteManager.config = configManager.config;
+                    UIHelpers.fixCssVariables();
+                }
+            });
         } else {
-            updateConnectionStateUI(false);
-            if (twitchChannelInput) twitchChannelInput.value = '';
-            if (initialTwitchInput) initialTwitchInput.value = '';
-            if (youtubeChannelInput) youtubeChannelInput.value = '';
-            if (initialYoutubeInput) initialYoutubeInput.value = '';
+            // Normal Mode: start live sync if token exists, and handle auto-connect
+            sceneSyncManager.start({
+                sceneName,
+                configManager,
+                badgeManager,
+                chatRenderer,
+                thirdPartyEmoteManager,
+                settingsPanel,
+                chatConnection
+            });
+
+            // Auto-connect if last channel is saved
+            const savedTwitch = configManager.config.lastTwitchChannel || configManager.config.lastChannel;
+            const savedYouTube = configManager.config.lastYouTubeTarget;
+
+            if (savedTwitch || savedYouTube) {
+                updateConnectionStateUI(true);
+                if (savedTwitch) {
+                    if (twitchChannelInput) twitchChannelInput.value = savedTwitch;
+                    if (initialTwitchInput) initialTwitchInput.value = savedTwitch;
+                }
+                if (savedYouTube) {
+                    if (youtubeChannelInput) youtubeChannelInput.value = savedYouTube;
+                    if (initialYoutubeInput) initialYoutubeInput.value = savedYouTube;
+                }
+                connectToChat();
+            } else {
+                updateConnectionStateUI(false);
+                if (twitchChannelInput) twitchChannelInput.value = '';
+                if (initialTwitchInput) initialTwitchInput.value = '';
+                if (youtubeChannelInput) youtubeChannelInput.value = '';
+                if (initialYoutubeInput) initialYoutubeInput.value = '';
+            }
         }
 
         // Apply chat mode

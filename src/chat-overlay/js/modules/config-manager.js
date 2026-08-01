@@ -9,6 +9,34 @@ import { UIHelpers } from './ui-helpers.js';
 // Stored configs without a version predate third-party emote support.
 export const CONFIG_VERSION = 2;
 
+/**
+ * Migration ladder for configuration objects.
+ * Accepts a raw loaded config (e.g. from localStorage or Firestore) and a base default config.
+ * Returns an object { config: mergedConfig, pendingNotice: boolean }.
+ */
+export function migrateConfig(loadedConfig, defaultConfig = null) {
+    if (!loadedConfig || typeof loadedConfig !== 'object') {
+        return { config: defaultConfig ? { ...defaultConfig } : {}, pendingNotice: false };
+    }
+
+    const merged = defaultConfig ? { ...defaultConfig, ...loadedConfig } : { ...loadedConfig };
+    let pendingNotice = false;
+
+    const storedVersion = loadedConfig.configVersion ?? 0;
+    if (storedVersion < CONFIG_VERSION) {
+        // v2: third-party emotes ship on by default. For an overlay that predates
+        // them, turning them on would swap text for images in a look the user already
+        // tuned, so grandfather them off and announce the feature once instead.
+        if (storedVersion < 2 && loadedConfig.thirdPartyEmotes === undefined) {
+            merged.thirdPartyEmotes = false;
+            pendingNotice = true;
+        }
+        merged.configVersion = CONFIG_VERSION;
+    }
+
+    return { config: merged, pendingNotice };
+}
+
 export class ConfigManager {
     constructor() {
         this.config = this.getDefaultConfig();
@@ -170,20 +198,13 @@ export class ConfigManager {
             if (savedConfig) {
                 const loadedConfig = JSON.parse(savedConfig);
                 const defaultConfigForMerge = this.getDefaultConfig();
-                this.config = { ...defaultConfigForMerge, ...loadedConfig };
-
-                // Migration ladder. Each step owns the version predicate it applies to, so a
-                // future CONFIG_VERSION bump doesn't re-run steps that already ran.
+                const migrationResult = migrateConfig(loadedConfig, defaultConfigForMerge);
+                this.config = migrationResult.config;
+                if (migrationResult.pendingNotice) {
+                    this.pendingUpgradeNotice = true;
+                }
                 const storedVersion = loadedConfig.configVersion ?? 0;
                 if (storedVersion < CONFIG_VERSION) {
-                    // v2: third-party emotes ship on by default. For an overlay that predates
-                    // them, turning them on would swap text for images in a look the user already
-                    // tuned, so grandfather them off and announce the feature once instead.
-                    if (storedVersion < 2 && loadedConfig.thirdPartyEmotes === undefined) {
-                        this.config.thirdPartyEmotes = false;
-                        this.pendingUpgradeNotice = true;
-                    }
-                    this.config.configVersion = CONFIG_VERSION;
                     this.saveConfig(sceneName);
                 }
             }

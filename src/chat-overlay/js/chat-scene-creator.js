@@ -1,25 +1,38 @@
+/**
+ * Chat Scene Creator JavaScript Module
+ * Handles management of chat overlay scenes, settings customization, live preview streaming, and Firestore web sync.
+ */
+
+import { ConfigManager, CONFIG_VERSION } from './modules/config-manager.js';
+import { getProxyBaseUrl } from './modules/scene-sync-manager.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Main Chat Scene Creator class
     class ChatSceneCreator {
         constructor() {
-            this.instances = {}; // Stores instance data { id: { name, config, ... } }
-            this.instanceOrder = []; // Stores the ordered list of instance IDs [id1, id2, ...]
+            this.configManagerHelper = new ConfigManager();
+            this.instances = {}; // Stores instance data { id: { name, syncToken, config, ... } }
+            this.instanceOrder = [];
             this.currentInstanceId = null;
-            this.draggedItemId = null; // To keep track of the item being dragged
+            this.draggedItemId = null;
+            this.firestoreUnsubscribe = null;
+            this.db = null;
+            // Per-session id so our own Firestore echoes can be told apart from
+            // edits made in the OBS panel or another creator tab.
+            this.myClientId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `creator-${Date.now()}-${Math.random()}`;
+
             this.initializeDOM();
             this.loadInstances();
             this.setupEventListeners();
+            this.setupFormLivePreview();
         }
 
         // Initialize DOM references
         initializeDOM() {
-            // Instance list panel
             this.instanceList = document.getElementById('instanceList');
             this.createInstanceBtn = document.getElementById('createInstanceBtn');
             this.importBtn = document.getElementById('importBtn');
             this.exportAllBtn = document.getElementById('exportAllBtn');
 
-            // Workspace panel
             this.workspaceTitle = document.getElementById('workspaceTitle');
             this.workspaceActions = document.getElementById('workspaceActions');
             this.configLayout = document.getElementById('configLayout');
@@ -27,24 +40,56 @@ document.addEventListener('DOMContentLoaded', () => {
             this.emptyStateCreateBtn = document.getElementById('emptyStateCreateBtn');
             this.obsSetup = document.getElementById('obsSetup');
 
-            // Instance actions
             this.duplicateBtn = document.getElementById('duplicateBtn');
             this.deleteBtn = document.getElementById('deleteBtn');
             this.exportBtn = document.getElementById('exportBtn');
 
-            // Form elements
+            // Form inputs
             this.instanceName = document.getElementById('instanceName');
             this.instanceId = document.getElementById('instanceId');
-            // Removed: maxMessages, showTimestamps, defaultChannel
+
+            this.creatorTwitchChannel = document.getElementById('creatorTwitchChannel');
+            this.creatorYoutubeTarget = document.getElementById('creatorYoutubeTarget');
+            this.applyChannelBtn = document.getElementById('applyChannelBtn');
+
+            this.creatorTheme = document.getElementById('creatorTheme');
+            this.creatorBgColor = document.getElementById('creatorBgColor');
+            this.creatorBgOpacity = document.getElementById('creatorBgOpacity');
+            this.bgOpacityVal = document.getElementById('bgOpacityVal');
+            this.creatorTextColor = document.getElementById('creatorTextColor');
+            this.creatorUsernameColor = document.getElementById('creatorUsernameColor');
+            this.creatorBorderColor = document.getElementById('creatorBorderColor');
+            this.creatorTimestampColor = document.getElementById('creatorTimestampColor');
+
+            this.creatorFontFamily = document.getElementById('creatorFontFamily');
+            this.creatorFontSize = document.getElementById('creatorFontSize');
+            this.creatorFontWeight = document.getElementById('creatorFontWeight');
+            this.creatorChatWidth = document.getElementById('creatorChatWidth');
+            this.creatorChatHeight = document.getElementById('creatorChatHeight');
+            this.creatorBorderRadius = document.getElementById('creatorBorderRadius');
+
+            this.creatorShowTimestamps = document.getElementById('creatorShowTimestamps');
+            this.creatorShowBadges = document.getElementById('creatorShowBadges');
+            this.creatorShowPronouns = document.getElementById('creatorShowPronouns');
+            this.creatorThirdPartyEmotes = document.getElementById('creatorThirdPartyEmotes');
+            this.creatorTopFade = document.getElementById('creatorTopFade');
+            this.creatorChromaKey = document.getElementById('creatorChromaKey');
+
             this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
 
-            // Preview section removed
+            // Sync controls
+            this.syncBadge = document.getElementById('syncBadge');
+            this.enableSyncBtn = document.getElementById('enableSyncBtn');
+            this.regenerateTokenBtn = document.getElementById('regenerateTokenBtn');
+            this.linkExistingTokenBtn = document.getElementById('linkExistingTokenBtn');
+            this.disableSyncBtn = document.getElementById('disableSyncBtn');
 
-            // OBS setup
+            // URL & Preview
             this.instanceUrlConfig = document.getElementById('instanceUrlConfig');
             this.instanceUrlSetup = document.getElementById('instanceUrlSetup');
             this.copyUrlBtnConfig = document.getElementById('copyUrlBtnConfig');
             this.copyUrlBtnSetup = document.getElementById('copyUrlBtnSetup');
+            this.previewIframe = document.getElementById('previewIframe');
 
             // Modal elements
             this.instanceModal = document.getElementById('instanceModal');
@@ -54,297 +99,197 @@ document.addEventListener('DOMContentLoaded', () => {
             this.modalCreateBtn = document.getElementById('modalCreateBtn');
         }
 
+        // Get default overlay configuration
+        getDefaultConfig() {
+            return this.configManagerHelper.getDefaultConfig();
+        }
+
         // Load instances from localStorage
         loadInstances() {
-            try { // Wrap initial instance loading in try...catch
+            try {
                 const instanceRegistry = localStorage.getItem('twitch-chat-overlay-instances');
                 if (instanceRegistry) {
                     this.instances = JSON.parse(instanceRegistry);
                 } else {
-                    this.instances = {}; // Initialize if nothing saved
+                    this.instances = {};
                 }
             } catch (error) {
                 console.error('Error loading instances:', error);
                 this.showNotification('Error', 'Failed to load saved instance data.', 'error');
-                this.instances = {}; // Reset on error
+                this.instances = {};
             }
 
-            // Load the instance order
             const savedOrder = localStorage.getItem('twitch-chat-overlay-instanceOrder');
             if (savedOrder) {
                 try {
                     this.instanceOrder = JSON.parse(savedOrder);
-                    // Validate order: ensure all ordered IDs exist in instances and vice-versa
                     const instanceIds = Object.keys(this.instances);
                     this.instanceOrder = this.instanceOrder.filter(id => instanceIds.includes(id));
-                    // Add any instances found in data but missing from order (e.g., older format)
                     instanceIds.forEach(id => {
                         if (!this.instanceOrder.includes(id)) {
-                            console.warn(`Instance ${id} found but missing from order. Adding to end.`);
                             this.instanceOrder.push(id);
                         }
                     });
-
                 } catch (error) {
                     console.error('Error loading instance order:', error);
-                    this.showNotification('Error', 'Failed to load instance order. Resetting order.', 'warning');
-                    // If order is corrupt, generate from the loaded instances
                     this.instanceOrder = Object.keys(this.instances);
                 }
             } else {
-                // If no order saved, generate from the loaded instances
                 this.instanceOrder = Object.keys(this.instances);
             }
 
-            // Initial render and selection
-            this.renderInstanceList(); // Render based on potentially corrected/generated order
+            this.renderInstanceList();
 
             if (this.instanceOrder.length > 0) {
-                // Select the first instance based on the potentially corrected order
                 const firstInstanceId = this.instanceOrder[0];
                 if (this.instances[firstInstanceId]) {
                     this.selectInstance(firstInstanceId);
                 } else {
-                    // Handle case where the first ordered ID might be invalid even after validation (should be rare)
-                    console.warn(`First instance ID in order (${firstInstanceId}) not found in loaded instances after validation.`);
                     this.showEmptyState();
                 }
             } else {
-                // Show empty state if no instances exist after loading/validation
                 this.showEmptyState();
-                // Only show create modal if there are truly no instances
                 if (Object.keys(this.instances).length === 0) {
                     this.showCreateInstanceModal();
                 }
             }
         }
 
-        // Save instances and their order to localStorage
+        // Save instances to localStorage
         saveInstances() {
             try {
                 localStorage.setItem('twitch-chat-overlay-instances', JSON.stringify(this.instances));
                 localStorage.setItem('twitch-chat-overlay-instanceOrder', JSON.stringify(this.instanceOrder));
             } catch (error) {
-                console.error('Error saving instances or order:', error);
+                console.error('Error saving instances:', error);
                 this.showNotification('Error', 'Failed to save data. LocalStorage may be full.', 'error');
             }
         }
 
-        // Render the instance list
+        // Render instance list items
         renderInstanceList() {
-            this.instanceList.innerHTML = ''; // Clear existing list
+            this.instanceList.innerHTML = '';
 
-            // Render based on the instanceOrder array
             this.instanceOrder.forEach(instanceId => {
                 const instance = this.instances[instanceId];
-                if (!instance) {
-                    console.warn(`Instance data missing for ordered ID: ${instanceId}. Skipping render.`);
-                    return; // Skip if data is somehow missing
-                }
+                if (!instance) return;
 
                 const instanceItem = document.createElement('div');
                 instanceItem.className = `instance-item ${instanceId === this.currentInstanceId ? 'active' : ''}`;
                 instanceItem.dataset.id = instanceId;
-                instanceItem.draggable = true; // Make the item draggable
+                instanceItem.draggable = true;
 
                 const details = document.createElement('div');
                 details.className = 'instance-details';
                 details.style.pointerEvents = 'none';
+
                 const nameEl = document.createElement('div');
                 nameEl.className = 'instance-name';
                 nameEl.textContent = instance.name;
+
                 const metaEl = document.createElement('div');
                 metaEl.className = 'instance-meta';
-                metaEl.textContent = `ID: ${instanceId}`;
+                metaEl.textContent = instance.syncToken ? `Synced (ID: ${instanceId})` : `ID: ${instanceId}`;
+
                 details.appendChild(nameEl);
                 details.appendChild(metaEl);
                 instanceItem.appendChild(details);
 
-                // Click event to select the instance
                 instanceItem.addEventListener('click', () => {
                     this.selectInstance(instanceId);
                 });
 
-                // Drag and Drop Event Listeners for each item
                 instanceItem.addEventListener('dragstart', this.handleDragStart.bind(this));
                 instanceItem.addEventListener('dragend', this.handleDragEnd.bind(this));
 
                 this.instanceList.appendChild(instanceItem);
             });
-
-            // Add dragover listeners to the container (needed for drop)
-            this.instanceList.addEventListener('dragover', this.handleDragOver.bind(this));
-            this.instanceList.addEventListener('dragenter', this.handleDragEnter.bind(this));
-            this.instanceList.addEventListener('dragleave', this.handleDragLeave.bind(this));
-            this.instanceList.addEventListener('drop', this.handleDrop.bind(this));
         }
 
-        // Methods for thumbnail rendering removed, since we now use a generic chat icon
-
-        // Show empty state when no chat scenes are available
-        showEmptyState() {
-            this.emptyState.style.display = 'block';
-            this.configLayout.style.display = 'none';
-            this.workspaceActions.style.display = 'none';
-            this.workspaceTitle.textContent = 'Create Your First Chat Scene';
-        }
-
-        // Setup all event listeners
+        // Setup event listeners for actions & buttons
         setupEventListeners() {
-            // Instance creation and management
             this.createInstanceBtn.addEventListener('click', () => this.showCreateInstanceModal());
             this.emptyStateCreateBtn.addEventListener('click', () => this.showCreateInstanceModal());
-            this.duplicateBtn.addEventListener('click', () => this.duplicateInstance());
-            this.deleteBtn.addEventListener('click', () => this.deleteInstance());
-            this.exportBtn.addEventListener('click', () => this.exportInstance(this.currentInstanceId));
-            this.exportAllBtn.addEventListener('click', () => this.exportAllInstances());
-            this.importBtn.addEventListener('click', () => this.importInstances());
-
-            // Modal events
             this.modalCancelBtn.addEventListener('click', () => this.hideModal());
             this.modalCreateBtn.addEventListener('click', () => this.createInstance());
 
-            // Modal keyboard events
             this.modalInstanceName.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.createInstance();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    this.hideModal();
                 }
             });
 
-            // Global escape key for modal
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.instanceModal.style.display === 'flex') {
-                    e.preventDefault();
-                    this.hideModal();
-                }
-            });
-
-            // Settings form events
             this.saveSettingsBtn.addEventListener('click', () => this.saveCurrentInstance());
+            this.duplicateBtn.addEventListener('click', () => this.duplicateInstance());
+            this.deleteBtn.addEventListener('click', () => this.deleteInstance());
 
-            // Preview button removed
+            this.exportBtn.addEventListener('click', () => this.exportCurrentInstance());
+            this.exportAllBtn.addEventListener('click', () => this.exportAllInstances());
+            this.importBtn.addEventListener('click', () => this.importInstances());
 
-            // OBS setup
             this.copyUrlBtnConfig.addEventListener('click', () => this.copyInstanceUrl());
-            this.copyUrlBtnSetup.addEventListener('click', () => this.copyInstanceUrl());
+            if (this.copyUrlBtnSetup) {
+                this.copyUrlBtnSetup.addEventListener('click', () => this.copyInstanceUrl());
+            }
 
-            // Form input events
-            this.setupFormEvents();
-
-            // Accordion sections
-            document.querySelectorAll('.accordion .accordion-header').forEach(header => {
-                // Remove previous listener if any to prevent duplicates after re-render
-                const newHeader = header.cloneNode(true);
-                header.parentNode.replaceChild(newHeader, header);
-
-                newHeader.addEventListener('click', () => {
-                    // Use newHeader's parentElement to find the accordion container
-                    const accordion = newHeader.parentElement;
-                    if (accordion) { // Add a check to ensure accordion exists
-                        accordion.classList.toggle('active');
-                    } else {
-                        console.error("Could not find parent accordion element for header:", newHeader);
+            const toggleObsBtn = document.getElementById('toggleObsSetupBtn');
+            if (toggleObsBtn) {
+                toggleObsBtn.addEventListener('click', () => {
+                    if (this.obsSetup) {
+                        const isHidden = this.obsSetup.style.display === 'none' || !this.obsSetup.style.display;
+                        this.obsSetup.style.display = isHidden ? 'block' : 'none';
                     }
+                });
+            }
+
+            // List-level drag & drop targets (attached once here; per-item dragstart/dragend
+            // are attached in renderInstanceList, which rebuilds the items each render)
+            this.instanceList.addEventListener('dragover', this.handleDragOver.bind(this));
+            this.instanceList.addEventListener('dragenter', this.handleDragEnter.bind(this));
+            this.instanceList.addEventListener('dragleave', this.handleDragLeave.bind(this));
+            this.instanceList.addEventListener('drop', this.handleDrop.bind(this));
+
+            // Sync action listeners
+            if (this.enableSyncBtn) this.enableSyncBtn.addEventListener('click', () => this.enableSync());
+            if (this.regenerateTokenBtn) this.regenerateTokenBtn.addEventListener('click', () => this.regenerateToken());
+            if (this.disableSyncBtn) this.disableSyncBtn.addEventListener('click', () => this.disableSync());
+            if (this.linkExistingTokenBtn) this.linkExistingTokenBtn.addEventListener('click', () => this.linkExistingToken());
+            if (this.applyChannelBtn) this.applyChannelBtn.addEventListener('click', () => this.applyChannel());
+        }
+
+        // Real-time live preview setup
+        setupFormLivePreview() {
+            const inputs = [
+                this.creatorTheme, this.creatorBgColor, this.creatorBgOpacity,
+                this.creatorTextColor, this.creatorUsernameColor, this.creatorBorderColor,
+                this.creatorTimestampColor, this.creatorFontFamily, this.creatorFontSize,
+                this.creatorFontWeight, this.creatorChatWidth, this.creatorChatHeight,
+                this.creatorBorderRadius, this.creatorShowTimestamps, this.creatorShowBadges,
+                this.creatorShowPronouns, this.creatorThirdPartyEmotes, this.creatorTopFade,
+                this.creatorChromaKey
+            ];
+
+            inputs.forEach(input => {
+                if (!input) return;
+                const eventType = input.type === 'checkbox' || input.type === 'range' || input.tagName === 'SELECT' ? 'change' : 'input';
+                input.addEventListener(eventType, () => {
+                    if (input === this.creatorBgOpacity && this.bgOpacityVal) {
+                        this.bgOpacityVal.textContent = input.value;
+                    }
+                    this.sendPreviewUpdate();
                 });
             });
         }
 
-        // Setup form input events
-        setupFormEvents() {
-            // No form events needed for our simplified interface
-        }
-
-        // Show the create chat scene modal
-        showCreateInstanceModal() {
-            this.modalTitle.textContent = 'Create New Chat Scene';
-            this.modalInstanceName.value = '';
-            this.modalCreateBtn.textContent = 'Create';
-            this.instanceModal.style.display = 'flex';
-
-            // Focus the name input
-            setTimeout(() => this.modalInstanceName.focus(), 100);
-        }
-
-        // Hide the modal
-        hideModal() {
-            this.instanceModal.style.display = 'none';
-        }
-
-        // Create a new chat scene
-        createInstance() {
-            let name = this.modalInstanceName.value.trim();
-
-            // If no name is provided, generate a default one like "Scene N"
-            if (!name) {
-                let sceneCounter = 1;
-                let defaultName = `Scene ${sceneCounter}`;
-                // Check if an instance with the default name already exists
-                while (Object.values(this.instances).some(instance => instance.name === defaultName)) {
-                    sceneCounter++;
-                    defaultName = `Scene ${sceneCounter}`;
-                }
-                name = defaultName; // Use the generated name
-            }
-
-            // Generate ID from name (use the potentially generated name)
-            let id = this.generateInstanceId(name);
-
-            // Make sure ID is URL-friendly
-            id = id.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-
-            // Check if ID already exists and generate a unique one if needed
-            let counter = 1;
-            let originalId = id;
-            while (this.instances[id]) {
-                id = `${originalId}-${counter}`;
-                counter++;
-            }
-
-            // Create the new instance with default settings
-            const newInstance = {
-                name: name,
-                createdAt: new Date().toISOString(),
-                lastModified: new Date().toISOString(),
-                config: this.getDefaultConfig()
-            };
-
-            // Save the instance and update order
-            this.instances[id] = newInstance;
-            this.instanceOrder.push(id); // Add new instance to the end of the order
-            this.saveInstances();
-
-            // Update the UI
-            this.hideModal();
-            this.renderInstanceList();
-            this.selectInstance(id);
-            this.showNotification('Success', `Chat scene '${name}' created successfully.`, 'success');
-        }
-
-        // Generate a unique instance ID from a name
-        generateInstanceId(name) {
-            // Convert name to lowercase and replace non-alphanumeric chars with dashes
-            let id = name.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-
-            // Check if this ID exists already
-            let counter = 1;
-            let uniqueId = id;
-
-            while (this.instances[uniqueId]) {
-                uniqueId = `${id}-${counter}`;
-                counter++;
-            }
-
-            return uniqueId;
-        }
-
-        // Get default configuration for new instances
-        getDefaultConfig() {
-            // Removed: maxMessages, showTimestamps, lastChannel
-            return {}; // Return an empty object or adjust if other defaults are needed later
+        // Send form configuration to preview iframe via postMessage
+        sendPreviewUpdate() {
+            if (!this.previewIframe || !this.previewIframe.contentWindow) return;
+            const config = this.readFormConfig();
+            this.previewIframe.contentWindow.postMessage({
+                type: 'PREVIEW_CONFIG_UPDATE',
+                config: config
+            }, window.location.origin);
         }
 
         // Select and load an instance
@@ -357,522 +302,637 @@ document.addEventListener('DOMContentLoaded', () => {
             this.currentInstanceId = instanceId;
             const instance = this.instances[instanceId];
 
-            // Update UI state
             this.emptyState.style.display = 'none';
             this.configLayout.style.display = 'grid';
             this.workspaceActions.style.display = 'flex';
             this.workspaceTitle.textContent = instance.name;
 
-            // Update instance list selection
             document.querySelectorAll('.instance-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.id === instanceId);
             });
 
-            // Populate form with instance values
             this.populateForm(instance);
-
-            // Generate and display instance URL
             this.updateInstanceUrl();
+            this.subscribeToRemoteChanges(instance.syncToken);
+
+            // Trigger preview update once iframe loads or is ready
+            setTimeout(() => this.sendPreviewUpdate(), 300);
         }
 
-        // Populate the form with instance values
-        populateForm(instance) {
-            const config = instance.config || this.getDefaultConfig();
+        // Subscribe to Firestore for live external edits (e.g. from OBS settings panel)
+        async subscribeToRemoteChanges(syncToken) {
+            if (this.firestoreUnsubscribe) {
+                this.firestoreUnsubscribe();
+                this.firestoreUnsubscribe = null;
+            }
 
-            this.instanceName.value = instance.name;
+            if (!syncToken) return;
+
+            try {
+                const [firebaseApp, firebaseFirestore] = await Promise.all([
+                    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+                    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+                ]);
+
+                const app = firebaseApp.getApps().length === 0 
+                    ? firebaseApp.initializeApp({ projectId: 'chat-themer' }) 
+                    : firebaseApp.getApps()[0];
+
+                let db;
+                try {
+                    db = firebaseFirestore.initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+                } catch (e) {
+                    db = firebaseFirestore.getFirestore(app);
+                }
+                const docRef = firebaseFirestore.doc(db, 'sceneConfigs', syncToken);
+
+                this.firestoreUnsubscribe = firebaseFirestore.onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().config) {
+                        const data = docSnap.data();
+                        // Echo suppression: our own saves bounce back through Firestore and
+                        // would otherwise revert anything typed since the Save.
+                        if (data.updatedBy && data.updatedBy === this.myClientId) return;
+                        const instance = this.instances[this.currentInstanceId];
+                        if (instance) {
+                            instance.config = data.config;
+                            this.saveInstances();
+                            this.populateForm(instance);
+                            this.sendPreviewUpdate();
+                        }
+                    }
+                }, (err) => console.warn('[Creator] Firestore subscription error:', err));
+            } catch (e) {
+                console.warn('[Creator] Could not initialize Firestore remote listener:', e);
+            }
+        }
+
+        // Populate form with instance values
+        populateForm(instance) {
+            const config = { ...this.getDefaultConfig(), ...(instance.config || {}) };
+
+            this.instanceName.value = instance.name || '';
             this.instanceId.value = this.currentInstanceId;
 
-            // Removed population for: maxMessages, showTimestamps, defaultChannel
+            if (this.creatorTwitchChannel) this.creatorTwitchChannel.value = config.lastTwitchChannel || config.lastChannel || '';
+            if (this.creatorYoutubeTarget) this.creatorYoutubeTarget.value = config.lastYouTubeTarget || '';
+
+            if (this.creatorTheme) this.creatorTheme.value = config.theme || 'default';
+            if (this.creatorBgColor) this.creatorBgColor.value = config.bgColor || '#121212';
+            if (this.creatorBgOpacity) {
+                this.creatorBgOpacity.value = config.bgColorOpacity ?? 0.8;
+                if (this.bgOpacityVal) this.bgOpacityVal.textContent = this.creatorBgOpacity.value;
+            }
+            if (this.creatorTextColor) this.creatorTextColor.value = config.textColor || '#efeff1';
+            if (this.creatorUsernameColor) this.creatorUsernameColor.value = config.usernameColor || '#9147ff';
+            if (this.creatorBorderColor) this.creatorBorderColor.value = config.borderColor || '#444444';
+            if (this.creatorTimestampColor) this.creatorTimestampColor.value = config.timestampColor || '#adadb8';
+
+            if (this.creatorFontFamily) this.creatorFontFamily.value = config.fontFamily || "'Inter', 'Helvetica Neue', Arial, sans-serif";
+            if (this.creatorFontSize) this.creatorFontSize.value = config.fontSize || 14;
+            if (this.creatorFontWeight) this.creatorFontWeight.value = config.fontWeight || 'normal';
+            if (this.creatorChatWidth) this.creatorChatWidth.value = config.chatWidth || 95;
+            if (this.creatorChatHeight) this.creatorChatHeight.value = config.chatHeight || 95;
+            if (this.creatorBorderRadius) this.creatorBorderRadius.value = config.borderRadius || '8px';
+
+            if (this.creatorShowTimestamps) this.creatorShowTimestamps.checked = !!config.showTimestamps;
+            if (this.creatorShowBadges) this.creatorShowBadges.checked = !!config.showBadges;
+            if (this.creatorShowPronouns) this.creatorShowPronouns.checked = !!config.showPronouns;
+            if (this.creatorThirdPartyEmotes) this.creatorThirdPartyEmotes.checked = !!config.thirdPartyEmotes;
+            if (this.creatorTopFade) this.creatorTopFade.checked = !!config.topFade;
+            if (this.creatorChromaKey) this.creatorChromaKey.checked = !!config.chromaKey;
+
+            // Sync controls UI state
+            if (instance.syncToken) {
+                if (this.syncBadge) {
+                    this.syncBadge.textContent = 'Web Sync: Active';
+                    this.syncBadge.style.background = '#e8f5e9';
+                    this.syncBadge.style.color = '#2e7d32';
+                }
+                if (this.enableSyncBtn) this.enableSyncBtn.style.display = 'none';
+                if (this.regenerateTokenBtn) this.regenerateTokenBtn.style.display = 'inline-flex';
+                if (this.disableSyncBtn) this.disableSyncBtn.style.display = 'inline-flex';
+            } else {
+                if (this.syncBadge) {
+                    this.syncBadge.textContent = 'Web Sync: Disabled';
+                    this.syncBadge.style.background = '#e0e0e0';
+                    this.syncBadge.style.color = '#555';
+                }
+                if (this.enableSyncBtn) this.enableSyncBtn.style.display = 'inline-flex';
+                if (this.regenerateTokenBtn) this.regenerateTokenBtn.style.display = 'none';
+                if (this.disableSyncBtn) this.disableSyncBtn.style.display = 'none';
+            }
         }
 
-        // Save the current instance
-        saveCurrentInstance() {
+        // Read configuration object from form input elements.
+        // Merges over the instance's last-known config so the ~30 settings the form
+        // doesn't cover (popup mode, shadows, maxMessages, bgImage, emote filters, ...)
+        // survive a web-side save instead of being reset to defaults.
+        // Channel fields are only written when includeChannel is set (the explicit
+        // "Apply Channel" action), and an empty field means "leave unchanged".
+        readFormConfig({ includeChannel = false } = {}) {
+            const defaults = this.getDefaultConfig();
+            const existing = this.instances[this.currentInstanceId]?.config || {};
+            const config = {
+                ...defaults,
+                ...existing,
+                configVersion: CONFIG_VERSION,
+                theme: this.creatorTheme?.value || defaults.theme,
+                bgColor: this.creatorBgColor?.value || defaults.bgColor,
+                bgColorOpacity: parseFloat(this.creatorBgOpacity?.value ?? defaults.bgColorOpacity),
+                textColor: this.creatorTextColor?.value || defaults.textColor,
+                usernameColor: this.creatorUsernameColor?.value || defaults.usernameColor,
+                borderColor: this.creatorBorderColor?.value || defaults.borderColor,
+                timestampColor: this.creatorTimestampColor?.value || defaults.timestampColor,
+                fontFamily: this.creatorFontFamily?.value || defaults.fontFamily,
+                fontSize: parseInt(this.creatorFontSize?.value || defaults.fontSize, 10),
+                fontWeight: this.creatorFontWeight?.value || defaults.fontWeight,
+                chatWidth: parseInt(this.creatorChatWidth?.value || defaults.chatWidth, 10),
+                chatHeight: parseInt(this.creatorChatHeight?.value || defaults.chatHeight, 10),
+                borderRadius: this.creatorBorderRadius?.value || defaults.borderRadius,
+                showTimestamps: !!this.creatorShowTimestamps?.checked,
+                showBadges: !!this.creatorShowBadges?.checked,
+                showPronouns: !!this.creatorShowPronouns?.checked,
+                thirdPartyEmotes: !!this.creatorThirdPartyEmotes?.checked,
+                topFade: !!this.creatorTopFade?.checked,
+                chromaKey: !!this.creatorChromaKey?.checked
+            };
+
+            if (includeChannel) {
+                const twitch = this.creatorTwitchChannel?.value?.trim();
+                const youtube = this.creatorYoutubeTarget?.value?.trim();
+                if (twitch) config.lastTwitchChannel = twitch;
+                if (youtube) config.lastYouTubeTarget = youtube;
+            }
+
+            return config;
+        }
+
+        // Save current instance configuration locally and push to Firestore if sync is enabled
+        async saveCurrentInstance({ includeChannel = false } = {}) {
             if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) {
                 this.showNotification('Error', 'No chat scene selected.', 'error');
                 return;
             }
 
             const instance = this.instances[this.currentInstanceId];
-
-            // Update basic information
-            instance.name = this.instanceName.value.trim();
+            instance.name = this.instanceName.value.trim() || instance.name;
             instance.lastModified = new Date().toISOString();
 
-            // Config object is now simpler, only containing what's necessary
-            // If other settings are added later, they would go here.
-            const updatedConfig = {}; // Currently empty as no settings are saved
-
-            // Update the instance config
+            const updatedConfig = this.readFormConfig({ includeChannel });
             instance.config = updatedConfig;
 
-            // Save to localStorage
             this.saveInstances();
+            localStorage.setItem(`chatConfig-${this.currentInstanceId}`, JSON.stringify(updatedConfig));
 
-            // Also save to instance-specific storage for the overlay to use
-            this.saveToInstanceStorage();
-
-            // Update UI
             this.workspaceTitle.textContent = instance.name;
             this.renderInstanceList();
-            this.updateInstanceUrl();
 
-            this.showNotification('Success', 'Chat scene saved successfully.', 'success');
-        }
-
-        // Save to instance-specific localStorage key
-        saveToInstanceStorage() {
-            const config = this.instances[this.currentInstanceId].config;
-            localStorage.setItem(`twitch-chat-overlay-config-${this.currentInstanceId}`, JSON.stringify(config));
-        }
-
-        // Duplicate the current instance
-        duplicateInstance() {
-            if (!this.currentInstanceId) {
-                this.showNotification('Error', 'No instance selected to duplicate.', 'error');
-                return;
+            if (instance.syncToken) {
+                const pushResult = await this.pushToCloud(instance.syncToken, updatedConfig, instance.name);
+                if (pushResult.success) {
+                    this.showNotification('Success', 'Chat scene saved and synced live to OBS.', 'success');
+                } else {
+                    this.showNotification('Saved Locally', 'Saved locally, but cloud push failed.', 'warning');
+                }
+            } else {
+                this.showNotification('Success', 'Chat scene saved locally.', 'success');
             }
+        }
 
-            const sourceInstance = this.instances[this.currentInstanceId];
-            const newName = `${sourceInstance.name} (Copy)`;
-            const newId = this.generateInstanceId(newName);
+        // Explicit "Apply Channel" action — the only path that writes channel fields,
+        // so a regular Save can never re-point or wipe a live stream's chat connection.
+        applyChannel() {
+            if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return;
+            this.saveCurrentInstance({ includeChannel: true });
+        }
 
-            // Create a deep copy of the instance
-            const newInstance = {
-                name: newName,
-                createdAt: new Date().toISOString(),
-                lastModified: new Date().toISOString(),
-                config: JSON.parse(JSON.stringify(sourceInstance.config))
+        // Push scene config to backend Cloud Run proxy
+        async pushToCloud(token, config, sceneName) {
+            const endpoint = `${getProxyBaseUrl()}/scene-config/${token}`;
+            const payload = {
+                config,
+                sceneName,
+                configVersion: CONFIG_VERSION,
+                updatedBy: this.myClientId
             };
 
-            // Save the new instance and update order
-            this.instances[newId] = newInstance;
-            // Add the duplicated instance right after the original in the order
-            const originalIndex = this.instanceOrder.indexOf(this.currentInstanceId);
-            if (originalIndex > -1) {
-                this.instanceOrder.splice(originalIndex + 1, 0, newId);
-            } else {
-                this.instanceOrder.push(newId); // Fallback: add to end
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                return { success: res.ok };
+            } catch (err) {
+                console.error('[Creator] Push to cloud error:', err);
+                return { success: false, error: err.message };
             }
-            this.saveInstances();
-
-            // Update UI
-            this.renderInstanceList();
-            this.selectInstance(newId);
-
-            this.showNotification('Success', `Instance '${sourceInstance.name}' duplicated as '${newName}'.`, 'success');
         }
 
-        // Delete the current instance
-        deleteInstance() {
-            if (!this.currentInstanceId) {
-                this.showNotification('Error', 'No instance selected to delete.', 'error');
-                return;
-            }
+        // Enable live web sync for the active scene instance
+        async enableSync() {
+            if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return;
 
             const instance = this.instances[this.currentInstanceId];
+            const newToken = crypto.randomUUID();
 
-            if (confirm(`Are you sure you want to delete the instance "${instance.name}"? This cannot be undone.`)) {
-                // Also remove from instance-specific storage
-                localStorage.removeItem(`twitch-chat-overlay-config-${this.currentInstanceId}`);
+            const configToPush = this.readFormConfig();
+            const result = await this.pushToCloud(newToken, configToPush, instance.name);
 
-                // Remove from our registry and order
-                const deletedId = this.currentInstanceId;
-                delete this.instances[deletedId];
-                this.instanceOrder = this.instanceOrder.filter(id => id !== deletedId);
+            if (result.success) {
+                instance.syncToken = newToken;
                 this.saveInstances();
-
-                // Update UI
-                this.currentInstanceId = null; // Deselect
-                this.renderInstanceList(); // Re-render the list
-
-                // Select another instance or show empty state
-                if (this.instanceOrder.length > 0) {
-                    // Try to select the next item, or the previous if it was the last
-                    let newIndex = this.instanceOrder.findIndex(id => id === deletedId); // Find where it *was*
-                    if (newIndex >= this.instanceOrder.length) { // If it was last
-                        newIndex = this.instanceOrder.length - 1;
-                    }
-                    if (newIndex < 0) newIndex = 0; // Fallback to first
-
-                    this.selectInstance(this.instanceOrder[newIndex]);
-                } else {
-                    this.showEmptyState();
-                }
-
-                this.showNotification('Success', `Instance '${instance.name}' deleted.`, 'success');
+                this.populateForm(instance);
+                this.updateInstanceUrl();
+                this.renderInstanceList();
+                this.subscribeToRemoteChanges(newToken);
+                this.showNotification('Live Sync Enabled', 'Web customization active! Copy your updated OBS URL.', 'success');
+            } else {
+                this.showNotification('Error', 'Failed to initialize cloud sync token.', 'error');
             }
         }
 
-        // Export a single instance
-        exportInstance(instanceId) {
-            if (!instanceId || !this.instances[instanceId]) {
-                this.showNotification('Error', 'Instance not found.', 'error');
+        // Regenerate the secret sync token
+        async regenerateToken() {
+            if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return;
+            const instance = this.instances[this.currentInstanceId];
+            const oldToken = instance.syncToken;
+
+            if (!confirm('Regenerate secret sync token? You will need to update the Browser Source URL in OBS.')) {
                 return;
             }
 
-            const instance = this.instances[instanceId];
-            const exportData = {
-                version: '1.0',
-                type: 'single',
-                timestamp: new Date().toISOString(),
-                data: {
-                    [instanceId]: instance
+            const newToken = crypto.randomUUID();
+            const result = await this.pushToCloud(newToken, this.readFormConfig(), instance.name);
+
+            if (result.success) {
+                if (oldToken) {
+                    fetch(`${getProxyBaseUrl()}/scene-config/${oldToken}`, { method: 'DELETE' }).catch(() => {});
                 }
-            };
-
-            this.downloadJson(exportData, `twitch-overlay-${instanceId}.json`);
-            this.showNotification('Success', `Instance '${instance.name}' exported.`, 'success');
+                instance.syncToken = newToken;
+                this.saveInstances();
+                this.populateForm(instance);
+                this.updateInstanceUrl();
+                this.subscribeToRemoteChanges(newToken);
+                this.showNotification('Token Regenerated', 'New token created. Copy your updated OBS URL.', 'success');
+            } else {
+                this.showNotification('Error', 'Failed to regenerate sync token.', 'error');
+            }
         }
 
-        // Export all instances
-        exportAllInstances() {
-            const exportData = {
-                version: '1.0',
-                type: 'collection',
-                timestamp: new Date().toISOString(),
-                data: this.instances
-            };
+        // Disable sync for the current instance
+        async disableSync() {
+            if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return;
+            const instance = this.instances[this.currentInstanceId];
 
-            this.downloadJson(exportData, 'twitch-overlay-instances.json');
-            this.showNotification('Success', 'All instances exported.', 'success');
+            // An OBS source still carrying &sync= will re-claim the token the next time it
+            // loads (its doc-missing handler re-uploads local config), silently undoing this.
+            if (!confirm('Disable web sync for this scene?\n\nImportant: also remove "&sync=..." from the Browser Source URL in OBS. If it stays there, the overlay will re-create the sync data next time it loads.')) {
+                return;
+            }
+
+            if (instance.syncToken) {
+                fetch(`${getProxyBaseUrl()}/scene-config/${instance.syncToken}`, { method: 'DELETE' }).catch(() => {});
+            }
+
+            instance.syncToken = null;
+            this.saveInstances();
+            this.populateForm(instance);
+            this.updateInstanceUrl();
+            this.renderInstanceList();
+            if (this.firestoreUnsubscribe) this.firestoreUnsubscribe();
+            this.showNotification('Sync Disabled', 'Web customization disabled for this scene.', 'info');
         }
 
-        // Helper to download JSON data
-        downloadJson(data, filename) {
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        // Link an existing token from an OBS browser source
+        async linkExistingToken() {
+            if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return;
+            const instance = this.instances[this.currentInstanceId];
 
-            const exportLink = document.createElement('a');
-            exportLink.setAttribute('href', dataUri);
-            exportLink.setAttribute('download', filename);
-            exportLink.style.display = 'none';
+            const inputToken = prompt('Enter the secret sync token (UUID) from your OBS Browser Source URL:');
+            if (!inputToken) return;
 
-            document.body.appendChild(exportLink);
-            exportLink.click();
-            document.body.removeChild(exportLink);
-        }
+            const trimmedToken = inputToken.trim();
+            const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!UUID_REGEX.test(trimmedToken)) {
+                this.showNotification('Invalid Token', 'The token must be a valid UUID format.', 'error');
+                return;
+            }
 
-        // Import instances from file
-        importInstances() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importData = JSON.parse(e.target.result);
-
-                        // Validate import data
-                        if (!importData.version || !importData.type || !importData.data) {
-                            throw new Error('Invalid import file format.');
-                        }
-
-                        // Process the imported data
-                        const importedInstances = importData.data;
-                        let importCount = 0;
-                        let skipCount = 0;
-
-                        // For each imported instance
-                        Object.keys(importedInstances).forEach(id => {
-                            // Check if it already exists
-                            if (this.instances[id]) {
-                                // Ask if user wants to overwrite
-                                const overwrite = confirm(`An instance with ID '${id}' already exists. Overwrite?`);
-                                if (!overwrite) {
-                                    skipCount++;
-                                    return;
-                                }
-                            }
-
-                            // Import the instance but sanitize the config
-                            const instance = importedInstances[id];
-                            this.instances[id] = {
-                                name: instance.name || `Imported Scene ${id}`, // Ensure name exists
-                                createdAt: instance.createdAt || new Date().toISOString(),
-                                lastModified: instance.lastModified || new Date().toISOString(),
-                                config: {} // Keep config empty as per previous logic
-                            };
-
-                            // Add to order if it wasn't skipped and isn't already there
-                            if (!this.instanceOrder.includes(id)) {
-                                this.instanceOrder.push(id);
-                            }
-                            importCount++;
-                        });
-
-                        // Save and update UI
-                        this.saveInstances(); // Saves both instances and the potentially updated order
-                        this.renderInstanceList(); // Re-render with new order/items
-
-                        if (importCount > 0) {
-                            // If we were in empty state or no instance selected, select the first imported one
-                            if (!this.currentInstanceId && this.instanceOrder.length > 0) {
-                                // Find the first ID from the imported set that exists in our final order
-                                const firstImportedIdInOrder = this.instanceOrder.find(orderedId => importedInstances[orderedId]);
-                                if (firstImportedIdInOrder) {
-                                    this.selectInstance(firstImportedIdInOrder);
-                                } else if (this.instanceOrder.length > 0) {
-                                    // Fallback: select the very first item in the list
-                                    this.selectInstance(this.instanceOrder[0]);
-                                }
-                            }
-
-                            this.showNotification('Success', `${importCount} instance(s) imported/updated.${skipCount ? ` ${skipCount} skipped.` : ''}`, 'success');
-                        } else if (skipCount > 0) {
-                            this.showNotification('Info', `Import finished. ${skipCount} instance(s) skipped.`, 'info');
-                        } else {
-                            this.showNotification('Info', 'No new instances were imported.', 'info');
-                        }
-
-                    } catch (error) {
-                        console.error('Import error:', error);
-                        this.showNotification('Error', 'Failed to import instances. Invalid file format.', 'error');
+            try {
+                const res = await fetch(`${getProxyBaseUrl()}/scene-config/${trimmedToken}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.config) {
+                        instance.config = data.config;
                     }
-                };
+                }
+            } catch (err) {
+                console.warn('[Creator] Link fetch failed:', err);
+            }
 
-                reader.readAsText(file);
-            });
-
-            input.click();
+            instance.syncToken = trimmedToken;
+            this.saveInstances();
+            this.populateForm(instance);
+            this.updateInstanceUrl();
+            this.renderInstanceList();
+            this.subscribeToRemoteChanges(trimmedToken);
+            this.showNotification('Scene Linked', 'Successfully linked to existing sync token.', 'success');
         }
 
-        // Update the instance URL display
+        // Update displayed URL in Creator workspace
         updateInstanceUrl() {
             if (!this.currentInstanceId) return;
 
-            // Get base path to chat.html
             const basePath = window.location.href.replace(/\/[^\/]*$/, '/chat.html');
-            const instanceUrl = `${basePath}?scene=${this.currentInstanceId}`;
+            const instance = this.instances[this.currentInstanceId];
+            
+            let instanceUrl = `${basePath}?scene=${this.currentInstanceId}`;
+            if (instance && instance.syncToken) {
+                instanceUrl += `&sync=${instance.syncToken}`;
+            }
 
-            // Update both URL displays
-            this.instanceUrlConfig.textContent = instanceUrl;
-            this.instanceUrlSetup.textContent = instanceUrl;
+            if (this.instanceUrlConfig) this.instanceUrlConfig.textContent = instanceUrl;
+            if (this.instanceUrlSetup) this.instanceUrlSetup.textContent = instanceUrl;
         }
 
         // Copy instance URL to clipboard
         copyInstanceUrl() {
-            // Use either URL display since they contain the same content
             const url = this.instanceUrlConfig.textContent;
-
             navigator.clipboard.writeText(url)
-                .then(() => {
-                    this.showNotification('Success', 'URL copied to clipboard.', 'success');
-                })
-                .catch(err => {
-                    console.error('Failed to copy URL:', err);
-                    this.showNotification('Error', 'Failed to copy URL. Please try selecting and copying manually.', 'error');
-                });
+                .then(() => this.showNotification('Success', 'URL copied to clipboard.', 'success'))
+                .catch(() => this.showNotification('Error', 'Failed to copy URL.', 'error'));
         }
 
-        // Show notification
-        showNotification(title, message, type) {
-            const container = document.getElementById('notification-container');
-
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-
-            const content = document.createElement('div');
-            content.className = 'notification-content';
-            const titleEl = document.createElement('div');
-            titleEl.className = 'notification-title';
-            titleEl.textContent = title;
-            const messageEl = document.createElement('div');
-            messageEl.className = 'notification-message';
-            messageEl.textContent = message;
-            content.appendChild(titleEl);
-            content.appendChild(messageEl);
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'notification-close';
-            closeBtn.textContent = '\u00D7';
-            notification.appendChild(content);
-            notification.appendChild(closeBtn);
-
-            // Add close button event
-            closeBtn.addEventListener('click', () => {
-                this.removeNotification(notification);
-            });
-
-            // Add to container
-            container.appendChild(notification);
-
-            // Auto remove after delay
-            setTimeout(() => {
-                this.removeNotification(notification);
-            }, 5000);
+        // Show create scene modal
+        showCreateInstanceModal() {
+            this.modalTitle.textContent = 'Create New Chat Scene';
+            this.modalInstanceName.value = '';
+            this.modalCreateBtn.textContent = 'Create';
+            this.instanceModal.style.display = 'flex';
+            setTimeout(() => this.modalInstanceName.focus(), 100);
         }
 
-        // Remove notification with animation
-        removeNotification(notification) {
-            notification.classList.add('hiding');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
+        hideModal() {
+            this.instanceModal.style.display = 'none';
+        }
+
+        createInstance() {
+            let name = this.modalInstanceName.value.trim();
+            if (!name) {
+                let counter = 1;
+                let defaultName = `Scene ${counter}`;
+                while (Object.values(this.instances).some(inst => inst.name === defaultName)) {
+                    counter++;
+                    defaultName = `Scene ${counter}`;
                 }
-            }, 300);
+                name = defaultName;
+            }
+
+            let id = this.generateInstanceId(name);
+            const newInstance = {
+                name: name,
+                syncToken: null,
+                createdAt: new Date().toISOString(),
+                lastModified: new Date().toISOString(),
+                config: this.getDefaultConfig()
+            };
+
+            this.instances[id] = newInstance;
+            this.instanceOrder.push(id);
+            this.saveInstances();
+
+            this.hideModal();
+            this.renderInstanceList();
+            this.selectInstance(id);
+            this.showNotification('Success', `Chat scene '${name}' created.`, 'success');
         }
 
-        // --- Drag and Drop Handlers ---
+        generateInstanceId(name) {
+            let id = name.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+            let counter = 1;
+            let uniqueId = id;
+            while (this.instances[uniqueId]) {
+                uniqueId = `${id}-${counter}`;
+                counter++;
+            }
+            return uniqueId;
+        }
 
+        duplicateInstance() {
+            if (!this.currentInstanceId) return;
+            const source = this.instances[this.currentInstanceId];
+            const newName = `${source.name} (Copy)`;
+            const newId = this.generateInstanceId(newName);
+
+            const newInstance = {
+                name: newName,
+                syncToken: null, // Duplicated scenes start with standalone tokens
+                createdAt: new Date().toISOString(),
+                lastModified: new Date().toISOString(),
+                config: JSON.parse(JSON.stringify(source.config || {}))
+            };
+
+            this.instances[newId] = newInstance;
+            const idx = this.instanceOrder.indexOf(this.currentInstanceId);
+            if (idx !== -1) {
+                this.instanceOrder.splice(idx + 1, 0, newId);
+            } else {
+                this.instanceOrder.push(newId);
+            }
+
+            this.saveInstances();
+            this.renderInstanceList();
+            this.selectInstance(newId);
+            this.showNotification('Success', `Duplicated scene as '${newName}'.`, 'success');
+        }
+
+        deleteInstance() {
+            if (!this.currentInstanceId) return;
+            const instance = this.instances[this.currentInstanceId];
+
+            if (!confirm(`Are you sure you want to delete '${instance.name}'?`)) return;
+
+            if (this.firestoreUnsubscribe) {
+                this.firestoreUnsubscribe();
+                this.firestoreUnsubscribe = null;
+            }
+
+            if (instance.syncToken) {
+                fetch(`${getProxyBaseUrl()}/scene-config/${instance.syncToken}`, { method: 'DELETE' }).catch(() => {});
+            }
+
+            delete this.instances[this.currentInstanceId];
+            this.instanceOrder = this.instanceOrder.filter(id => id !== this.currentInstanceId);
+
+            this.saveInstances();
+            this.renderInstanceList();
+
+            if (this.instanceOrder.length > 0) {
+                this.selectInstance(this.instanceOrder[0]);
+            } else {
+                this.showEmptyState();
+            }
+
+            this.showNotification('Success', 'Scene deleted.', 'success');
+        }
+
+        exportCurrentInstance() {
+            if (!this.currentInstanceId) return;
+            const instance = this.instances[this.currentInstanceId];
+            const exportData = {
+                type: 'wildcat-chat-scene',
+                version: '1.0',
+                instance: { id: this.currentInstanceId, ...instance }
+            };
+
+            this.downloadJSON(exportData, `chat-scene-${this.currentInstanceId}.json`);
+        }
+
+        exportAllInstances() {
+            const exportData = {
+                type: 'wildcat-chat-scenes-bundle',
+                version: '1.0',
+                instances: this.instances,
+                instanceOrder: this.instanceOrder
+            };
+
+            this.downloadJSON(exportData, 'wildcat-chat-scenes-all.json');
+        }
+
+        importInstances() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const data = JSON.parse(evt.target.result);
+                        if (data.type === 'wildcat-chat-scene' && data.instance) {
+                            const inst = data.instance;
+                            const id = this.generateInstanceId(inst.name || 'imported-scene');
+                            this.instances[id] = {
+                                name: inst.name,
+                                syncToken: inst.syncToken || null,
+                                createdAt: inst.createdAt || new Date().toISOString(),
+                                lastModified: new Date().toISOString(),
+                                config: inst.config || {}
+                            };
+                            this.instanceOrder.push(id);
+                            this.saveInstances();
+                            this.renderInstanceList();
+                            this.selectInstance(id);
+                            this.showNotification('Success', 'Imported scene successfully.', 'success');
+                        } else if (data.type === 'wildcat-chat-scenes-bundle' && data.instances) {
+                            Object.keys(data.instances).forEach(id => {
+                                const newId = this.generateInstanceId(data.instances[id].name || id);
+                                this.instances[newId] = data.instances[id];
+                                this.instanceOrder.push(newId);
+                            });
+                            this.saveInstances();
+                            this.renderInstanceList();
+                            this.showNotification('Success', 'Imported scene bundle successfully.', 'success');
+                        } else {
+                            this.showNotification('Error', 'Unrecognized scene JSON format.', 'error');
+                        }
+                    } catch (err) {
+                        this.showNotification('Error', 'Failed to parse JSON file.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        downloadJSON(obj, filename) {
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        showEmptyState() {
+            this.currentInstanceId = null;
+            this.emptyState.style.display = 'block';
+            this.configLayout.style.display = 'none';
+            this.workspaceActions.style.display = 'none';
+            this.workspaceTitle.textContent = 'Select or Create a Chat Scene';
+        }
+
+        showNotification(title, message, type = 'info') {
+            const container = document.getElementById('notification-container') || document.body;
+            const notif = document.createElement('div');
+            notif.className = `notification notification-${type}`;
+            notif.style.cssText = `
+                position: fixed; bottom: 20px; right: 20px; padding: 12px 20px;
+                background: ${type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : '#0288d1'};
+                color: #fff; border-radius: 8px; font-weight: 500; font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; transition: opacity 0.3s;
+            `;
+            notif.textContent = `${title}: ${message}`;
+            container.appendChild(notif);
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                setTimeout(() => notif.remove(), 300);
+            }, 3500);
+        }
+
+        // Drag & Drop handlers for instance list ordering
         handleDragStart(e) {
-            this.draggedItemId = e.target.dataset.id;
-            e.dataTransfer.effectAllowed = 'move';
-            // Optionally add data to transfer (though not strictly needed if using this.draggedItemId)
-            e.dataTransfer.setData('text/plain', this.draggedItemId);
-
-            // Add styling to the dragged item
-            setTimeout(() => { // Timeout ensures style applies after drag starts
-                e.target.classList.add('dragging');
-            }, 0);
+            this.draggedItemId = e.currentTarget.dataset.id;
+            e.currentTarget.classList.add('dragging');
         }
 
         handleDragEnd(e) {
-            // Clean up styling
-            e.target.classList.remove('dragging');
-            // Remove any lingering drag-over styles from potential targets
-            this.instanceList.querySelectorAll('.instance-item.drag-over').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-            this.draggedItemId = null; // Clear dragged item ID
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.instance-item').forEach(item => item.classList.remove('drag-over'));
         }
 
         handleDragOver(e) {
-            e.preventDefault(); // Necessary to allow dropping
-            e.dataTransfer.dropEffect = 'move';
-
-            const targetItem = e.target.closest('.instance-item');
-            if (targetItem && targetItem.dataset.id !== this.draggedItemId) {
-                // Remove previous drag-over class
-                this.instanceList.querySelectorAll('.instance-item.drag-over').forEach(item => {
-                    if (item !== targetItem) {
-                        item.classList.remove('drag-over');
-                    }
-                });
-                // Add class to current target
-                targetItem.classList.add('drag-over');
-            }
+            e.preventDefault();
         }
 
         handleDragEnter(e) {
-            e.preventDefault();
-            const targetItem = e.target.closest('.instance-item');
-            if (targetItem && targetItem.dataset.id !== this.draggedItemId) {
-                // Could add temporary highlight on enter if desired
+            const target = e.target.closest('.instance-item');
+            if (target && target.dataset.id !== this.draggedItemId) {
+                target.classList.add('drag-over');
             }
         }
 
         handleDragLeave(e) {
-            const targetItem = e.target.closest('.instance-item');
-            // Only remove drag-over if leaving the item itself, not just child elements
-            if (targetItem && !targetItem.contains(e.relatedTarget)) {
-                targetItem.classList.remove('drag-over');
-            }
-            // If leaving the list container entirely
-            if (e.target === this.instanceList && !this.instanceList.contains(e.relatedTarget)) {
-                this.instanceList.querySelectorAll('.instance-item.drag-over').forEach(item => {
-                    item.classList.remove('drag-over');
-                });
+            const target = e.target.closest('.instance-item');
+            if (target) {
+                target.classList.remove('drag-over');
             }
         }
 
         handleDrop(e) {
-            e.preventDefault(); // Prevent default drop behavior (like opening link)
+            e.preventDefault();
+            const dropTarget = e.target.closest('.instance-item');
+            if (!dropTarget || dropTarget.dataset.id === this.draggedItemId) return;
 
-            const targetItem = e.target.closest('.instance-item');
-            const droppedOnId = targetItem ? targetItem.dataset.id : null;
+            const targetId = dropTarget.dataset.id;
+            const fromIdx = this.instanceOrder.indexOf(this.draggedItemId);
+            const toIdx = this.instanceOrder.indexOf(targetId);
 
-            // Remove visual cues
-            if (targetItem) targetItem.classList.remove('drag-over');
-            this.instanceList.querySelectorAll('.instance-item.dragging').forEach(item => {
-                item.classList.remove('dragging');
-            });
-
-            if (!this.draggedItemId || this.draggedItemId === droppedOnId) {
-                // Dropped on itself or invalid drag, do nothing
-                this.draggedItemId = null;
-                return;
+            if (fromIdx !== -1 && toIdx !== -1) {
+                this.instanceOrder.splice(fromIdx, 1);
+                this.instanceOrder.splice(toIdx, 0, this.draggedItemId);
+                this.saveInstances();
+                this.renderInstanceList();
             }
-
-            // Find original index of dragged item
-            const originalIndex = this.instanceOrder.indexOf(this.draggedItemId);
-            if (originalIndex === -1) {
-                console.error("Dragged item ID not found in order array!");
-                this.draggedItemId = null;
-                return; // Should not happen
-            }
-
-            // Remove item from its original position
-            this.instanceOrder.splice(originalIndex, 1);
-
-            // Find index of the item it was dropped on
-            const targetIndex = droppedOnId ? this.instanceOrder.indexOf(droppedOnId) : -1;
-
-            if (targetIndex > -1) {
-                // Insert before the target item
-                this.instanceOrder.splice(targetIndex, 0, this.draggedItemId);
-            } else {
-                // If dropped on the container but not on an item, add to the end
-                this.instanceOrder.push(this.draggedItemId);
-            }
-
-            // Save the new order and re-render the list
-            this.saveInstances();
-            this.renderInstanceList(); // Re-render maintains selection if possible
-
-            // Ensure the currently selected item remains visually selected after re-render
-            if (this.currentInstanceId) {
-                const selectedElement = this.instanceList.querySelector(`.instance-item[data-id="${this.currentInstanceId}"]`);
-                if (selectedElement) {
-                    selectedElement.classList.add('active');
-                }
-            }
-
-            this.draggedItemId = null; // Clear dragged item ID
-            this.showNotification('Success', 'Chat scene order updated.', 'success');
         }
     }
 
-    // Initialize the Chat Scene Creator
-    const manager = new ChatSceneCreator();
-
-    // Add style to animate message transitions
-    const style = document.createElement('style');
-    style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        `;
-    document.head.appendChild(style);
-
-    // Toggle OBS Setup Instructions
-    const toggleObsSetupBtn = document.getElementById('toggleObsSetupBtn');
-    const obsSetup = document.getElementById('obsSetup');
-
-    toggleObsSetupBtn.addEventListener('click', () => {
-        const isVisible = obsSetup.style.display !== 'none';
-
-        obsSetup.style.display = isVisible ? 'none' : 'block';
-        toggleObsSetupBtn.innerHTML = isVisible ?
-            '<i data-lucide="monitor" class="lucide-inline"></i> Detailed OBS Setup Instructions' :
-            '<i data-lucide="monitor" class="lucide-inline"></i> Hide OBS Setup Instructions';
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
-
-    // Toggle Browser Settings Accordion
-    const browserSettingsHeader = document.querySelector('#browserSettingsAccordion .accordion-header');
-    const browserSettingsContent = document.querySelector('#browserSettingsAccordion .accordion-content');
-    const browserSettingsIcon = document.querySelector('#browserSettingsAccordion .accordion-icon');
-
-    if (browserSettingsHeader && browserSettingsContent) {
-        browserSettingsHeader.addEventListener('click', () => {
-            const isVisible = browserSettingsContent.style.display !== 'none';
-            browserSettingsContent.style.display = isVisible ? 'none' : 'block';
-            // Removed logic for browser settings accordion toggle
-        });
-    }
+    new ChatSceneCreator();
 });
