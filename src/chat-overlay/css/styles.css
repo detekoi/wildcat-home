@@ -247,6 +247,7 @@ header p {
     grid-template-columns: 260px 1fr;
     gap: var(--spacing-lg);
     min-height: calc(100vh - 200px);
+    align-items: start;
 }
 
 /* Instance List Panel */
@@ -256,6 +257,12 @@ header p {
     box-shadow: var(--shadow-sm);
     padding: var(--spacing-md);
     height: fit-content;
+    position: sticky;
+    top: calc(var(--nav-height, 60px) + 20px);
+    max-height: calc(100vh - var(--nav-height, 60px) - 40px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color, #333) transparent;
 }
 
 .instances-header {
@@ -276,8 +283,6 @@ header p {
     flex-direction: column;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-lg);
-    max-height: 500px;
-    overflow-y: auto;
 }
 
 .instance-item {
@@ -342,7 +347,6 @@ header p {
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
-    overflow-x: hidden;
 }
 
 .workspace-header {
@@ -368,6 +372,7 @@ header p {
     grid-template-columns: 1fr 350px;
     gap: var(--spacing-lg);
     max-width: 100%;
+    align-items: start;
 }
 
 .settings-container {
@@ -483,13 +488,17 @@ input[type="color"]:disabled::-webkit-color-swatch,
 
 /* Preview Panel */
 .preview-panel {
-    height: 100%;
+    position: sticky;
+    top: calc(var(--nav-height, 60px) + 20px);
+    max-height: calc(100vh - var(--nav-height, 60px) - 40px);
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color, #333) transparent;
 }
 
 .preview-container {
@@ -1135,13 +1144,14 @@ input:checked + .toggle-slider:before {
     }
     
     .preview-panel {
+        position: static;
+        max-height: none;
         margin-top: var(--spacing-lg);
     }
     
     .workspace-panel {
         width: 100%;
         max-width: 100%;
-        overflow-x: hidden;
         padding: var(--spacing-md);
     }
 }
@@ -1152,6 +1162,8 @@ input:checked + .toggle-slider:before {
     }
     
     .instances-panel {
+        position: static;
+        max-height: none;
         margin-bottom: var(--spacing-lg);
     }
     
