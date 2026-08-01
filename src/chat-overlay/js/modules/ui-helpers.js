@@ -248,8 +248,23 @@ export class UIHelpers {
         const l = 45 + (Math.abs(hash) % 26); // Lightness (45-70) - Adjusted for better readability
         return `hsl(${h}, ${s}%, ${l}%)`;
     }
+
+    /**
+     * Escape HTML special characters
+     */
+    static escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Notification helper stub
+     */
+    static showNotification(title, message, type = 'info') {
+        console.log(`[Notification ${type.toUpperCase()}] ${title}: ${message}`);
+    }
 }
 
 // Make functions globally available for backwards compatibility
 window.getBorderRadiusValue = UIHelpers.getBorderRadiusValue;
 window.getBoxShadowValue = UIHelpers.getBoxShadowValue;
+
