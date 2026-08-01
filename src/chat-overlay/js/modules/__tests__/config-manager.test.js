@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ConfigManager, migrateConfig, CONFIG_VERSION } from '../config-manager.js';
+import { ConfigManager, migrateConfig, CONFIG_VERSION, applyChromaKey } from '../config-manager.js';
 
 describe('migrateConfig Unit Tests', () => {
     it('should return empty object or default clone when given null or non-object input', () => {
@@ -186,6 +186,26 @@ describe('ConfigManager - State Persistence', () => {
             const parsedExport = JSON.parse(exportedJSON);
             expect(parsedExport.theme).toBe('matrix');
             expect(parsedExport.chatMode).toBe('popup');
+        });
+    });
+
+    describe('applyChromaKey Unit Tests', () => {
+        it('should stash preChromaKeyOpacity and set bgColor to #00b140 and opacity to 0 when enabled', () => {
+            const config = { chromaKey: false, bgColor: '#121212', bgColorOpacity: 0.85 };
+            applyChromaKey(config, true);
+
+            expect(config.chromaKey).toBe(true);
+            expect(config.preChromaKeyOpacity).toBe(0.85);
+            expect(config.bgColor).toBe('#00b140');
+            expect(config.bgColorOpacity).toBe(0);
+        });
+
+        it('should restore preChromaKeyOpacity when Chroma Key is disabled', () => {
+            const config = { chromaKey: true, preChromaKeyOpacity: 0.85, bgColor: '#00b140', bgColorOpacity: 0 };
+            applyChromaKey(config, false);
+
+            expect(config.chromaKey).toBe(false);
+            expect(config.bgColorOpacity).toBe(0.85);
         });
     });
 });

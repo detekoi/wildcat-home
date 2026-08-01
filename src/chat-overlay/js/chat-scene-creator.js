@@ -205,10 +205,48 @@ document.addEventListener('DOMContentLoaded', () => {
                         input.type = 'checkbox';
                         input.id = `schema-input-${item.key}`;
                     } else if (item.control === 'color') {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'color-control-wrapper';
+
+                        const safeDefault = (UIHelpers.parseColor(item.default).hex || '#121212').toLowerCase();
+
                         input = document.createElement('input');
                         input.type = 'color';
                         input.id = `schema-input-${item.key}`;
-                        input.value = item.default;
+                        input.className = 'color-picker-swatch';
+                        input.value = safeDefault;
+
+                        const hexInput = document.createElement('input');
+                        hexInput.type = 'text';
+                        hexInput.id = `schema-hex-${item.key}`;
+                        hexInput.className = 'form-control color-hex-input';
+                        hexInput.maxLength = 7;
+                        hexInput.value = safeDefault.toUpperCase();
+                        hexInput.placeholder = '#RRGGBB';
+
+                        // Sync swatch -> hex text
+                        input.addEventListener('input', () => {
+                            hexInput.value = input.value.toUpperCase();
+                        });
+
+                        // Sync hex text -> swatch
+                        const syncHexToSwatch = () => {
+                            let val = hexInput.value.trim();
+                            if (val && !val.startsWith('#')) val = '#' + val;
+                            const parsed = UIHelpers.parseColor(val);
+                            if (parsed.hex && parsed.hex.length === 7) {
+                                input.value = parsed.hex;
+                                this.sendPreviewUpdate();
+                            }
+                        };
+                        hexInput.addEventListener('input', syncHexToSwatch);
+                        hexInput.addEventListener('change', syncHexToSwatch);
+
+                        wrapper.appendChild(input);
+                        wrapper.appendChild(hexInput);
+                        row.appendChild(wrapper);
+                        groupDiv.appendChild(row);
+                        return;
                     } else if (item.control === 'range') {
                         input = document.createElement('input');
                         input.type = 'range';
@@ -418,10 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (result && result.themeData) {
                             const theme = result.themeData;
                             if (theme.background_color) {
+                                this.updateColorControl('bgColor', theme.background_color);
                                 const parsed = UIHelpers.parseColor(theme.background_color);
-                                const bgInput = document.getElementById('schema-input-bgColor');
                                 const bgOpacityInput = document.getElementById('schema-input-bgColorOpacity');
-                                if (bgInput && parsed.hex) bgInput.value = parsed.hex;
                                 if (bgOpacityInput && parsed.opacity !== undefined) {
                                     bgOpacityInput.value = parsed.opacity;
                                     const valDisplay = document.getElementById('schema-val-bgColorOpacity');
@@ -429,19 +466,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                             if (theme.border_color) {
-                                const parsed = UIHelpers.parseColor(theme.border_color);
-                                const borderInput = document.getElementById('schema-input-borderColor');
-                                if (borderInput && parsed.hex) borderInput.value = parsed.hex;
+                                this.updateColorControl('borderColor', theme.border_color);
                             }
                             if (theme.text_color) {
-                                const parsed = UIHelpers.parseColor(theme.text_color);
-                                const textInput = document.getElementById('schema-input-textColor');
-                                if (textInput && parsed.hex) textInput.value = parsed.hex;
+                                this.updateColorControl('textColor', theme.text_color);
                             }
                             if (theme.username_color) {
-                                const parsed = UIHelpers.parseColor(theme.username_color);
-                                const userColorInput = document.getElementById('schema-input-usernameColor');
-                                if (userColorInput && parsed.hex) userColorInput.value = parsed.hex;
+                                this.updateColorControl('usernameColor', theme.username_color);
                             }
                             if (result.compressedImage) {
                                 this.currentBgImage = result.compressedImage;
@@ -582,6 +613,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
+                    if (item.key === 'theme') {
+                        const themeVal = input.value;
+                        const themes = window.availableThemes || [];
+                        const foundTheme = themes.find(t => t.value === themeVal || t.name === themeVal);
+                        if (foundTheme) {
+                            if (foundTheme.bgColor) this.updateColorControl('bgColor', foundTheme.bgColor);
+                            if (foundTheme.borderColor) this.updateColorControl('borderColor', foundTheme.borderColor);
+                            if (foundTheme.textColor) this.updateColorControl('textColor', foundTheme.textColor);
+                            if (foundTheme.usernameColor) this.updateColorControl('usernameColor', foundTheme.usernameColor);
+                            if (foundTheme.timestampColor) this.updateColorControl('timestampColor', foundTheme.timestampColor);
+                            if (foundTheme.pronounBadgeColor) this.updateColorControl('pronounBadgeColor', foundTheme.pronounBadgeColor);
+                        }
+                    }
+
+                    if (item.key === 'chromaKey') {
+                        this.syncChromaKeyUIControls(input.checked);
+                    }
+
                     if (item.key === 'chatMode') {
                         const isPopup = input.value === 'popup';
                         const popupBlock = document.getElementById('popupModeBlock');
@@ -607,6 +656,79 @@ document.addEventListener('DOMContentLoaded', () => {
                     input.addEventListener('input', () => this.sendPreviewUpdate());
                 }
             });
+        }
+
+        // Helper to update both color swatch input and hex text input cleanly
+        updateColorControl(key, colorStr) {
+            if (!colorStr) return;
+            const parsed = UIHelpers.parseColor(colorStr);
+            const hex = (parsed && parsed.hex) ? parsed.hex : '#121212';
+            const swatchInput = document.getElementById(`schema-input-${key}`);
+            const hexInput = document.getElementById(`schema-hex-${key}`);
+            if (swatchInput) swatchInput.value = hex;
+            if (hexInput) hexInput.value = hex.toUpperCase();
+        }
+
+        // Helper to sync Chroma Key UI state across background color and opacity controls
+        syncChromaKeyUIControls(isChromaKey) {
+            const bgColorInput = document.getElementById('schema-input-bgColor');
+            const bgColorHex = document.getElementById('schema-hex-bgColor');
+            const opacityInput = document.getElementById('schema-input-bgColorOpacity');
+            const opacityValDisplay = document.getElementById('schema-val-bgColorOpacity');
+
+            const currentInstance = this.instances[this.currentInstanceId];
+            const currentBg = (currentInstance?.config?.bgColor || '').toLowerCase();
+            const currentInputColor = (bgColorInput ? bgColorInput.value : '').toLowerCase();
+
+            if (isChromaKey) {
+                if (opacityInput && parseFloat(opacityInput.value) > 0) {
+                    this.stashedBgOpacity = parseFloat(opacityInput.value);
+                    if (currentInstance && currentInstance.config) {
+                        currentInstance.config.preChromaKeyOpacity = this.stashedBgOpacity;
+                    }
+                }
+                if (bgColorInput) {
+                    if (!this.stashedBgColor && currentInputColor !== '#00b140' && currentInputColor !== '#000000') {
+                        this.stashedBgColor = bgColorInput.value;
+                    }
+                    bgColorInput.value = '#00b140';
+                    bgColorInput.disabled = true;
+                    bgColorInput.style.pointerEvents = 'none';
+                    bgColorInput.style.opacity = '1';
+                }
+                if (bgColorHex) {
+                    bgColorHex.value = '#00B140';
+                    bgColorHex.disabled = true;
+                }
+                if (opacityInput) {
+                    opacityInput.value = 0;
+                    opacityInput.disabled = true;
+                }
+                if (opacityValDisplay) {
+                    opacityValDisplay.textContent = '0%';
+                }
+            } else {
+                const restoredOpacity = this.stashedBgOpacity ?? currentInstance?.config?.preChromaKeyOpacity ?? currentInstance?.config?.bgColorOpacity ?? 0.85;
+                const restoredColor = this.stashedBgColor ?? (currentBg && currentBg !== '#000000' && currentBg !== '#00b140' ? currentInstance.config.bgColor : '#121212');
+
+                if (bgColorInput) {
+                    bgColorInput.value = restoredColor;
+                    bgColorInput.disabled = false;
+                    bgColorInput.style.pointerEvents = 'auto';
+                    bgColorInput.style.opacity = '1';
+                }
+                if (bgColorHex) {
+                    bgColorHex.value = restoredColor.toUpperCase();
+                    bgColorHex.disabled = false;
+                }
+                if (opacityInput) {
+                    opacityInput.value = restoredOpacity;
+                    opacityInput.disabled = false;
+                }
+                if (opacityValDisplay) {
+                    opacityValDisplay.textContent = `${Math.round(restoredOpacity * 100)}%`;
+                }
+            }
         }
 
         // Send form configuration to preview iframe via postMessage
@@ -736,6 +858,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (item.control === 'checkbox') {
                     input.checked = !!config[item.key];
+                } else if (item.control === 'color') {
+                    this.updateColorControl(item.key, config[item.key] ?? item.default);
                 } else if (item.control === 'range') {
                     input.value = config[item.key] ?? item.default;
                     const valDisplay = document.getElementById(`schema-val-${item.key}`);
@@ -764,6 +888,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rowHeight) rowHeight.style.display = isPopup ? 'none' : 'flex';
             if (rowMaxMsg) rowMaxMsg.style.display = isPopup ? 'none' : 'flex';
             if (rowTopFade) rowTopFade.style.display = isPopup ? 'none' : 'flex';
+
+            // Sync Chroma Key UI controls
+            const chromaKeyInput = document.getElementById('schema-input-chromaKey');
+            if (chromaKeyInput) {
+                this.syncChromaKeyUIControls(chromaKeyInput.checked);
+            }
 
             // Sync controls UI state
             if (instance.syncToken) {

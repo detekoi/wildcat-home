@@ -211,6 +211,7 @@ export class SettingsPanelManager {
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
                 topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
                 chromaKey: this._configManager.config.chromaKey ?? false,
+                preChromaKeyOpacity: this._configManager.config.preChromaKeyOpacity,
             };
 
             this._configManager.config = newConfig;
@@ -279,8 +280,8 @@ export class SettingsPanelManager {
         const hexColor = this._configManager.config.bgColor || '#121212';
         const isChromaKey = !!this._configManager.config.chromaKey;
         const opacityPercent = isChromaKey ? 0 : Math.round((this._configManager.config.bgColorOpacity ?? 0.85) * 100);
-        if (bgColorInput) bgColorInput.style.backgroundColor = isChromaKey ? '#000000' : hexColor;
-        if (bgColorHex) bgColorHex.value = (isChromaKey ? '#000000' : hexColor).toUpperCase();
+        if (bgColorInput) bgColorInput.style.backgroundColor = isChromaKey ? '#00b140' : hexColor;
+        if (bgColorHex) bgColorHex.value = (isChromaKey ? '#00b140' : hexColor).toUpperCase();
         if (bgOpacityInput && bgOpacityValue) {
             bgOpacityInput.value = opacityPercent;
             bgOpacityValue.textContent = `${opacityPercent}%`;

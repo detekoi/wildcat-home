@@ -301,8 +301,8 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                             }
                             applyChromaKey(configManager.config, true);
                             document.body.classList.add('chroma-key');
-                            setSwatchColor(bgColorInput, '#000000');
-                            if (bgColorHex) bgColorHex.value = '#000000';
+                            setSwatchColor(bgColorInput, '#00b140');
+                            if (bgColorHex) bgColorHex.value = '#00B140';
                             if (bgOpacityInput) bgOpacityInput.value = 0;
                         } else {
                             const wasChromaKey = !!configManager.config.chromaKey;

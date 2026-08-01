@@ -50,7 +50,7 @@ export function applyChromaKey(config, enabled) {
             config.preChromaKeyOpacity = config.bgColorOpacity;
         }
         config.chromaKey = true;
-        config.bgColor = '#000000';
+        config.bgColor = '#00b140';
         config.bgColorOpacity = 0;
     } else {
         config.chromaKey = false;

@@ -404,14 +404,81 @@ header p {
 }
 
 .settings-row label {
-    flex: 0 0 110px;
+    flex: 0 0 180px;
+    min-width: 160px;
     margin-right: var(--spacing-md);
+    line-height: 1.3;
 }
 
 .settings-row .input-group {
     flex-grow: 1;
     display: flex;
     align-items: center;
+}
+
+/* Color Control Wrapper & Swatches */
+.color-control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+input[type="color"],
+.color-picker-swatch {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 38px !important;
+    height: 30px !important;
+    padding: 2px !important;
+    border: 1px solid var(--border-color, #444) !important;
+    border-radius: 4px !important;
+    background-color: transparent !important;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper,
+.color-picker-swatch::-webkit-color-swatch-wrapper {
+    padding: 0 !important;
+    background-color: transparent !important;
+    border-radius: 2px;
+}
+
+input[type="color"]::-webkit-color-swatch,
+.color-picker-swatch::-webkit-color-swatch {
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 2px !important;
+}
+
+input[type="color"]::-moz-color-swatch,
+.color-picker-swatch::-moz-color-swatch {
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 2px !important;
+}
+
+input[type="color"]:disabled,
+.color-picker-swatch:disabled {
+    opacity: 1 !important;
+    filter: none !important;
+    cursor: not-allowed;
+}
+
+input[type="color"]:disabled::-webkit-color-swatch-wrapper,
+.color-picker-swatch:disabled::-webkit-color-swatch-wrapper,
+input[type="color"]:disabled::-webkit-color-swatch,
+.color-picker-swatch:disabled::-webkit-color-swatch {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.color-hex-input {
+    width: 85px !important;
+    font-family: monospace !important;
+    font-size: 13px !important;
+    text-transform: uppercase;
+    text-align: center;
 }
 
 /* Preview Panel */

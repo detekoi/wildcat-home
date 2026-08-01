@@ -132,4 +132,14 @@ describe('SettingsPanelManager - auto-provisioned sync token ends with a live su
         expect(sceneSyncManager.syncToken).toBe(tokenAfterFirstSave);
         expect(typeof sceneSyncManager._unsubscribe).toBe('function');
     });
+
+    it('preserves preChromaKeyOpacity in config when saveConfiguration is called', () => {
+        configManager.config.chromaKey = true;
+        configManager.config.preChromaKeyOpacity = 0.85;
+
+        settingsPanel.saveConfiguration();
+
+        expect(configManager.config.chromaKey).toBe(true);
+        expect(configManager.config.preChromaKeyOpacity).toBe(0.85);
+    });
 });
