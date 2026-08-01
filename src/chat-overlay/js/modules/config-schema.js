@@ -337,7 +337,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyEmotes',
         group: 'third_party_emotes',
-        label: 'Third-Party Emotes (Master)',
+        label: 'Third-Party Emotes (BTTV, FFZ, 7TV)',
         control: 'checkbox',
         default: true,
         advanced: true
@@ -345,18 +345,21 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyChannelEmotes',
         group: 'third_party_emotes',
-        label: 'Channel 7TV/BTTV/FFZ Emotes',
+        label: 'Show Channel Emotes',
         control: 'checkbox',
         default: true,
-        advanced: true
+        advanced: true,
+        indent: 1
     },
     {
         key: 'thirdPartyFilter7tvTwitchDisallowed',
         group: 'third_party_emotes',
-        label: 'Filter Twitch-Disallowed Emotes',
+        label: 'Filter Twitch Disallowed',
         control: 'checkbox',
         default: true,
-        advanced: true
+        advanced: true,
+        indent: 2,
+        subheading: '7TV Content Filters:'
     },
     {
         key: 'thirdPartyFilter7tvSexual',
@@ -364,23 +367,26 @@ export const CONFIG_SCHEMA = [
         label: 'Filter Sexual Content',
         control: 'checkbox',
         default: false,
-        advanced: true
+        advanced: true,
+        indent: 2
     },
     {
         key: 'thirdPartyFilter7tvEpilepsy',
         group: 'third_party_emotes',
-        label: 'Filter Epilepsy Triggers',
+        label: 'Filter Epilepsy / Flashing',
         control: 'checkbox',
         default: true,
-        advanced: true
+        advanced: true,
+        indent: 2
     },
     {
         key: 'thirdPartyFilter7tvEdgy',
         group: 'third_party_emotes',
-        label: 'Filter Edgy Content',
+        label: 'Filter Edgy / Offensive',
         control: 'checkbox',
         default: false,
-        advanced: true
+        advanced: true,
+        indent: 2
     },
 
     // --- Badges & Cheermotes ---

@@ -57,13 +57,38 @@ export class CreatorFormRenderer {
             if (group.advanced) groupDiv.style.marginTop = '12px';
 
             groupItems.forEach(item => {
+                if (item.subheading) {
+                    const subHead = document.createElement('div');
+                    subHead.className = 'config-sublabel';
+                    subHead.textContent = item.subheading;
+                    subHead.style.fontSize = '0.9em';
+                    subHead.style.fontWeight = '600';
+                    subHead.style.opacity = '0.85';
+                    subHead.style.marginTop = '10px';
+                    subHead.style.marginBottom = '6px';
+                    if (item.indent) {
+                        const subIndent = item.indent > 1 ? 20 : (item.indent * 20);
+                        subHead.style.marginLeft = `${subIndent}px`;
+                    }
+                    groupDiv.appendChild(subHead);
+                }
+
                 const row = document.createElement('div');
                 row.className = 'settings-row';
                 row.id = `schema-row-${item.key}`;
 
+                if (item.indent) {
+                    const indentPx = item.indent === 1 ? 20 : 35;
+                    row.style.marginLeft = `${indentPx}px`;
+                    row.style.width = `calc(100% - ${indentPx}px)`;
+                }
+
                 const label = document.createElement('label');
                 label.htmlFor = `schema-input-${item.key}`;
                 label.textContent = item.label;
+                if (item.indent) {
+                    label.style.fontSize = '0.95em';
+                }
                 row.appendChild(label);
 
                 if (item.control === 'font') {
