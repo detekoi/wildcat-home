@@ -22,6 +22,23 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
     }
 
     function initApp() {
+        // theme-carousel.js is a classic script loaded before this module, so
+        // window.themeCarousel.mount is already defined. Mount it first, before
+        // any DOM lookups below (e.g. #theme-preview), since mount() is what
+        // injects that markup into #theme-carousel-mount. onApply is wired to
+        // themeManager below via a mutable reference — mount() only registers
+        // event listeners here, it doesn't invoke onApply synchronously, so
+        // themeManager being assigned later (once constructed) is safe.
+        let themeManager;
+        const themeCarouselMountEl = document.getElementById('theme-carousel-mount');
+        if (themeCarouselMountEl && window.themeCarousel && typeof window.themeCarousel.mount === 'function') {
+            window.themeCarousel.mount(themeCarouselMountEl, {
+                onApply: (theme) => themeManager && themeManager.applyTheme(theme.value)
+            });
+        } else {
+            console.warn('[chat.js] window.themeCarousel.mount not found; theme carousel will not render.');
+        }
+
         // --- DOM ELEMENT LOOKUPS ---
 
         const initialConnectionPrompt = document.getElementById('initial-connection-prompt');
@@ -129,7 +146,7 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
             onFontChange: () => themeManager.updateThemePreview()
         });
 
-        const themeManager = new ThemeManager({
+        themeManager = new ThemeManager({
             configManager, badgeManager, chatRenderer, fontManager, domRefs
         });
 

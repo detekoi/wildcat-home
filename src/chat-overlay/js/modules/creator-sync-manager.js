@@ -78,7 +78,7 @@ export class CreatorSyncManager {
     async pushToCloud(syncToken, config, sceneName) {
         try {
             const proxyUrl = getProxyBaseUrl();
-            const response = await fetch(`${proxyUrl}/scenes/${syncToken}`, {
+            const response = await fetch(`${proxyUrl}/scene-config/${syncToken}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

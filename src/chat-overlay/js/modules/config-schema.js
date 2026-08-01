@@ -42,18 +42,7 @@ export const CONFIG_SCHEMA = [
         key: 'theme',
         group: 'theme_colors',
         label: 'Theme Preset',
-        control: 'select',
-        options: [
-            { label: 'Default', value: 'default' },
-            { label: 'Dark', value: 'dark' },
-            { label: 'Light', value: 'light' },
-            { label: 'Dracula', value: 'dracula' },
-            { label: 'Cyberpunk', value: 'cyberpunk' },
-            { label: 'Nord', value: 'nord' },
-            { label: 'Monokai', value: 'monokai' },
-            { label: 'Sunset', value: 'sunset' },
-            { label: 'Forest', value: 'forest' }
-        ],
+        control: 'themeCarousel',
         default: 'default'
     },
     {

@@ -111,6 +111,7 @@
 /* Generated themes are now integrated into the main theme carousel */
 
 .theme-card {
+    position: relative;
     flex: 0 0 150px;
     height: 90px;
     border-radius: 8px;
@@ -118,6 +119,32 @@
     padding: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
+}
+
+/* Delete control for AI-generated theme cards */
+.theme-card-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+    width: 18px;
+    height: 18px;
+    line-height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.theme-card-delete:hover {
+    background: rgba(200, 40, 40, 0.85);
 }
 
 .theme-card:hover {
@@ -280,4 +307,45 @@
 .theme-description-details #selected-theme-description::-webkit-scrollbar-thumb {
     background: #555;
     border-radius: 3px;
+}
+/* Theme preview swatch. Lives here rather than in config-panel.css because the
+   carousel injects this markup itself and is mounted on the scene creator too,
+   which does not load config-panel.css. */
+.theme-preview-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.theme-preview {
+    background-color: var(--preview-bg-color, var(--chat-bg-color));
+    border: 1px solid var(--preview-border-color, var(--chat-border-color));
+    padding: 10px;
+    border-radius: var(--preview-border-radius, var(--chat-border-radius));
+    box-shadow: var(--preview-box-shadow, var(--chat-box-shadow));
+    font-family: var(--preview-font-family, var(--font-family));
+    color: var(--preview-text-color, var(--chat-text-color));
+    margin: 5px auto 0;
+    width: 90%;
+    max-width: 280px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    z-index: 0;
+}
+
+.theme-preview::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--preview-bg-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: var(--preview-bg-image-opacity, 0.55);
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
 }

@@ -495,6 +495,7 @@
 
     // Expose reusable utilities on window object for use by Scene Creator and other components
     window.compressImageToBase64JPEG = compressImageToBase64JPEG;
+    window.processAndAddTheme = processAndAddTheme;
     window.generateThemeApi = async function ({ prompt, generateImage = false, onStatusUpdate = () => { } }) {
         let currentAttempt = 1;
         let delay = INITIAL_DELAY;

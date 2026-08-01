@@ -55,6 +55,25 @@ describe('Config Schema Parity & Coverage', () => {
     });
 });
 
+describe('Config Schema - theme item uses the theme carousel control', () => {
+    // The theme picker used to be a plain <select> with nine fictional preset
+    // options (dark/light/dracula/cyberpunk/nord/monokai/sunset/forest) that
+    // matched nothing in the real theme catalog (theme-carousel.js). It now
+    // delegates entirely to the shared card carousel at runtime.
+    const themeItem = CONFIG_SCHEMA.find(item => item.key === 'theme');
+
+    it('the theme item exists, uses control "themeCarousel", and defaults to "default"', () => {
+        expect(themeItem).toBeDefined();
+        expect(themeItem.control).toBe('themeCarousel');
+        expect(themeItem.group).toBe('theme_colors');
+        expect(themeItem.default).toBe('default');
+    });
+
+    it('the theme item no longer declares a static options list', () => {
+        expect(themeItem.options).toBeUndefined();
+    });
+});
+
 describe('Config Schema - internal (non-user-facing) keys are hidden from the rendered form', () => {
     // chat-scene-creator.js's renderSchemaForm() builds each group's visible rows from
     // getVisibleSchemaItems(group.id) — the exact function under test here. This pins

@@ -8,6 +8,19 @@ import { CONFIG_SCHEMA, SCHEMA_GROUPS, getVisibleSchemaItems } from './config-sc
 import { createFontPicker } from './font-manager.js';
 import { UIHelpers } from './ui-helpers.js';
 
+/**
+ * Normalize a shadow preset's display name to the slug the preset buttons use,
+ * e.g. 'Simple 3D' -> 'simple3d', 'Soft' -> 'soft'. Returns null for CSS values
+ * (which contain characters no slug has) so they don't activate a wrong button.
+ * @param {string} [name]
+ * @returns {string|null}
+ */
+function slugifyPreset(name) {
+    if (!name || typeof name !== 'string') return null;
+    if (/[(),#]/.test(name)) return null; // a raw CSS value, not a preset name
+    return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export class CreatorFormRenderer {
     /**
      * @param {Object} opts
@@ -160,6 +173,36 @@ export class CreatorFormRenderer {
 
                     row.appendChild(presetGroup);
                     groupDiv.appendChild(row);
+                    return;
+                }
+
+                if (item.control === 'themeCarousel') {
+                    const mountDiv = document.createElement('div');
+                    mountDiv.id = `schema-themecarousel-${item.key}`;
+                    mountDiv.className = 'theme-carousel-mount';
+
+                    // Hidden input holds the selected theme's value so the generic
+                    // read/populate loops in readFormConfig()/populateForm() keep
+                    // working for this key without special-casing it there.
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = `schema-input-${item.key}`;
+                    hiddenInput.value = item.default;
+                    row.appendChild(hiddenInput);
+                    row.appendChild(mountDiv);
+                    groupDiv.appendChild(row);
+
+                    if (window.themeCarousel && typeof window.themeCarousel.mount === 'function') {
+                        this.themeCarouselController = window.themeCarousel.mount(mountDiv, {
+                            onApply: (theme) => this.applyThemeToForm(theme),
+                            // The creator already renders a live preview beside the form,
+                            // so the carousel's own swatch would just be a duplicate.
+                            showPreview: false
+                        });
+                    } else {
+                        console.warn('[creator-form-renderer] window.themeCarousel not found; theme picker will not render.');
+                        mountDiv.textContent = 'Theme picker unavailable.';
+                    }
                     return;
                 }
 
@@ -442,6 +485,19 @@ export class CreatorFormRenderer {
                             if (previewEl) previewEl.textContent = 'AI Background Image generated';
                         }
 
+                        // Persist the generated theme to the shared cloud library so it doesn't
+                        // vanish once this form is closed. Reuse theme-generator.js's own
+                        // construction logic (unique `generated-...` value, "(Variant N)" dedupe
+                        // naming) instead of duplicating it here.
+                        if (typeof window.processAndAddTheme === 'function') {
+                            window.processAndAddTheme(theme, result.compressedImage || null);
+                            if (this.themeCarouselController && typeof this.themeCarouselController.refresh === 'function') {
+                                this.themeCarouselController.refresh();
+                            }
+                        } else {
+                            console.warn('[creator-form-renderer] window.processAndAddTheme unavailable; generated theme was not persisted to the theme library.');
+                        }
+
                         if (statusEl) statusEl.textContent = 'Theme applied!';
                         this.sendPreviewUpdate();
                     }
@@ -457,7 +513,7 @@ export class CreatorFormRenderer {
 
     setupFormLivePreview() {
         CONFIG_SCHEMA.forEach(item => {
-            if (item.control === 'font' || item.control === 'presets') return;
+            if (item.control === 'font' || item.control === 'presets' || item.control === 'themeCarousel') return;
 
             const input = document.getElementById(`schema-input-${item.key}`);
             if (!input) return;
@@ -468,20 +524,6 @@ export class CreatorFormRenderer {
                     const valDisplay = document.getElementById(`schema-val-${item.key}`);
                     if (valDisplay) {
                         valDisplay.textContent = item.scale ? `${Math.round(input.value * item.scale)}%` : input.value;
-                    }
-                }
-
-                if (item.key === 'theme') {
-                    const themeVal = input.value;
-                    const themes = window.availableThemes || [];
-                    const foundTheme = themes.find(t => t.value === themeVal || t.name === themeVal);
-                    if (foundTheme) {
-                        if (foundTheme.bgColor) this.updateColorControl('bgColor', foundTheme.bgColor);
-                        if (foundTheme.borderColor) this.updateColorControl('borderColor', foundTheme.borderColor);
-                        if (foundTheme.textColor) this.updateColorControl('textColor', foundTheme.textColor);
-                        if (foundTheme.usernameColor) this.updateColorControl('usernameColor', foundTheme.usernameColor);
-                        if (foundTheme.timestampColor) this.updateColorControl('timestampColor', foundTheme.timestampColor);
-                        if (foundTheme.pronounBadgeColor) this.updateColorControl('pronounBadgeColor', foundTheme.pronounBadgeColor);
                     }
                 }
 
@@ -524,6 +566,103 @@ export class CreatorFormRenderer {
         const hexInput = document.getElementById(`schema-hex-${key}`);
         if (swatchInput) swatchInput.value = hex;
         if (hexInput) hexInput.value = hex.toUpperCase();
+    }
+
+    /**
+     * Apply a theme object (fired via the theme carousel's onApply callback) to the
+     * form: writes its colors through updateColorControl(), records the selected
+     * theme's value, resolves its background image, and pushes the result to the
+     * live preview. Mirrors the field mapping applyTheme() uses in
+     * modules/theme-manager.js:79-92.
+     * @param {Object} theme
+     */
+    applyThemeToForm(theme) {
+        if (!theme) return;
+
+        if (theme.bgColor) {
+            this.updateColorControl('bgColor', theme.bgColor);
+            // A theme's alpha lives inside its bgColor (e.g. the Transparent preset
+            // is 'rgba(0, 0, 0, 0)'), so it has to be lifted into the separate
+            // opacity slider. Without this the form keeps whatever opacity was
+            // already set and transparent themes render as solid colour.
+            const parsed = UIHelpers.parseColor(theme.bgColor);
+            const opacity = theme.bgColorOpacity ?? parsed.opacity;
+            if (opacity !== undefined) this.updateRangeControl('bgColorOpacity', opacity, v => `${Math.round(v * 100)}%`);
+        }
+
+        // parseColor() has no notion of named colours and maps 'transparent' to its
+        // #121212 fallback, so preserve it explicitly the way theme-manager.js does.
+        if (theme.borderColor === 'transparent') {
+            const borderSwatch = document.getElementById('schema-input-borderColor');
+            const borderHex = document.getElementById('schema-hex-borderColor');
+            if (borderSwatch) borderSwatch.value = '#000000';
+            if (borderHex) borderHex.value = 'TRANSPARENT';
+        } else if (theme.borderColor) {
+            this.updateColorControl('borderColor', theme.borderColor);
+        }
+
+        if (theme.textColor) this.updateColorControl('textColor', theme.textColor);
+        if (theme.usernameColor) this.updateColorControl('usernameColor', theme.usernameColor);
+        if (theme.timestampColor) this.updateColorControl('timestampColor', theme.timestampColor);
+        if (theme.pronounBadgeColor) this.updateColorControl('pronounBadgeColor', theme.pronounBadgeColor);
+
+        // Themes and the preset buttons speak different dialects: a theme carries
+        // borderRadius: 'Subtle' with borderRadiusValue: '8px', while the radius
+        // buttons are keyed by the px value. Shadows are the reverse — the buttons
+        // use slugs ('simple3d') and the theme uses display names ('Simple 3D').
+        this.updatePresetControl('borderRadius', theme.borderRadiusValue || theme.borderRadius);
+        this.updatePresetControl('boxShadow', slugifyPreset(theme.boxShadow));
+        this.updatePresetControl('textShadow', slugifyPreset(theme.textShadow));
+
+        if (theme.bgImageOpacity !== undefined) {
+            this.updateRangeControl('bgImageOpacity', theme.bgImageOpacity, v => `${Math.round(v * 100)}%`);
+        }
+
+        const topFadeInput = document.getElementById('schema-input-topFade');
+        if (topFadeInput && theme.topFade !== undefined) topFadeInput.checked = !!theme.topFade;
+
+        if (theme.fontFamily && this.fontPicker && typeof this.fontPicker.setValue === 'function') {
+            this.fontPicker.setValue(theme.fontFamily);
+        }
+
+        const themeInput = document.getElementById('schema-input-theme');
+        if (themeInput) themeInput.value = theme.value || theme.name || themeInput.value;
+
+        this.currentBgImage = theme.backgroundImage || null;
+        const previewEl = document.getElementById('creatorBgPreview');
+        if (previewEl) previewEl.textContent = this.currentBgImage ? 'Background image active' : 'No background image set';
+
+        this.sendPreviewUpdate();
+    }
+
+    /**
+     * Set a range input and its value readout together.
+     * @param {string} key - Schema key.
+     * @param {number} value
+     * @param {Function} [format] - Formats the readout text.
+     */
+    updateRangeControl(key, value, format) {
+        const input = document.getElementById(`schema-input-${key}`);
+        if (!input) return;
+        input.value = value;
+        const valDisplay = document.getElementById(`schema-val-${key}`);
+        if (valDisplay) valDisplay.textContent = format ? format(value) : String(value);
+    }
+
+    /**
+     * Move the active state on a preset button group (borderRadius/boxShadow/textShadow).
+     * @param {string} key - Schema key.
+     * @param {string} value - The preset value to activate.
+     */
+    updatePresetControl(key, value) {
+        if (!value) return;
+        const container = document.getElementById(`schema-presets-${key}`);
+        if (!container) return;
+        // Must match the selector readFormConfig() uses to read the value back
+        // (`#schema-presets-<key> .preset-btn.active`).
+        container.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === value);
+        });
     }
 
     syncChromaKeyUIControls(isChromaKey, currentInstanceConfig = {}) {
@@ -631,6 +770,15 @@ export class CreatorFormRenderer {
                 if (dirInput) dirInput.value = config.popup?.direction || item.default.direction;
                 if (durInput) durInput.value = config.popup?.duration || item.default.duration;
                 if (maxMsgInput) maxMsgInput.value = config.popup?.maxMessages !== undefined ? config.popup.maxMessages : item.default.maxMessages;
+                return;
+            }
+            if (item.control === 'themeCarousel') {
+                const themeVal = config[item.key] ?? item.default;
+                const themeInput = document.getElementById(`schema-input-${item.key}`);
+                if (themeInput) themeInput.value = themeVal;
+                if (this.themeCarouselController && typeof this.themeCarouselController.selectByValue === 'function') {
+                    this.themeCarouselController.selectByValue(themeVal);
+                }
                 return;
             }
 
