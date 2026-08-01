@@ -1,0 +1,127 @@
+/* =====================================================
+   SCENE CREATOR — preset preview controls
+   Border radius / box shadow / text shadow swatches for
+   chat-scene-creator.html. Loaded after wildcat-theme.css so the
+   Post-Industrial Modernism tokens (--background-color, --primary-color,
+   --border-color, --shadow-sm/md/lg, sharp corners) are already set.
+
+   Kept as real classes (not per-element inline styles) so the presets are
+   restylable in one place; only the data-driven preview value itself
+   (the actual border-radius / box-shadow / text-shadow being previewed)
+   is still set inline by chat-scene-creator.js, since that value comes
+   straight from UIHelpers.getBoxShadowValue()/getTextShadowValue() and
+   must never drift from what gets applied to the real overlay.
+   ===================================================== */
+
+.preset-group {
+    display: flex;
+    gap: var(--spacing-sm, 8px);
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs, 4px);
+    padding: var(--spacing-xs, 4px);
+    background: var(--panel-color, #0a0a0a);
+    color: var(--text-color, #ffffff);
+    border: 2px solid var(--border-color, #333333);
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1.2;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.preset-btn:hover {
+    border-color: var(--primary-color, #fffdd9);
+}
+
+.preset-btn:focus-visible {
+    outline: 2px solid var(--primary-color, #fffdd9);
+    outline-offset: 2px;
+}
+
+.preset-btn.active {
+    border-color: var(--primary-color, #fffdd9);
+    box-shadow: var(--shadow-sm, 3px 3px 0 rgba(255, 255, 255, 0.15));
+}
+
+.preset-label {
+    display: block;
+    font-size: 10px;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* --- Border radius: the swatch IS the radius, no icon asset needed --- */
+.preset-btn.radius-btn {
+    width: 64px;
+    height: 64px;
+    padding: var(--spacing-sm, 8px);
+}
+
+.radius-swatch {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 3px solid var(--text-color, #ffffff);
+    box-sizing: border-box;
+}
+
+/* --- Box shadow: a light tile on a mid-tone stage, so a dark shadow is
+   actually visible. A dark shadow blurring straight off a light tile onto
+   this page's near-black button background reads as almost nothing — the
+   shadow and the backdrop are nearly the same color. Giving the tile a
+   mid-grey "stage" to sit on (like a product photo backdrop) gives every
+   preset's shadow, even the faint low-opacity ones, a surface it visibly
+   contrasts against. --- */
+.preset-btn.shadow-btn {
+    width: 88px;
+    padding: 16px var(--spacing-sm, 8px) 10px;
+    /* The "sharp" preset offsets 8px with no blur, and "intense3d" blurs out
+       ~20px — keep room for both to render fully instead of clipping. */
+    overflow: visible;
+}
+
+.shadow-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 34px;
+    margin: 0 auto;
+    background: #c9c9c9;
+}
+
+.shadow-tile {
+    display: block;
+    width: 26px;
+    height: 16px;
+    background: #fafafa;
+}
+
+/* --- Text shadow: light text over a mid-tone chip, real shadow applied.
+   Sized well above the overlay's own chat text so a 1-2px preset shadow is
+   still a legible fraction of the glyph instead of disappearing at 12px. --- */
+.preset-btn.text-shadow-btn {
+    width: 88px;
+    padding: 10px var(--spacing-sm, 8px);
+    /* The "glow" preset blurs up to 24px past the glyph edges. */
+    overflow: visible;
+}
+
+.text-shadow-sample {
+    display: block;
+    min-width: 48px;
+    padding: 6px 10px;
+    background: #9a9a9a;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 1;
+}

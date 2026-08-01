@@ -116,6 +116,54 @@ describe('SceneSyncManager', () => {
         expect(pushSpy).toHaveBeenCalledWith(mockConfigManager.config);
     });
 
+    it('should still wire up dependencies when there is no sync URL param, so a later auto-provisioned token can subscribe', async () => {
+        // Regression: start() used to assign _configManager/_sceneName/etc.
+        // AFTER its early "no ?sync= param" return, so a fresh visitor who
+        // saves without a sync token (auto-provisioning one afterward via
+        // setSyncToken) would find these deps unset.
+        const started = await syncManager.start({
+            sceneName: 'my_scene',
+            configManager: mockConfigManager,
+            chatRenderer: mockChatRenderer,
+            settingsPanel: mockSettingsPanel,
+            chatConnection: mockChatConnection
+        });
+
+        expect(started).toBe(false);
+        expect(syncManager._configManager).toBe(mockConfigManager);
+        expect(syncManager._sceneName).toBe('my_scene');
+        expect(syncManager._db).toBeNull();
+    });
+
+    it('should attempt to subscribe when setSyncToken is called even though _db is still null (auto-provision flow)', () => {
+        // Regression: setSyncToken only resubscribed inside `if (this._db && this._token)`,
+        // but _db is only ever assigned inside start(), which no-ops without a ?sync= param.
+        // So an auto-provisioned token (assigned after Save with no prior sync param) never
+        // opened a Firestore subscription until the page was reloaded.
+        expect(syncManager._db).toBeNull();
+        const ensureSpy = vi.spyOn(syncManager, '_ensureSubscribed').mockResolvedValue(true);
+
+        syncManager.setSyncToken('brand-new-token');
+
+        expect(syncManager._token).toBe('brand-new-token');
+        expect(ensureSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not attempt to subscribe when setSyncToken is cleared to an empty token', () => {
+        const ensureSpy = vi.spyOn(syncManager, '_ensureSubscribed').mockResolvedValue(true);
+        syncManager.setSyncToken('');
+        expect(ensureSpy).not.toHaveBeenCalled();
+    });
+
+    it('should degrade silently (not throw) when Firestore subscription setup fails', async () => {
+        // _ensureSubscribed dynamically imports Firebase from a CDN URL; in the
+        // test environment (and on network failure in production) that import
+        // rejects. It must resolve to false rather than propagate.
+        syncManager._token = 'some-token';
+        await expect(syncManager._ensureSubscribed()).resolves.toBe(false);
+        expect(syncManager._unsubscribe).toBeNull();
+    });
+
     it('should push config payload to backend via fetch PUT', async () => {
         syncManager._token = '12345678-1234-4321-8765-1234567890ab';
         

@@ -29,6 +29,41 @@ describe('UIHelpers', () => {
         });
     });
 
+    describe('parseColor', () => {
+        it('should parse 6-digit hex colors', () => {
+            expect(UIHelpers.parseColor('#ff0080')).toEqual({ hex: '#ff0080', opacity: 1.0 });
+        });
+
+        it('should parse 3-digit hex colors', () => {
+            expect(UIHelpers.parseColor('#f08')).toEqual({ hex: '#ff0088', opacity: 1.0 });
+        });
+
+        it('should parse 4-digit hex colors with alpha', () => {
+            expect(UIHelpers.parseColor('#f08f')).toEqual({ hex: '#ff0088', opacity: 1.0 });
+        });
+
+        it('should parse 8-digit hex colors with alpha', () => {
+            expect(UIHelpers.parseColor('#ff008080')).toEqual({ hex: '#ff0080', opacity: 0.5 });
+        });
+
+        it('should parse rgba colors', () => {
+            expect(UIHelpers.parseColor('rgba(255, 0, 128, 0.5)')).toEqual({ hex: '#ff0080', opacity: 0.5 });
+        });
+
+        it('should parse rgb colors', () => {
+            expect(UIHelpers.parseColor('rgb(255, 0, 128)')).toEqual({ hex: '#ff0080', opacity: 1.0 });
+        });
+
+        it('should clamp out-of-range rgb channel values', () => {
+            expect(UIHelpers.parseColor('rgb(300, -10, 128)')).toEqual({ hex: '#ff0080', opacity: 1.0 });
+        });
+
+        it('should fall back gracefully on invalid string input', () => {
+            expect(UIHelpers.parseColor('invalidColor')).toEqual({ hex: '#121212', opacity: 0.85 });
+            expect(UIHelpers.parseColor(null)).toEqual({ hex: '#121212', opacity: 0.85 });
+        });
+    });
+
     describe('generateColorFromName', () => {
         it('should return a deterministic HSL color for the same given name', () => {
             const color1 = UIHelpers.generateColorFromName('wildcatecosystem');

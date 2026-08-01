@@ -815,3 +815,33 @@ button:hover {
     font-size: 0.85em;
     margin-top: 0;
 }
+
+/* Save/Copy/Regen/Cancel/Reset use these variant classes to distinguish
+   intent instead of all falling back to the generic (primary-purple) button
+   look above. */
+#config-panel-actions .btn-primary {
+    background-color: var(--primary-color);
+    color: var(--button-text-color, white);
+}
+
+#config-panel-actions .btn-primary:hover {
+    background-color: var(--primary-dark, #772ce8);
+}
+
+#config-panel-actions .btn-secondary {
+    background-color: var(--config-border-color, #555);
+    color: var(--config-text-color, #fff);
+}
+
+#config-panel-actions .btn-secondary:hover {
+    filter: brightness(1.15);
+}
+
+#config-panel-actions .btn-danger {
+    background-color: var(--danger-color, #aa5555);
+    color: var(--button-text-color, white);
+}
+
+#config-panel-actions .btn-danger:hover {
+    filter: brightness(1.1);
+}

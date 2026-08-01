@@ -3,6 +3,38 @@
  * Handles font selection, search dropdown, and remote Google Font discovery
  */
 
+// Some pages that use FontManager (e.g. chat-scene-creator.html) don't load
+// theme-carousel.js, so `window.availableFonts` / `window.loadGoogleFont` may
+// not exist. Guard against that so a missing carousel script never throws.
+if (!Array.isArray(window.availableFonts)) {
+    window.availableFonts = [];
+}
+
+/**
+ * Dynamically load a Google Font by injecting a <link> tag. Prefers the
+ * carousel-provided `window.loadGoogleFont` (identical behavior on chat.html),
+ * and falls back to an equivalent local implementation when it's unavailable
+ * (e.g. on chat-scene-creator.html, which doesn't load theme-carousel.js).
+ * @param {string} fontFamily - The font family name.
+ * @param {string} [customUrl] - Optional custom Google Fonts CSS URL.
+ */
+function ensureGoogleFontLoaded(fontFamily, customUrl) {
+    if (typeof window.loadGoogleFont === 'function') {
+        window.loadGoogleFont(fontFamily, customUrl);
+        return;
+    }
+    if (!fontFamily) return;
+
+    const fontId = `google-font-${fontFamily.replace(/\s+/g, '-').toLowerCase()}`;
+    if (document.getElementById(fontId)) return; // Already loaded
+
+    const link = document.createElement('link');
+    link.id = fontId;
+    link.rel = 'stylesheet';
+    link.href = customUrl || `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
+    document.head.appendChild(link);
+}
+
 export class FontManager {
     /**
      * @param {Object} opts
@@ -12,14 +44,20 @@ export class FontManager {
      * @param {HTMLButtonElement} opts.nextFontBtn - Next font button
      * @param {Object}           opts.configManager - ConfigManager instance
      * @param {Function}         opts.onFontChange - Callback when font changes (for preview updates)
+     * @param {HTMLElement}      [opts.styleTarget] - Element whose `--font-family` CSS variable
+     *   is set on selection. Defaults to `document.documentElement`, which is correct on
+     *   chat.html (the overlay IS the whole page). Pages that embed a font picker inside a
+     *   larger UI (e.g. chat-scene-creator.html) must pass a scoped element so selecting a
+     *   font for the overlay doesn't restyle the surrounding page chrome.
      */
-    constructor({ fontSearchInput, fontSearchResults, prevFontBtn, nextFontBtn, configManager, onFontChange }) {
+    constructor({ fontSearchInput, fontSearchResults, prevFontBtn, nextFontBtn, configManager, onFontChange, styleTarget }) {
         this._fontSearchInput = fontSearchInput;
         this._fontSearchResults = fontSearchResults;
         this._prevFontBtn = prevFontBtn;
         this._nextFontBtn = nextFontBtn;
         this._configManager = configManager;
         this._onFontChange = onFontChange || (() => {});
+        this._styleTarget = styleTarget || document.documentElement;
 
         // Internal state
         this._currentFontIndex = 0;
@@ -87,9 +125,7 @@ export class FontManager {
                 };
                 // Add to the front of the fonts list and load the stylesheet
                 window.availableFonts.unshift(fontObj);
-                if (window.loadGoogleFont) {
-                    window.loadGoogleFont(fontObj.googleFontFamily);
-                }
+                ensureGoogleFontLoaded(fontObj.googleFontFamily);
                 fontIndex = 0;
             }
         }
@@ -124,11 +160,11 @@ export class FontManager {
         // Persist Google Font metadata so the font can be restored on page refresh
         this._configManager.updateConfig('googleFontFamily',
             (currentFont.isGoogleFont && currentFont.googleFontFamily) ? currentFont.googleFontFamily : null);
-        document.documentElement.style.setProperty('--font-family', currentFont.value);
+        this._styleTarget.style.setProperty('--font-family', currentFont.value);
 
         // Load Google Font if applicable
-        if (currentFont.isGoogleFont && currentFont.googleFontFamily && window.loadGoogleFont) {
-            window.loadGoogleFont(currentFont.googleFontFamily, currentFont.googleFontUrl);
+        if (currentFont.isGoogleFont && currentFont.googleFontFamily) {
+            ensureGoogleFontLoaded(currentFont.googleFontFamily, currentFont.googleFontUrl);
         }
 
         // Close dropdown when cycling
@@ -189,8 +225,8 @@ export class FontManager {
         const nameSpan = document.createElement('span');
         nameSpan.textContent = font.name;
         nameSpan.style.fontFamily = font.value;
-        if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-            window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
+        if (font.isGoogleFont && font.googleFontFamily) {
+            ensureGoogleFontLoaded(font.googleFontFamily, font.googleFontUrl);
         }
         item.appendChild(nameSpan);
 
@@ -212,11 +248,16 @@ export class FontManager {
      * Open the font search dropdown with local + remote results.
      */
     _openFontDropdown(query) {
-        if (!this._fontSearchResults || !window.availableFonts?.length) return;
+        if (!this._fontSearchResults) return;
+        // Don't require a non-empty local list: pages that don't load
+        // theme-carousel.js (e.g. chat-scene-creator.html) start with
+        // `window.availableFonts` as an empty array, and results should
+        // still come from the remote search below.
+        const fonts = window.availableFonts || [];
         const q = query.toLowerCase().trim();
         const matches = q
-            ? window.availableFonts.filter(f => f.name.toLowerCase().includes(q))
-            : window.availableFonts;
+            ? fonts.filter(f => f.name.toLowerCase().includes(q))
+            : fonts;
 
         this._fontSearchResults.innerHTML = '';
         this._dropdownHighlightIndex = -1;
@@ -299,7 +340,7 @@ export class FontManager {
 
             if (!remoteFonts || remoteFonts.length === 0) return;
 
-            const localNames = new Set(window.availableFonts.map(f => f.name.toLowerCase()));
+            const localNames = new Set((window.availableFonts || []).map(f => f.name.toLowerCase()));
             const newResults = remoteFonts.filter(f => !localNames.has(f.name.toLowerCase()));
 
             if (newResults.length === 0) return;
@@ -319,8 +360,8 @@ export class FontManager {
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = font.name;
                 nameSpan.style.fontFamily = font.value;
-                if (font.isGoogleFont && font.googleFontFamily && window.loadGoogleFont) {
-                    window.loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
+                if (font.isGoogleFont && font.googleFontFamily) {
+                    ensureGoogleFontLoaded(font.googleFontFamily, font.googleFontUrl);
                 }
                 item.appendChild(nameSpan);
 
@@ -391,9 +432,7 @@ export class FontManager {
             };
         }
 
-        if (window.loadGoogleFont) {
-            window.loadGoogleFont(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
-        }
+        ensureGoogleFontLoaded(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
 
         const existingIdx = window.availableFonts.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
         if (existingIdx === -1) {
@@ -524,3 +563,79 @@ export class FontManager {
         });
     }
 }
+
+/**
+ * Standalone Font Picker component launcher.
+ * Mounts a search combobox inside container and manages local + remote Google Fonts search.
+ * @param {HTMLElement} container
+ * @param {Object} [opts]
+ * @param {string} [opts.initialValue]
+ * @param {Function} [opts.onSelect]
+ * @param {HTMLElement} [opts.styleTarget] - Element whose `--font-family` CSS variable is
+ *   set on selection. Defaults to the picker's own wrapper element (NOT `document.documentElement`)
+ *   so a standalone picker embedded in a larger page — e.g. chat-scene-creator.js's scene form —
+ *   never restyles anything outside itself. Pass the actual live-preview surface explicitly if
+ *   that's the intent.
+ */
+export function createFontPicker(container, { initialValue = '', onSelect, styleTarget } = {}) {
+    if (!container) return null;
+
+    container.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'font-picker-wrapper';
+    wrapper.style.position = 'relative';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control font-picker-input';
+    input.placeholder = 'Search Google Fonts...';
+    input.value = initialValue;
+
+    const resultsContainer = document.createElement('div');
+    resultsContainer.className = 'font-search-results font-picker-dropdown';
+    resultsContainer.style.display = 'none';
+    resultsContainer.style.position = 'absolute';
+    resultsContainer.style.top = '100%';
+    resultsContainer.style.left = '0';
+    resultsContainer.style.right = '0';
+    resultsContainer.style.zIndex = '1000';
+    resultsContainer.style.maxHeight = '240px';
+    resultsContainer.style.overflowY = 'auto';
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(resultsContainer);
+    container.appendChild(wrapper);
+
+    // Minimal ConfigManager-shaped stand-in: FontManager.updateFontDisplay() calls
+    // configManager.updateConfig(key, value) on every selection (to set fontFamily
+    // and googleFontFamily). Without this method, selecting a font here throws.
+    const dummyConfigManager = {
+        config: { fontFamily: initialValue },
+        updateConfig(key, value) {
+            this.config[key] = value;
+        }
+    };
+    const fontManager = new FontManager({
+        fontSearchInput: input,
+        fontSearchResults: resultsContainer,
+        configManager: dummyConfigManager,
+        styleTarget: styleTarget || wrapper,
+        onFontChange: (val) => {
+            if (onSelect) onSelect(val);
+        }
+    });
+
+    return {
+        fontManager,
+        input,
+        setValue(val) {
+            input.value = val || '';
+            dummyConfigManager.config.fontFamily = val;
+            fontManager.syncToConfig();
+        },
+        getValue() {
+            return dummyConfigManager.config.fontFamily || input.value;
+        }
+    };
+}
+

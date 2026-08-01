@@ -41,47 +41,62 @@ export class SceneSyncManager {
         return this._token;
     }
 
-    /**
-     * Start live sync if a sync token is present in the URL parameter
-     */
-    async start(options = {}) {
-        const tokenFromUrl = UIHelpers.getUrlParameter('sync');
-        if (!tokenFromUrl) {
-            // Rule #1: No-op if sync parameter is not present. Zero cost / zero behavior change.
-            return false;
-        }
+    get syncToken() {
+        return this._token;
+    }
 
-        this._token = tokenFromUrl;
-        this._sceneName = options.sceneName || 'default';
-        this._configManager = options.configManager;
-        this._badgeManager = options.badgeManager;
-        this._chatRenderer = options.chatRenderer;
-        this._thirdPartyEmoteManager = options.thirdPartyEmoteManager;
-        this._settingsPanel = options.settingsPanel;
-        this._chatConnection = options.chatConnection;
+    set syncToken(newToken) {
+        this.setSyncToken(newToken);
+    }
+
+    /**
+     * Set active sync token and (re)subscribe to Firestore snapshot updates.
+     * Handles both the "already syncing, token changed" case and the
+     * "auto-provisioned token, never subscribed yet" case (where `_db` is
+     * still null because `start()` no-op'd due to no `?sync=` URL param).
+     */
+    setSyncToken(newToken) {
+        if (this._token === newToken) return;
+        this._token = newToken;
+        if (this._unsubscribe) {
+            this._unsubscribe();
+            this._unsubscribe = null;
+        }
+        if (this._token) {
+            this._ensureSubscribed();
+        }
+    }
+
+    /**
+     * Initialize Firebase (if not already done) and subscribe to snapshot updates
+     * for the current `_token`. Shared by `start()` and `setSyncToken()`. Any
+     * failure degrades silently — the caller keeps using local config.
+     * @returns {Promise<boolean>} whether the subscription was established
+     */
+    async _ensureSubscribed() {
+        if (!this._token) return false;
 
         try {
-            // Dynamically import Firebase ESM modules from gstatic
-            const [firebaseApp, firebaseFirestore] = await Promise.all([
-                import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-                import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
-            ]);
+            const firebaseFirestore = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
-            const firebaseConfig = {
-                projectId: 'chat-themer'
-            };
+            if (!this._db) {
+                const firebaseApp = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+                const firebaseConfig = {
+                    projectId: 'chat-themer'
+                };
 
-            const app = firebaseApp.getApps().length === 0 
-                ? firebaseApp.initializeApp(firebaseConfig) 
-                : firebaseApp.getApps()[0];
+                const app = firebaseApp.getApps().length === 0
+                    ? firebaseApp.initializeApp(firebaseConfig)
+                    : firebaseApp.getApps()[0];
 
-            // Safely initialize or get Firestore instance
-            try {
-                this._db = firebaseFirestore.initializeFirestore(app, {
-                    experimentalAutoDetectLongPolling: true
-                });
-            } catch (e) {
-                this._db = firebaseFirestore.getFirestore(app);
+                // Safely initialize or get Firestore instance
+                try {
+                    this._db = firebaseFirestore.initializeFirestore(app, {
+                        experimentalAutoDetectLongPolling: true
+                    });
+                } catch (e) {
+                    this._db = firebaseFirestore.getFirestore(app);
+                }
             }
 
             const docRef = firebaseFirestore.doc(this._db, 'sceneConfigs', this._token);
@@ -95,10 +110,36 @@ export class SceneSyncManager {
             this._isSyncing = true;
             return true;
         } catch (err) {
-            console.error('[SceneSyncManager] Failed to initialize Firebase SDK or subscription:', err);
+            console.warn('[SceneSyncManager] Failed to initialize Firebase SDK or subscription:', err);
             // Rule #3: Network / SDK failure -> fallback gracefully to local config already loaded
             return false;
         }
+    }
+
+    /**
+     * Start live sync if a sync token is present in the URL parameter.
+     * Dependencies are wired up unconditionally (cheap reference assignment)
+     * so a later `setSyncToken()` call (e.g. auto-provisioning a token on
+     * first Save) has everything it needs to subscribe. Firebase itself is
+     * only ever initialized when there's a token to subscribe with.
+     */
+    async start(options = {}) {
+        this._sceneName = options.sceneName || 'default';
+        this._configManager = options.configManager;
+        this._badgeManager = options.badgeManager;
+        this._chatRenderer = options.chatRenderer;
+        this._thirdPartyEmoteManager = options.thirdPartyEmoteManager;
+        this._settingsPanel = options.settingsPanel;
+        this._chatConnection = options.chatConnection;
+
+        const tokenFromUrl = UIHelpers.getUrlParameter('sync');
+        if (!tokenFromUrl) {
+            // Rule #1: No-op if sync parameter is not present. Zero cost / zero behavior change.
+            return false;
+        }
+
+        this._token = tokenFromUrl;
+        return this._ensureSubscribed();
     }
 
     /**

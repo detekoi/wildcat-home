@@ -37,6 +37,52 @@ export class UIHelpers {
     }
 
     /**
+     * Parses any hex, rgb, or rgba color string into { hex: '#rrggbb', opacity: 0-1 }.
+     */
+    static parseColor(colorStr) {
+        if (!colorStr || typeof colorStr !== 'string') {
+            return { hex: '#121212', opacity: 0.85 };
+        }
+        const str = colorStr.trim().toLowerCase();
+
+        // Handle rgb(...) and rgba(...)
+        const rgbMatch = str.match(/^rgba?\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*([\d.]+))?\s*\)$/);
+        if (rgbMatch) {
+            const r = Math.max(0, Math.min(255, parseInt(rgbMatch[1], 10) || 0));
+            const g = Math.max(0, Math.min(255, parseInt(rgbMatch[2], 10) || 0));
+            const b = Math.max(0, Math.min(255, parseInt(rgbMatch[3], 10) || 0));
+            const a = rgbMatch[4] !== undefined ? parseFloat(rgbMatch[4]) : 1.0;
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).padStart(6, '0')}`;
+            const opacity = !isNaN(a) ? Math.max(0, Math.min(1, a)) : 0.85;
+            return { hex, opacity };
+        }
+
+        // Handle hex formats (#rgb, #rgba, #rrggbb, #rrggbbaa)
+        if (str.startsWith('#')) {
+            const hexVal = str.slice(1);
+            if (hexVal.length === 3) {
+                const hex = `#${hexVal[0]}${hexVal[0]}${hexVal[1]}${hexVal[1]}${hexVal[2]}${hexVal[2]}`;
+                return { hex, opacity: 1.0 };
+            }
+            if (hexVal.length === 4) {
+                const hex = `#${hexVal[0]}${hexVal[0]}${hexVal[1]}${hexVal[1]}${hexVal[2]}${hexVal[2]}`;
+                const a = parseInt(`${hexVal[3]}${hexVal[3]}`, 16) / 255;
+                return { hex, opacity: Math.max(0, Math.min(1, parseFloat(a.toFixed(2)))) };
+            }
+            if (hexVal.length === 6) {
+                return { hex: str, opacity: 1.0 };
+            }
+            if (hexVal.length === 8) {
+                const hex = `#${hexVal.slice(0, 6)}`;
+                const a = parseInt(hexVal.slice(6, 8), 16) / 255;
+                return { hex, opacity: Math.max(0, Math.min(1, parseFloat(a.toFixed(2)))) };
+            }
+        }
+
+        return { hex: str.startsWith('#') ? str : '#121212', opacity: 0.85 };
+    }
+
+    /**
      * Get border radius CSS value from preset name or direct value
      */
     static getBorderRadiusValue(value) {

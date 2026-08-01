@@ -493,4 +493,61 @@
         }
     }
 
+    // Expose reusable utilities on window object for use by Scene Creator and other components
+    window.compressImageToBase64JPEG = compressImageToBase64JPEG;
+    window.generateThemeApi = async function ({ prompt, generateImage = false, onStatusUpdate = () => { } }) {
+        let currentAttempt = 1;
+        let delay = INITIAL_DELAY;
+        let previousThemeData = null;
+
+        while (currentAttempt <= MAX_RETRIES) {
+            try {
+                onStatusUpdate(`Generating (Attempt ${currentAttempt})...`);
+                const proxyResponse = await generateThemeViaProxy(prompt, generateImage, currentAttempt - 1, previousThemeData);
+
+                if (proxyResponse.retry) {
+                    onStatusUpdate(proxyResponse.message || 'Generating...');
+                    if (proxyResponse.themeData && proxyResponse.includesThemeData) {
+                        previousThemeData = proxyResponse.themeData;
+                    }
+                    if (currentAttempt < MAX_RETRIES) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        currentAttempt++;
+                        continue;
+                    } else {
+                        throw new Error("Max retries reached after proxy requested further attempts.");
+                    }
+                }
+
+                const { themeData, backgroundImage } = proxyResponse;
+                let finalBackgroundImageDataUrl = null;
+
+                if (backgroundImage && backgroundImage.inlineData && backgroundImage.inlineData.data) {
+                    onStatusUpdate('Compressing background image...');
+                    const cleanBase64 = backgroundImage.inlineData.data.replace(/[\r\n\s]+/g, '');
+                    const mimeType = backgroundImage.inlineData.mimeType || 'image/png';
+                    const backgroundImageDataUrl = `data:${mimeType};base64,${cleanBase64}`;
+
+                    try {
+                        finalBackgroundImageDataUrl = await compressImageToBase64JPEG(backgroundImageDataUrl, 0.85);
+                    } catch (compressionError) {
+                        console.error('Image compression failed:', compressionError);
+                    }
+                }
+
+                return { themeData, compressedImage: finalBackgroundImageDataUrl };
+            } catch (error) {
+                if (currentAttempt < MAX_RETRIES) {
+                    onStatusUpdate('Retrying...');
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                } else {
+                    throw error;
+                }
+            }
+            currentAttempt++;
+        }
+    };
+
 })();

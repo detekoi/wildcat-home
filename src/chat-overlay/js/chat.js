@@ -294,33 +294,30 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                 switch (target) {
                     case 'bg':
                         if (color === 'chroma-key') {
-                            // Chroma key mode: green page background, transparent chat bg
-                            // Store the current opacity so we can restore it when leaving chroma key
-                            const currentOpacity = bgOpacityInput ? parseInt(bgOpacityInput.value) / 100 : (configManager.config.bgColorOpacity ?? 0.85);
-                            configManager.updateConfig('preChromaKeyOpacity', currentOpacity > 0 ? currentOpacity : 0.85);
+                            // Sync the live (possibly unsaved) slider value into config before
+                            // stashing it, so applyChromaKey doesn't stash a stale saved opacity.
+                            if (bgOpacityInput) {
+                                configManager.config.bgColorOpacity = parseInt(bgOpacityInput.value) / 100;
+                            }
+                            applyChromaKey(configManager.config, true);
                             document.body.classList.add('chroma-key');
                             setSwatchColor(bgColorInput, '#000000');
                             if (bgColorHex) bgColorHex.value = '#000000';
                             if (bgOpacityInput) bgOpacityInput.value = 0;
-                            configManager.updateConfig('chromaKey', true);
-                            configManager.updateConfig('bgColorOpacity', 0);
                         } else {
                             const wasChromaKey = !!configManager.config.chromaKey;
                             document.body.classList.remove('chroma-key');
-                            configManager.updateConfig('chromaKey', false);
+                            applyChromaKey(configManager.config, false);
                             if (color === 'transparent') {
                                 setSwatchColor(bgColorInput, '#000000');
                                 if (bgColorHex) bgColorHex.value = '#000000';
                                 if (bgOpacityInput) bgOpacityInput.value = 0;
-                                configManager.updateConfig('bgColorOpacity', 0);
                             } else {
                                 setSwatchColor(bgColorInput, color);
                                 if (bgColorHex) bgColorHex.value = color.toUpperCase();
-                                // Restore opacity when leaving chroma key or transparent
                                 if (wasChromaKey || (bgOpacityInput && parseInt(bgOpacityInput.value) === 0)) {
-                                    const restoredOpacity = configManager.config.preChromaKeyOpacity ?? 0.85;
+                                    const restoredOpacity = configManager.config.bgColorOpacity;
                                     if (bgOpacityInput) bgOpacityInput.value = Math.round(restoredOpacity * 100);
-                                    configManager.updateConfig('bgColorOpacity', restoredOpacity);
                                 }
                             }
                         }

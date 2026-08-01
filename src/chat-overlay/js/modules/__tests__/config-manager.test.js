@@ -1,5 +1,48 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ConfigManager } from '../config-manager.js';
+import { ConfigManager, migrateConfig, CONFIG_VERSION } from '../config-manager.js';
+
+describe('migrateConfig Unit Tests', () => {
+    it('should return empty object or default clone when given null or non-object input', () => {
+        expect(migrateConfig(null)).toEqual({ config: {}, pendingNotice: false });
+        expect(migrateConfig(undefined)).toEqual({ config: {}, pendingNotice: false });
+        expect(migrateConfig('invalid')).toEqual({ config: {}, pendingNotice: false });
+
+        const defaults = { theme: 'default', fontSize: 14 };
+        expect(migrateConfig(null, defaults)).toEqual({ config: defaults, pendingNotice: false });
+    });
+
+    it('should merge loaded config over default config', () => {
+        const defaults = { theme: 'default', fontSize: 14, chatMode: 'window' };
+        const loaded = { fontSize: 18, theme: 'dracula' };
+        const result = migrateConfig(loaded, defaults);
+
+        expect(result.config.theme).toBe('dracula');
+        expect(result.config.fontSize).toBe(18);
+        expect(result.config.chatMode).toBe('window');
+    });
+
+    it('should grandfather thirdPartyEmotes to false for legacy configs without configVersion', () => {
+        const defaults = { configVersion: CONFIG_VERSION, thirdPartyEmotes: true };
+        const legacyLoaded = { theme: 'monokai' };
+
+        const result = migrateConfig(legacyLoaded, defaults);
+
+        expect(result.config.thirdPartyEmotes).toBe(false);
+        expect(result.config.configVersion).toBe(CONFIG_VERSION);
+        expect(result.pendingNotice).toBe(true);
+    });
+
+    it('should not override explicit thirdPartyEmotes boolean if set', () => {
+        const defaults = { configVersion: CONFIG_VERSION, thirdPartyEmotes: true };
+        const loaded = { thirdPartyEmotes: true };
+
+        const result = migrateConfig(loaded, defaults);
+
+        expect(result.config.thirdPartyEmotes).toBe(true);
+        expect(result.config.configVersion).toBe(CONFIG_VERSION);
+        expect(result.pendingNotice).toBe(false);
+    });
+});
 
 describe('ConfigManager - State Persistence', () => {
     let configManager;

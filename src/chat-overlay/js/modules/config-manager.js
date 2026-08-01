@@ -37,6 +37,29 @@ export function migrateConfig(loadedConfig, defaultConfig = null) {
     return { config: merged, pendingNotice };
 }
 
+/**
+ * Shared enter/exit transition helper for Chroma Key mode.
+ * Stashes existing background opacity in preChromaKeyOpacity, forces #000000 + 0 opacity when enabled,
+ * and restores stashed opacity when disabled.
+ */
+export function applyChromaKey(config, enabled) {
+    if (!config || typeof config !== 'object') return;
+
+    if (enabled) {
+        if (!config.chromaKey && config.bgColorOpacity !== undefined && config.bgColorOpacity !== 0) {
+            config.preChromaKeyOpacity = config.bgColorOpacity;
+        }
+        config.chromaKey = true;
+        config.bgColor = '#000000';
+        config.bgColorOpacity = 0;
+    } else {
+        config.chromaKey = false;
+        if (config.preChromaKeyOpacity !== undefined) {
+            config.bgColorOpacity = config.preChromaKeyOpacity;
+        }
+    }
+}
+
 export class ConfigManager {
     constructor() {
         this.config = this.getDefaultConfig();
