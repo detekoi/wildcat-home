@@ -25,6 +25,7 @@ export class SceneSyncManager {
         this._unsubscribe = null;
         this._db = null;
         this._isSyncing = false;
+        this._restFallbackToken = null;
         
         this._configManager = null;
         this._badgeManager = null;
@@ -105,13 +106,22 @@ export class SceneSyncManager {
                 this.handleSnapshot(docSnap);
             }, (error) => {
                 console.warn('[SceneSyncManager] Firestore snapshot error:', error);
+                // The SDK loaded but the listener can't deliver (permission denied,
+                // long-polling blocked by a restrictive network). Nothing was thrown,
+                // so the catch below never runs — fall back to REST here instead.
+                // Once per token: the callback re-fires on every retry.
+                if (this._restFallbackToken !== this._token) {
+                    this._restFallbackToken = this._token;
+                    this.fetchConfigFromProxy(this._token);
+                }
             });
 
             this._isSyncing = true;
             return true;
         } catch (err) {
             console.warn('[SceneSyncManager] Failed to initialize Firebase SDK or subscription:', err);
-            // Rule #3: Network / SDK failure -> fallback gracefully to local config already loaded
+            // Rule #3: Network / SDK failure -> fallback gracefully to REST GET if token active
+            this.fetchConfigFromProxy(this._token);
             return false;
         }
     }
@@ -140,6 +150,36 @@ export class SceneSyncManager {
 
         this._token = tokenFromUrl;
         return this._ensureSubscribed();
+    }
+
+    /**
+     * Fetch scene configuration via REST GET endpoint from proxy service (fallback on SDK / network error)
+     */
+    async fetchConfigFromProxy(token = this._token) {
+        if (!token) return null;
+        try {
+            const baseUrl = getProxyBaseUrl();
+            const response = await fetch(`${baseUrl}/scene-config/${token}`);
+            if (!response.ok) return null;
+            const data = await response.json();
+            if (data && data.config && this._configManager) {
+                const defaults = this._configManager.getDefaultConfig();
+                const { config: mergedConfig } = migrateConfig(data.config, defaults);
+                this._configManager.applyConfiguration(mergedConfig);
+                this._configManager.saveConfig(this._sceneName);
+                try {
+                    localStorage.setItem(`chatConfig_sync_${token}`, JSON.stringify(mergedConfig));
+                } catch (e) {}
+                if (this._badgeManager) this._badgeManager.config = mergedConfig;
+                if (this._chatRenderer) this._chatRenderer.config = mergedConfig;
+                if (this._thirdPartyEmoteManager) this._thirdPartyEmoteManager.config = mergedConfig;
+                if (this._settingsPanel) this._settingsPanel.updateConfigPanelFromConfig();
+                return mergedConfig;
+            }
+        } catch (err) {
+            console.warn('[SceneSyncManager] Failed to fetch scene config from proxy:', err);
+        }
+        return null;
     }
 
     /**
@@ -179,6 +219,11 @@ export class SceneSyncManager {
         // Apply configuration live
         this._configManager.applyConfiguration(mergedConfig);
         this._configManager.saveConfig(this._sceneName);
+        if (this._token) {
+            try {
+                localStorage.setItem(`chatConfig_sync_${this._token}`, JSON.stringify(mergedConfig));
+            } catch (e) {}
+        }
 
         // Update dependencies
         if (this._badgeManager) this._badgeManager.config = mergedConfig;
@@ -253,6 +298,19 @@ export class SceneSyncManager {
             const resData = await response.json();
             if (resData.stripped && this._chatRenderer) {
                 this._chatRenderer.addSystemMessage('Background image was stripped due to size limit, but other settings saved.', true);
+            }
+
+            if (this._token) {
+                // Cache the server's view, not ours. The backend rewrites a data-URL
+                // bgImage to a Cloud Storage URL (and may strip it outright), so
+                // storing our copy would keep a data URL the server doesn't have —
+                // up to 900 KB of base64 duplicated alongside the scene-keyed entry,
+                // which risks blowing the localStorage quota and losing the write.
+                // The snapshot echo delivers the real URL moments later.
+                const cacheable = { ...payload.config, bgImage: null };
+                try {
+                    localStorage.setItem(`chatConfig_sync_${this._token}`, JSON.stringify(cacheable));
+                } catch (e) {}
             }
 
             return { success: true, data: resData };

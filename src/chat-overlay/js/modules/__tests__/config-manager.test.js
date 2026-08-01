@@ -96,6 +96,26 @@ describe('ConfigManager - State Persistence', () => {
             expect(configManager.config.showPronouns).toBe(true); // Default
         });
 
+        it('should prefer the sceneName cache over the token-keyed cache so local saves are never reverted', () => {
+            // Local save paths (settings panel, generated-theme auto-save, last-channel)
+            // only write the scene key. If the token key won, a save that failed to
+            // reach Firestore would silently revert on the next load.
+            localStorage.setItem('chatConfig-default', JSON.stringify({ theme: 'default_scene_theme' }));
+            localStorage.setItem('chatConfig_sync_my-token-uuid', JSON.stringify({ theme: 'token_specific_theme' }));
+
+            configManager.loadSavedConfig('default', 'my-token-uuid');
+
+            expect(configManager.config.theme).toBe('default_scene_theme');
+        });
+
+        it('should fall back to the token-keyed cache when no sceneName cache exists (fresh machine)', () => {
+            localStorage.setItem('chatConfig_sync_my-token-uuid', JSON.stringify({ theme: 'token_specific_theme' }));
+
+            configManager.loadSavedConfig('default', 'my-token-uuid');
+
+            expect(configManager.config.theme).toBe('token_specific_theme');
+        });
+
         it('should handle completely corrupted JSON gracefully and fall back to system defaults without throwing', () => {
             localStorage.setItem('chatConfig-default', '{ "theme": dracula, --- corrupted --- }');
             

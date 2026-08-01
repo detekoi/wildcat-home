@@ -185,4 +185,59 @@ describe('SceneSyncManager', () => {
             })
         );
     });
+
+    it('should save config to token-keyed localStorage on handleSnapshot', () => {
+        syncManager._configManager = mockConfigManager;
+        syncManager._token = 'test-token-123';
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+        const mockSnap = {
+            exists: () => true,
+            data: () => ({
+                config: { theme: 'dracula', fontSize: 18 },
+                updatedBy: 'remote-session'
+            })
+        };
+
+        syncManager.handleSnapshot(mockSnap);
+        expect(setItemSpy).toHaveBeenCalledWith('chatConfig_sync_test-token-123', expect.stringContaining('dracula'));
+    });
+
+    it('should fetch scene config via REST GET fallback on fetchConfigFromProxy and populate token-keyed localStorage', async () => {
+        syncManager._configManager = mockConfigManager;
+        syncManager._token = 'rest-fallback-token';
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                config: { theme: 'neon', fontSize: 20 }
+            })
+        });
+
+        const config = await syncManager.fetchConfigFromProxy('rest-fallback-token');
+        expect(config).toBeDefined();
+        expect(config.theme).toBe('neon');
+        expect(setItemSpy).toHaveBeenCalledWith('chatConfig_sync_rest-fallback-token', expect.stringContaining('neon'));
+    });
+
+    it('should not cache a data-URL bgImage after pushConfig, since the server rewrites it', async () => {
+        syncManager._configManager = mockConfigManager;
+        syncManager._token = 'bgimage-token';
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, token: 'bgimage-token', stripped: false })
+        });
+
+        await syncManager.pushConfig({ theme: 'dracula', bgImage: 'data:image/png;base64,AAAA' });
+
+        const cached = setItemSpy.mock.calls.find(([key]) => key === 'chatConfig_sync_bgimage-token');
+        expect(cached).toBeDefined();
+        expect(JSON.parse(cached[1]).bgImage).toBeNull();
+        expect(JSON.parse(cached[1]).theme).toBe('dracula');
+    });
 });

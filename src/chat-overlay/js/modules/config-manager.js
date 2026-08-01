@@ -213,11 +213,21 @@ export class ConfigManager {
     }
 
     /**
-     * Load saved configuration from localStorage
+     * Load saved configuration from localStorage.
+     *
+     * The scene-keyed entry wins when present: it's the one every local save path
+     * writes (settings panel, generated-theme auto-save, last-channel), so
+     * preferring the token key here would silently revert saves that never made
+     * it to Firestore. The token key is the fresh-machine fallback — it's the
+     * only entry that exists when a `?sync=` URL is opened on a browser that has
+     * never rendered this scene.
      */
-    loadSavedConfig(sceneName = 'default') {
+    loadSavedConfig(sceneName = 'default', syncToken = null) {
         try {
-            const savedConfig = localStorage.getItem(`chatConfig-${sceneName}`);
+            let savedConfig = localStorage.getItem(`chatConfig-${sceneName}`);
+            if (!savedConfig && syncToken) {
+                savedConfig = localStorage.getItem(`chatConfig_sync_${syncToken}`);
+            }
             if (savedConfig) {
                 const loadedConfig = JSON.parse(savedConfig);
                 const defaultConfigForMerge = this.getDefaultConfig();

@@ -756,9 +756,10 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
         // --- INITIALIZATION ---
 
         const sceneName = UIHelpers.getUrlParameter('scene') || 'default';
+        const syncToken = UIHelpers.getUrlParameter('sync');
         const isDemoMode = UIHelpers.getUrlParameter('demo') === '1';
 
-        configManager.loadSavedConfig(sceneName);
+        configManager.loadSavedConfig(sceneName, syncToken);
         configManager.applyConfiguration(configManager.config);
         badgeManager.config = configManager.config;
         chatRenderer.config = configManager.config;
