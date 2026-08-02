@@ -47,6 +47,15 @@
     outline-offset: -2px;
 }
 
+/* Mount container — lives inside a flex row (.settings-row / .config-row) and
+   must shrink below its content width so the nav arrows never clip off-screen. */
+.theme-carousel-mount,
+#theme-carousel-mount {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
 /* Main container for the theme carousel (replacing theme-buttons-container if needed) */
 .theme-carousel-container {
     width: 100%;
