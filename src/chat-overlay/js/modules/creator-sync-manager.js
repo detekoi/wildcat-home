@@ -17,9 +17,7 @@ export class CreatorSyncManager {
         this.onRemoteUpdate = onRemoteUpdate;
         this.firestoreUnsubscribe = null;
 
-        this.myClientId = typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `creator-${Date.now()}-${Math.random()}`;
+        this.myClientId = UIHelpers.generateSecureId('creator');
     }
 
     async subscribeToRemoteChanges(syncToken, currentInstanceId, getInstance, saveInstances, getCurrentInstanceId) {

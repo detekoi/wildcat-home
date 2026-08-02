@@ -19,7 +19,7 @@ export function getProxyBaseUrl() {
 
 export class SceneSyncManager {
     constructor() {
-        this.myClientId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}-${Math.random()}`;
+        this.myClientId = UIHelpers.generateSecureId('session');
         this._token = null;
         this._sceneName = 'default';
         this._unsubscribe = null;

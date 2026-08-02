@@ -257,6 +257,25 @@ export class UIHelpers {
     }
 
     /**
+     * Generate a cryptographically secure random ID
+     */
+    static generateSecureId(prefix = '') {
+        if (typeof crypto !== 'undefined') {
+            if (crypto.randomUUID) {
+                return prefix ? `${prefix}-${crypto.randomUUID()}` : crypto.randomUUID();
+            }
+            if (crypto.getRandomValues) {
+                const arr = new Uint32Array(4);
+                crypto.getRandomValues(arr);
+                const token = Array.from(arr, val => val.toString(16).padStart(8, '0')).join('-');
+                return prefix ? `${prefix}-${token}` : token;
+            }
+        }
+        const fallback = `${Date.now()}_${Math.random().toString(36).substring(2)}`;
+        return prefix ? `${prefix}-${fallback}` : fallback;
+    }
+
+    /**
      * Notification helper stub
      */
     static showNotification(title, message, type = 'info') {

@@ -69,16 +69,12 @@ export class CreatorInstanceManager {
      * @returns {string} A new bare UUID token
      */
     mintSyncToken() {
-        return typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `sync-${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        return UIHelpers.generateSecureId('sync');
     }
 
     createInstance(nameInput) {
         const name = (nameInput || '').trim() || 'New Chat Scene';
-        const id = typeof crypto !== 'undefined' && crypto.randomUUID
-            ? `scene_${crypto.randomUUID()}`
-            : `scene_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const id = UIHelpers.generateSecureId('scene');
 
         this.instances[id] = {
             id: id,
@@ -98,9 +94,7 @@ export class CreatorInstanceManager {
     duplicateCurrentInstance() {
         if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return null;
         const current = this.instances[this.currentInstanceId];
-        const newId = typeof crypto !== 'undefined' && crypto.randomUUID
-            ? `scene_${crypto.randomUUID()}`
-            : `scene_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const newId = UIHelpers.generateSecureId('scene');
         const newName = `${current.name} (Copy)`;
 
         this.instances[newId] = {

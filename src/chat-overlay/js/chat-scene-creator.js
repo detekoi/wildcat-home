@@ -3,7 +3,7 @@
  * Orchestrates chat scene creation, settings customization, live preview streaming, and Firestore web sync.
  */
 
-import { ConfigManager } from './modules/config-manager.js';
+import { ConfigManager, migrateConfig } from './modules/config-manager.js';
 import { UIHelpers } from './modules/ui-helpers.js';
 import { CreatorFormRenderer } from './modules/creator-form-renderer.js';
 import { CreatorInstanceManager } from './modules/creator-instance-manager.js';
@@ -343,19 +343,38 @@ document.addEventListener('DOMContentLoaded', () => {
                         (parsed) => {
                             let importedCount = 0;
                             if (parsed.instances && parsed.instanceOrder) {
-                                this.instanceManager.instances = { ...this.instanceManager.instances, ...parsed.instances };
+                                for (const id of Object.keys(parsed.instances)) {
+                                    const rawInstance = parsed.instances[id];
+                                    if (rawInstance && rawInstance.config) {
+                                        const { config: safeConfig } = migrateConfig(rawInstance.config, this.configManagerHelper.getDefaultConfig());
+                                        this.instanceManager.instances[id] = {
+                                            id: String(rawInstance.id || id),
+                                            name: String(rawInstance.name || 'Imported Scene').trim() || 'Imported Scene',
+                                            config: safeConfig,
+                                            createdAt: String(rawInstance.createdAt || new Date().toISOString()),
+                                            lastModified: new Date().toISOString(),
+                                            syncToken: rawInstance.syncToken ? String(rawInstance.syncToken) : this.instanceManager.mintSyncToken()
+                                        };
+                                    }
+                                }
                                 parsed.instanceOrder.forEach(id => {
-                                    if (!this.instanceManager.instanceOrder.includes(id)) {
-                                        this.instanceManager.instanceOrder.push(id);
+                                    const safeId = String(id);
+                                    if (!this.instanceManager.instanceOrder.includes(safeId) && this.instanceManager.instances[safeId]) {
+                                        this.instanceManager.instanceOrder.push(safeId);
                                     }
                                 });
                                 importedCount = Object.keys(parsed.instances).length;
                             } else if (parsed.id && parsed.name && parsed.config) {
-                                const newId = typeof crypto !== 'undefined' && crypto.randomUUID
-                                    ? `scene_${crypto.randomUUID()}`
-                                    : `scene_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-                                parsed.id = newId;
-                                this.instanceManager.instances[newId] = parsed;
+                                const newId = UIHelpers.generateSecureId('scene');
+                                const { config: safeConfig } = migrateConfig(parsed.config, this.configManagerHelper.getDefaultConfig());
+                                this.instanceManager.instances[newId] = {
+                                    id: newId,
+                                    name: String(parsed.name).trim() || 'Imported Scene',
+                                    config: safeConfig,
+                                    createdAt: String(parsed.createdAt || new Date().toISOString()),
+                                    lastModified: new Date().toISOString(),
+                                    syncToken: parsed.syncToken ? String(parsed.syncToken) : this.instanceManager.mintSyncToken()
+                                };
                                 this.instanceManager.instanceOrder.push(newId);
                                 importedCount = 1;
                             } else {
