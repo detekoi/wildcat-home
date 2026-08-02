@@ -202,6 +202,15 @@
     let prevBtnHandler = null;
     let nextBtnHandler = null;
 
+    // Per-session client ID for echo suppression: when this page pushes an
+    // activeTheme update, the onSnapshot callback on this same page sees it
+    // come back; comparing updatedBy lets us skip applying our own change.
+    const myClientId = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `carousel-${Date.now()}-${Math.random()}`;
+    let lastPushedActiveTheme = null; // Value we last pushed, to debounce.
+    let suppressSync = false;          // True while applying a remote theme change.
+
     // Lazily import the theme-library-client ES module from this classic script.
     let libraryClientPromise = null;
     function getLibraryClient() {
@@ -450,7 +459,7 @@
     }
 
     function selectByValue(value) {
-        if (!window.availableThemes) return;
+        if (!window.availableThemes || !value) return;
         const idx = window.availableThemes.findIndex(t => t.value === value);
         if (idx !== -1) applyAndScrollToTheme(idx);
     }
@@ -472,8 +481,23 @@
             const fresh = await client.fetchThemes();
             applyGeneratedThemes(fresh);
 
-            libraryUnsubscribe = client.subscribe((themes) => {
+            libraryUnsubscribe = client.subscribe((themes, meta) => {
                 applyGeneratedThemes(themes);
+
+                // Cross-page active theme sync: if another page changed the
+                // active theme, select it here (echo suppression via clientId).
+                if (meta && meta.activeTheme && meta.activeThemeUpdatedBy !== myClientId) {
+                    const currentValue = window.availableThemes?.[window.currentThemeIndex]?.value;
+                    if (meta.activeTheme !== currentValue) {
+                        const idx = window.availableThemes?.findIndex(t => t.value === meta.activeTheme) ?? -1;
+                        if (idx !== -1) {
+                            console.log(`[ThemeCarousel] Remote active theme change: ${meta.activeTheme}`);
+                            suppressSync = true;
+                            applyAndScrollToTheme(idx);
+                            suppressSync = false;
+                        }
+                    }
+                }
             });
         } catch (e) {
             console.warn('[ThemeCarousel] Theme library unavailable, continuing with local cache/defaults:', e);
@@ -502,6 +526,7 @@
         }
 
         renderCarousel();
+        scrollToThemeCard(window.currentThemeIndex);
     }
 
     /**
@@ -546,6 +571,7 @@
         }));
 
         renderCarousel();
+        scrollToThemeCard(0);
 
         pushThemeToCloud(themeWithFlag);
 
@@ -570,6 +596,47 @@
         } catch (e) {
             console.warn('[ThemeCarousel] Failed to push generated theme to cloud library:', e);
         }
+    }
+
+    /**
+     * Displays an in-page custom confirmation modal before deleting a generated theme.
+     * Compatible with OBS CEF browser sources where system dialogs (confirm/alert) fail.
+     * @param {Object} theme - Theme object to delete
+     */
+    function confirmDeleteTheme(theme) {
+        if (!theme) return;
+
+        const existingModal = document.querySelector('.theme-carousel-modal-overlay');
+        if (existingModal) existingModal.remove();
+
+        const escapeHtml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        const overlay = document.createElement('div');
+        overlay.className = 'theme-carousel-modal-overlay';
+        overlay.innerHTML = `
+            <div class="theme-carousel-modal">
+                <h3>Delete Theme?</h3>
+                <p>Are you sure you want to delete <span class="theme-name-highlight">"${escapeHtml(theme.name || 'Unnamed Theme')}"</span>? This will permanently remove it from your library and delete its background image from storage.</p>
+                <div class="theme-carousel-modal-actions">
+                    <button type="button" class="theme-carousel-modal-cancel">Cancel</button>
+                    <button type="button" class="theme-carousel-modal-delete">Delete</button>
+                </div>
+            </div>
+        `;
+
+        const closeModal = () => overlay.remove();
+
+        overlay.querySelector('.theme-carousel-modal-cancel').addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        overlay.querySelector('.theme-carousel-modal-delete').addEventListener('click', () => {
+            closeModal();
+            deleteGeneratedTheme(theme);
+        });
+
+        document.body.appendChild(overlay);
     }
 
     /**
@@ -762,7 +829,7 @@
             deleteBtn.textContent = '×';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                deleteGeneratedTheme(theme);
+                confirmDeleteTheme(theme);
             });
             card.appendChild(deleteBtn);
         }
@@ -806,6 +873,17 @@
         }
 
         scrollToThemeCard(index);
+
+        // Cross-page sync: fire-and-forget push so other tabs/pages pick up
+        // the selection via their onSnapshot subscription.
+        // Guarded by suppressSync to prevent feedback loops when applying a
+        // remote change.
+        if (!suppressSync && theme.value !== lastPushedActiveTheme) {
+            lastPushedActiveTheme = theme.value;
+            getLibraryClient()
+                .then(client => client.setActiveTheme(theme.value, myClientId))
+                .catch(() => {}); // silent — sync is best-effort
+        }
     }
 
     /**
@@ -833,6 +911,31 @@
             const fullDescription = theme.description || 'No description available';
 
             nameElement.textContent = theme.name || 'Unnamed Theme';
+
+            // Add nav bar delete button for active generated themes
+            let deleteNavBtn = mountedRoot.querySelector('#nav-theme-delete-btn');
+            if (theme.isGenerated && showDeleteCards) {
+                if (!deleteNavBtn) {
+                    deleteNavBtn = document.createElement('button');
+                    deleteNavBtn.type = 'button';
+                    deleteNavBtn.id = 'nav-theme-delete-btn';
+                    deleteNavBtn.className = 'theme-nav-delete-btn';
+                    deleteNavBtn.innerHTML = '🗑 Delete';
+                    nameElement.parentNode.insertBefore(deleteNavBtn, nameElement.nextSibling);
+                }
+                deleteNavBtn.style.display = 'inline-flex';
+
+                // Re-bind click listener with latest theme reference
+                const newBtn = deleteNavBtn.cloneNode(true);
+                deleteNavBtn.parentNode.replaceChild(newBtn, deleteNavBtn);
+                newBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    confirmDeleteTheme(theme);
+                });
+            } else if (deleteNavBtn) {
+                deleteNavBtn.style.display = 'none';
+            }
+
             descSpanElement.textContent = fullDescription;
 
             detailsElement.removeAttribute('open');

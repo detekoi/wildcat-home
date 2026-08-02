@@ -148,7 +148,7 @@ export class SettingsPanelManager {
             const topFadeToggle = document.getElementById('top-fade-toggle');
 
             const currentFontValue = this._fontManager.getCurrentFontValue();
-            const currentThemeValue = this._themeManager.lastAppliedThemeValue;
+            const currentThemeValue = this._themeManager.lastAppliedThemeValue || this._configManager.config.theme || 'default';
             const bgImageOpacityValue = getOpacity(bgImageOpacityInput, this._configManager.config.bgImageOpacity ?? 0.55);
             const currentBgColorHex = getColor(bgColorHex, '.color-buttons [data-target="bg"]', this._configManager.config.bgColor || '#121212');
             const currentBgOpacity = getOpacity(bgOpacityInput, this._configManager.config.bgColorOpacity ?? 0.85);
@@ -331,12 +331,17 @@ export class SettingsPanelManager {
         this._fontManager.updateFontDisplay();
 
         // Sync theme carousel
-        const themeIndex = window.availableThemes?.findIndex(t => t.value === this._configManager.config.theme) ?? -1;
+        const savedThemeVal = this._configManager.config.theme || 'default';
+        if (this._themeManager) {
+            this._themeManager.lastAppliedThemeValue = savedThemeVal;
+        }
+        const themeIndex = window.availableThemes?.findIndex(t => t.value === savedThemeVal) ?? -1;
         const currentThemeIdx = (themeIndex !== -1) ? themeIndex : (window.availableThemes?.findIndex(t => t.value === 'default') ?? 0);
         const currentTheme = window.availableThemes?.[currentThemeIdx];
         if (currentTheme) {
             if (typeof window.updateThemeDetails === 'function') window.updateThemeDetails(currentTheme);
             if (typeof window.highlightActiveCard === 'function') window.highlightActiveCard(currentTheme.value);
+            if (typeof window.scrollToThemeCard === 'function') window.scrollToThemeCard(currentThemeIdx);
         }
 
         if (twitchChannelInput) twitchChannelInput.value = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel || '';

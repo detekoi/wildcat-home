@@ -196,6 +196,31 @@ export async function deleteTheme(id) {
 }
 
 /**
+ * Persist the currently active (selected) theme value to the library doc via
+ * the proxy. Other pages that subscribe() will receive the update in real time
+ * through Firestore onSnapshot.
+ *
+ * Fire-and-forget — never throws.
+ *
+ * @param {string} themeValue - The `value` field of the selected theme.
+ * @param {string} updatedBy - A per-session client ID for echo suppression.
+ */
+export async function setActiveTheme(themeValue, updatedBy) {
+    if (!themeValue) return;
+    const token = getLibraryToken();
+    try {
+        const baseUrl = getProxyBaseUrl();
+        await fetch(`${baseUrl}/theme-library/${token}/active-theme`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ themeValue, updatedBy: updatedBy || null })
+        });
+    } catch (err) {
+        console.warn('[ThemeLibraryClient] setActiveTheme failed:', err);
+    }
+}
+
+/**
  * Subscribe to live updates of the theme library via Firestore onSnapshot.
  * `cb(themes)` is invoked with the full themes array on every update, and the
  * offline cache is written through on every successful snapshot. Copies the
@@ -237,7 +262,10 @@ export function subscribe(cb) {
                 const data = docSnap.data();
                 const themes = Array.isArray(data?.themes) ? data.themes : [];
                 writeCache(themes);
-                cb(themes);
+                cb(themes, {
+                    activeTheme: data.activeTheme || null,
+                    activeThemeUpdatedBy: data.activeThemeUpdatedBy || null
+                });
             }, (err) => {
                 console.warn('[ThemeLibraryClient] Firestore subscription error:', err);
             });

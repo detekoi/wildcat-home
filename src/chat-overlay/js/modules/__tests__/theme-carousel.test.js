@@ -197,6 +197,10 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             const deleteBtn = card.querySelector('.theme-card-delete');
             deleteBtn.click();
 
+            const confirmBtn = document.querySelector('.theme-carousel-modal-delete');
+            expect(confirmBtn).not.toBeNull();
+            confirmBtn.click();
+
             // Should be removed from availableThemes
             expect(window.availableThemes.find(t => t.value === 'temp-gen')).toBeUndefined();
             // Active theme index updated to fallback theme (index 0 which is now default dark)

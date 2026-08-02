@@ -84,29 +84,7 @@
     flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
-.theme-nav-btn {
-    background: none;
-    border: none;
-    color: inherit;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px;
-    min-width: 28px;
-    min-height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s;
-}
-
-.theme-nav-btn:hover {
-    opacity: 0.7;
-}
-
-.theme-nav-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
+/* .theme-nav-btn styles are defined below #theme-info-and-nav */
 
 /* Generated themes are now integrated into the main theme carousel */
 
@@ -203,19 +181,54 @@
 #theme-info-and-nav {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 15px;
+    justify-content: space-between;
+    width: 100%;
     margin-top: 10px;
-    padding: 0 10px;
+    padding: 0 4px;
+    box-sizing: border-box;
+}
+
+.theme-nav-btn {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 2;
+    pointer-events: auto;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.theme-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    opacity: 1;
+}
+
+.theme-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 #theme-details {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    min-width: 0; /* Enable text truncation */
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin: 0 6px;
+    overflow: hidden;
 }
 
 #selected-theme-name {
@@ -224,6 +237,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
 }
 
 #selected-theme-description {
@@ -235,6 +250,115 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.3;
+}
+
+/* Custom confirmation modal for theme deletion (works in OBS CEF & standard browsers) */
+.theme-carousel-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeInModal 0.15s ease-out;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.theme-carousel-modal {
+    background: #18181b;
+    border: 1px solid #333338;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    color: #efeff1;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.theme-carousel-modal h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.theme-carousel-modal p {
+    margin: 0 0 16px 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #adadb8;
+}
+
+.theme-carousel-modal .theme-name-highlight {
+    color: #a970ff;
+    font-weight: 600;
+}
+
+.theme-carousel-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.theme-carousel-modal-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.theme-carousel-modal-cancel {
+    background: #27272a;
+    color: #efeff1;
+}
+
+.theme-carousel-modal-cancel:hover {
+    background: #3f3f46;
+}
+
+.theme-carousel-modal-delete {
+    background: #e53935;
+    color: #ffffff;
+}
+
+.theme-carousel-modal-delete:hover {
+    background: #c62828;
+}
+
+/* Nav bar delete button */
+.theme-nav-delete-btn {
+    background: none;
+    border: none;
+    color: #ef5350;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    margin-left: 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0.8;
+    transition: opacity 0.15s, background-color 0.15s;
+}
+
+.theme-nav-delete-btn:hover {
+    opacity: 1;
+    background: rgba(239, 83, 80, 0.15);
 }
 
 /* Styling for the new details/summary structure */
