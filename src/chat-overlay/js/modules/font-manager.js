@@ -18,7 +18,7 @@ if (!Array.isArray(window.availableFonts)) {
  * @param {string} fontFamily - The font family name.
  * @param {string} [customUrl] - Optional custom Google Fonts CSS URL.
  */
-function ensureGoogleFontLoaded(fontFamily, customUrl) {
+export function ensureGoogleFontLoaded(fontFamily, customUrl) {
     if (typeof window.loadGoogleFont === 'function') {
         window.loadGoogleFont(fontFamily, customUrl);
         return;
@@ -620,13 +620,48 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
     return {
         fontManager,
         input,
-        setValue(val) {
+        /**
+         * @param {string} val - Font family CSS value (or bare name).
+         * @param {string|null} [googleFontFamily] - Google Font metadata for `val`,
+         *   seeded into the picker's config BEFORE syncToConfig so its recovery
+         *   path can resolve fonts that aren't in window.availableFonts yet.
+         */
+        setValue(val, googleFontFamily = undefined) {
             input.value = val || '';
             dummyConfigManager.config.fontFamily = val;
+            if (googleFontFamily !== undefined) {
+                dummyConfigManager.config.googleFontFamily = googleFontFamily;
+            }
             fontManager.syncToConfig();
+            // If syncToConfig resolved the value to a known font, adopt its
+            // metadata: show the friendly name, record googleFontFamily so
+            // readFormConfig can ship it to the preview/sync, and make sure the
+            // stylesheet is loaded in this document.
+            const resolved = window.availableFonts?.[fontManager.currentFontIndex];
+            if (resolved && (resolved.value === val || resolved.name === val)) {
+                input.value = resolved.name;
+                dummyConfigManager.config.fontFamily = resolved.value;
+                dummyConfigManager.config.googleFontFamily =
+                    (resolved.isGoogleFont && resolved.googleFontFamily) ? resolved.googleFontFamily : null;
+                if (resolved.isGoogleFont && resolved.googleFontFamily) {
+                    ensureGoogleFontLoaded(resolved.googleFontFamily, resolved.googleFontUrl);
+                }
+            }
+        },
+        /**
+         * Select a full font object (e.g. from an AI-generated theme), adding it
+         * to the available list, loading its stylesheet, and updating the picker
+         * config — the same path a dropdown selection takes.
+         */
+        setFont(fontObj) {
+            if (!fontObj || !fontObj.name) return;
+            fontManager.addAndSelectGoogleFont(fontObj);
         },
         getValue() {
             return dummyConfigManager.config.fontFamily || input.value;
+        },
+        getGoogleFontFamily() {
+            return dummyConfigManager.config.googleFontFamily ?? null;
         }
     };
 }

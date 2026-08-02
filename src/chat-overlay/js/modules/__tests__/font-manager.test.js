@@ -254,4 +254,37 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         // 3) Loaded via the ensureGoogleFontLoaded fallback (no window.loadGoogleFont on this page)
         expect(document.getElementById('google-font-orbitron')).not.toBeNull();
     });
+
+    it('setValue correctly handles googleFontFamily metadata and loads the stylesheet', () => {
+        const picker = createFontPicker(container, {
+            initialValue: "'Inter', sans-serif"
+        });
+
+        picker.setValue("'Press Start 2P', cursive", 'Press Start 2P');
+
+        expect(picker.getValue()).toBe("'Press Start 2P', cursive");
+        expect(picker.getGoogleFontFamily()).toBe('Press Start 2P');
+        expect(document.getElementById('google-font-press-start-2p')).not.toBeNull();
+        expect(window.availableFonts.some(f => f.googleFontFamily === 'Press Start 2P')).toBe(true);
+    });
+
+    it('setFont adds the full font object, updates picker value, and loads stylesheet', () => {
+        const picker = createFontPicker(container, {
+            initialValue: "'Inter', sans-serif"
+        });
+
+        picker.setFont({
+            name: 'Monoton',
+            value: "'Monoton', display",
+            description: 'Monoton from Google Fonts',
+            isGoogleFont: true,
+            googleFontFamily: 'Monoton'
+        });
+
+        expect(picker.getValue()).toBe("'Monoton', display");
+        expect(picker.getGoogleFontFamily()).toBe('Monoton');
+        expect(document.getElementById('google-font-monoton')).not.toBeNull();
+        expect(window.availableFonts.some(f => f.name === 'Monoton')).toBe(true);
+    });
 });
+

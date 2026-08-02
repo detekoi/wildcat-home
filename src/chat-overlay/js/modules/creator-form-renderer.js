@@ -663,8 +663,21 @@ export class CreatorFormRenderer {
         const topFadeInput = document.getElementById('schema-input-topFade');
         if (topFadeInput && theme.topFade !== undefined) topFadeInput.checked = !!theme.topFade;
 
-        if (theme.fontFamily && this.fontPicker && typeof this.fontPicker.setValue === 'function') {
-            this.fontPicker.setValue(theme.fontFamily);
+        if (theme.fontFamily && this.fontPicker) {
+            if (theme.isGoogleFont && theme.googleFontFamily && typeof this.fontPicker.setFont === 'function') {
+                // Full metadata available (AI-generated themes): register the font,
+                // load its stylesheet, and record googleFontFamily so the preview
+                // iframe and synced configs can load it too.
+                this.fontPicker.setFont({
+                    name: theme.fontFamily,
+                    value: `'${theme.googleFontFamily}', sans-serif`,
+                    description: `${theme.googleFontFamily} from Google Fonts`,
+                    isGoogleFont: true,
+                    googleFontFamily: theme.googleFontFamily
+                });
+            } else if (typeof this.fontPicker.setValue === 'function') {
+                this.fontPicker.setValue(theme.fontFamily);
+            }
         }
 
         const themeInput = document.getElementById('schema-input-theme');
@@ -792,7 +805,9 @@ export class CreatorFormRenderer {
 
         CONFIG_SCHEMA.forEach(item => {
             if (item.control === 'font') {
-                if (this.fontPicker) this.fontPicker.setValue(config.fontFamily || item.default);
+                // Pass the saved Google Font metadata alongside the value so the
+                // picker can resolve fonts that aren't in window.availableFonts.
+                if (this.fontPicker) this.fontPicker.setValue(config.fontFamily || item.default, config.googleFontFamily ?? null);
                 return;
             }
             if (item.control === 'presets') {
@@ -866,6 +881,13 @@ export class CreatorFormRenderer {
         CONFIG_SCHEMA.forEach(item => {
             if (item.control === 'font') {
                 config.fontFamily = this.fontPicker ? this.fontPicker.getValue() : (existingConfig.fontFamily || defaults.fontFamily);
+                // Carried alongside fontFamily (it's a runtime key, not a schema
+                // item) so the preview iframe and the synced config can load the
+                // font's stylesheet. Without it a picked Google Font renders as
+                // the browser fallback everywhere but this page.
+                config.googleFontFamily = this.fontPicker && typeof this.fontPicker.getGoogleFontFamily === 'function'
+                    ? this.fontPicker.getGoogleFontFamily()
+                    : (existingConfig.googleFontFamily ?? null);
                 return;
             }
             if (item.control === 'presets') {

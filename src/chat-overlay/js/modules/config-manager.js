@@ -4,6 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
+import { ensureGoogleFontLoaded } from './font-manager.js';
 
 // Bumped whenever a default changes in a way that would visibly alter an existing overlay.
 // Stored configs without a version predate third-party emote support.
@@ -166,6 +167,14 @@ export class ConfigManager {
         rootStyle.setProperty('--pronoun-badge-color', (cfg.pronounBadgeColor && cfg.pronounBadgeColor !== 'timestamp') ? cfg.pronounBadgeColor : 'var(--timestamp-color)');
         rootStyle.setProperty('--font-size', `${cfg.fontSize || 14}px`);
         rootStyle.setProperty('--font-family', cfg.fontFamily || "'Inter', 'Helvetica Neue', Arial, sans-serif");
+        // A CSS variable alone can't render a web font this document never loaded.
+        // Configs arriving from outside (creator live-preview postMessage, Firestore
+        // scene sync) carry the Google Font name in googleFontFamily — inject its
+        // stylesheet here or the browser silently falls back to whatever font
+        // happens to be loaded already.
+        if (cfg.googleFontFamily) {
+            ensureGoogleFontLoaded(cfg.googleFontFamily);
+        }
         rootStyle.setProperty('--font-weight', cfg.fontWeight || 'normal');
         rootStyle.setProperty('--chat-width', `${cfg.chatWidth || 95}%`);
         rootStyle.setProperty('--chat-height', `${cfg.chatHeight || 95}%`);
