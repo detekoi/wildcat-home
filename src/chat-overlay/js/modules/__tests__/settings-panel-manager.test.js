@@ -25,8 +25,8 @@ vi.mock('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js', () =
 }));
 
 describe('SettingsPanelManager - auto-provisioned sync token ends with a live subscription', () => {
-    // Regression: a fresh visitor who hits Save (or Copy OBS URL) on chat.html with no
-    // ?sync= param used to get a working PUT to the proxy (the copied OBS URL worked)
+    // Regression: a fresh visitor who hits Save on chat.html with no
+    // ?sync= param used to get a working PUT to the proxy
     // but the ORIGINATING tab never subscribed to Firestore, so it needed a page reload
     // to see live edits made elsewhere. start() no-ops (by design) when there's no
     // ?sync= param, so the fix has to live in the auto-provision paths themselves.
@@ -36,7 +36,7 @@ describe('SettingsPanelManager - auto-provisioned sync token ends with a live su
     beforeEach(async () => {
         vi.clearAllMocks();
         localStorage.clear();
-        // saveConfiguration()/copyObsUrl() push a ?sync=...&scene=... param onto the URL
+        // saveConfiguration() pushes a ?sync=...&scene=... param onto the URL
         // via history.replaceState, which persists across tests in jsdom. Reset it so
         // every test starts from a clean "no ?sync= param" URL, same as a fresh visitor.
         window.history.replaceState(null, '', '/');
@@ -63,11 +63,6 @@ describe('SettingsPanelManager - auto-provisioned sync token ends with a live su
         });
 
         global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ success: true }) });
-
-        Object.defineProperty(navigator, 'clipboard', {
-            value: { writeText: vi.fn().mockResolvedValue(undefined) },
-            configurable: true
-        });
 
         // Mirror chat.js's real startup: start() runs with no ?sync= param, so it
         // no-ops (Rule #1) but still wires up dependencies, same as the live app.
@@ -104,20 +99,6 @@ describe('SettingsPanelManager - auto-provisioned sync token ends with a live su
         expect(sceneSyncManager.syncToken).not.toBeNull();
     });
 
-    it('copyObsUrl() auto-provisions a token and ends with an active Firestore subscription', async () => {
-        expect(sceneSyncManager._db).toBeNull();
-        expect(sceneSyncManager.syncToken).toBeNull();
-
-        await settingsPanel.copyObsUrl();
-
-        await vi.waitFor(() => {
-            expect(sceneSyncManager._db).not.toBeNull();
-            expect(typeof sceneSyncManager._unsubscribe).toBe('function');
-        });
-
-        expect(sceneSyncManager.syncToken).not.toBeNull();
-        expect(navigator.clipboard.writeText).toHaveBeenCalled();
-    });
 
     it('does not re-provision or drop the subscription when a token already exists', async () => {
         settingsPanel.saveConfiguration();

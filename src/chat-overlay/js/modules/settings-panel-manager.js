@@ -408,76 +408,8 @@ export class SettingsPanelManager {
         if (thirdPartyFilter7tvEdgyToggle) thirdPartyFilter7tvEdgyToggle.checked = this._configManager.config.thirdPartyFilter7tvEdgy ?? false;
 
         this._themeManager.updateThemePreview();
-
-        // Wire copy OBS URL and regenerate token buttons if present
-        const copyObsUrlBtn = document.getElementById('copy-obs-url-btn');
-        if (copyObsUrlBtn && !copyObsUrlBtn.dataset.bound) {
-            copyObsUrlBtn.dataset.bound = 'true';
-            copyObsUrlBtn.addEventListener('click', () => this.copyObsUrl());
-        }
-
-        const regenTokenBtn = document.getElementById('regen-token-btn');
-        if (regenTokenBtn && !regenTokenBtn.dataset.bound) {
-            regenTokenBtn.dataset.bound = 'true';
-            regenTokenBtn.addEventListener('click', () => this.regenerateToken());
-        }
     }
 
-    /**
-     * Copy full OBS Browser Source URL with scene and sync token to clipboard.
-     */
-    async copyObsUrl() {
-        const scene = UIHelpers.getUrlParameter('scene') || 'default';
-        let syncToken = this._sceneSyncManager?.syncToken || UIHelpers.getUrlParameter('sync');
-
-        if (!syncToken) {
-            syncToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sync-${Date.now()}`;
-            if (this._sceneSyncManager) this._sceneSyncManager.setSyncToken(syncToken);
-            const url = new URL(window.location.href);
-            url.searchParams.set('sync', syncToken);
-            if (!url.searchParams.has('scene')) url.searchParams.set('scene', scene);
-            window.history.replaceState(null, '', url.toString());
-            if (this._sceneSyncManager) this._sceneSyncManager.pushConfig(this._configManager.config);
-        }
-
-        const fullUrl = new URL(window.location.href);
-        fullUrl.searchParams.set('scene', scene);
-        fullUrl.searchParams.set('sync', syncToken);
-
-        try {
-            await navigator.clipboard.writeText(fullUrl.toString());
-            if (this._chatRenderer) {
-                this._chatRenderer.addSystemMessage('Copied OBS Browser Source URL!');
-            }
-        } catch (e) {
-            console.error('Failed to copy URL:', e);
-        }
-    }
-
-    /**
-     * Regenerate sync token after warning user.
-     */
-    async regenerateToken() {
-        if (!window.confirm('Generating a new token will orphan the old URL in OBS. Continue?')) {
-            return;
-        }
-
-        const newToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sync-${Date.now()}`;
-        const scene = UIHelpers.getUrlParameter('scene') || 'default';
-
-        if (this._sceneSyncManager) {
-            this._sceneSyncManager.setSyncToken(newToken);
-            const url = new URL(window.location.href);
-            url.searchParams.set('sync', newToken);
-            if (!url.searchParams.has('scene')) url.searchParams.set('scene', scene);
-            window.history.replaceState(null, '', url.toString());
-            await this._sceneSyncManager.pushConfig(this._configManager.config);
-        }
-
-        if (this._chatRenderer) {
-            this._chatRenderer.addSystemMessage('Generated new sync token. Update your OBS Browser Source URL!');
-        }
-    }
 
     // --- Private Methods ---
 
