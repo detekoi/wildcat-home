@@ -518,7 +518,7 @@
 
         while (currentAttempt <= MAX_RETRIES) {
             try {
-                onStatusUpdate(`Generating (Attempt ${currentAttempt})...`);
+                onStatusUpdate('Generating...');
                 const proxyResponse = await generateThemeViaProxy(prompt, generateImage, currentAttempt - 1, previousThemeData);
 
                 if (proxyResponse.retry) {
