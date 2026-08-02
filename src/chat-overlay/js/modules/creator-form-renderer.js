@@ -209,9 +209,7 @@ export class CreatorFormRenderer {
                 if (item.control === 'popup_group') {
                     const popupContainer = document.createElement('div');
                     popupContainer.id = 'popupModeBlock';
-                    popupContainer.style.padding = '12px';
-                    popupContainer.style.background = 'var(--bg-secondary, #18181b)';
-                    popupContainer.style.borderRadius = '8px';
+                    popupContainer.className = 'creator-subcard';
                     popupContainer.style.marginTop = '8px';
 
                     const directionSubfield = item.subFields?.find(sf => sf.key === 'direction');
@@ -318,8 +316,13 @@ export class CreatorFormRenderer {
 
                     const valDisplay = document.createElement('span');
                     valDisplay.id = `schema-val-${item.key}`;
-                    valDisplay.style.marginLeft = '8px';
-                    valDisplay.style.fontSize = '12px';
+                    valDisplay.className = 'range-val-display';
+                    valDisplay.style.minWidth = '38px';
+                    valDisplay.style.textAlign = 'right';
+                    valDisplay.style.marginRight = '12px';
+                    valDisplay.style.fontSize = '13px';
+                    valDisplay.style.fontVariantNumeric = 'tabular-nums';
+                    valDisplay.style.opacity = '0.9';
                     valDisplay.textContent = item.scale ? `${Math.round(item.default * item.scale)}%` : item.default;
                     row.appendChild(valDisplay);
                 } else {
@@ -357,12 +360,9 @@ export class CreatorFormRenderer {
 
             if (group.id === 'theme_colors') {
                 const aiCard = document.createElement('div');
-                aiCard.className = 'ai-theme-card';
+                aiCard.className = 'ai-theme-card creator-subcard';
                 aiCard.style.marginTop = '16px';
-                aiCard.style.padding = '12px';
-                aiCard.style.background = 'var(--bg-secondary, #18181b)';
                 aiCard.style.border = '1px dashed var(--primary-color, #9147ff)';
-                aiCard.style.borderRadius = '8px';
                 aiCard.innerHTML = `
                     <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--primary-light, #a970ff);">AI Theme Generator</h4>
                     <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -405,7 +405,7 @@ export class CreatorFormRenderer {
      */
     createBgImageBox() {
         const bgImgBox = document.createElement('div');
-        bgImgBox.className = 'creator-bg-image-box';
+        bgImgBox.className = 'creator-bg-image-box creator-subcard';
         bgImgBox.innerHTML = `
             <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">Background Image</label>
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">

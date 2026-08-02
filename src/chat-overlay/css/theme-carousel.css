@@ -48,10 +48,12 @@
 }
 
 /* Mount container — lives inside a flex row (.settings-row / .config-row) and
-   must shrink below its content width so the nav arrows never clip off-screen. */
+   must shrink below its content width so the nav arrows never clip off-screen.
+   flex-basis: auto (not 0) so it doesn't collapse to zero height in column
+   flex layouts like .config-row { flex-direction: column }. */
 .theme-carousel-mount,
 #theme-carousel-mount {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
 }
@@ -206,10 +208,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--secondary-color, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 4px;
-    color: inherit;
+    color: var(--text-color, inherit);
     font-size: 18px;
     cursor: pointer;
     z-index: 2;
@@ -220,6 +222,12 @@
 .theme-nav-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     opacity: 1;
+}
+
+@media (prefers-color-scheme: light) {
+    .theme-nav-btn:hover {
+        background: rgba(0, 0, 0, 0.08);
+    }
 }
 
 .theme-nav-btn:disabled {
