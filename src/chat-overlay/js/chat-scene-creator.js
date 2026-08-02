@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize UI
             this.formRenderer.renderSchemaForm(document.getElementById('generatedSchemaForm'));
             this.instanceManager.loadInstances();
+            this.renderInstanceList();
             this.setupEventListeners();
             this.setupPreviewBgSelector();
             this.formRenderer.setupFormLivePreview();
