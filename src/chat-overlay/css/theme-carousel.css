@@ -132,6 +132,13 @@
     transition: background-color 0.2s, opacity 0.2s;
 }
 
+.theme-card-delete svg,
+.theme-card-delete .lucide {
+    width: 11px;
+    height: 11px;
+    stroke-width: 2.2px;
+}
+
 .theme-card-delete:hover {
     background: rgba(200, 40, 40, 0.85);
 }
@@ -350,6 +357,16 @@
 .theme-carousel-modal-delete {
     background: #e53935;
     color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.theme-carousel-modal-delete svg,
+.theme-carousel-modal-delete .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2px;
 }
 
 .theme-carousel-modal-delete:hover {
@@ -368,9 +385,16 @@
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     opacity: 0.8;
     transition: opacity 0.15s, background-color 0.15s;
+}
+
+.theme-nav-delete-btn svg,
+.theme-nav-delete-btn .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2px;
 }
 
 .theme-nav-delete-btn:hover {

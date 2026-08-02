@@ -619,7 +619,7 @@
                 <p>Are you sure you want to delete <span class="theme-name-highlight">"${escapeHtml(theme.name || 'Unnamed Theme')}"</span>? This will permanently remove it from your library and delete its background image from storage.</p>
                 <div class="theme-carousel-modal-actions">
                     <button type="button" class="theme-carousel-modal-cancel">Cancel</button>
-                    <button type="button" class="theme-carousel-modal-delete">Delete</button>
+                    <button type="button" class="theme-carousel-modal-delete"><i data-lucide="trash-2"></i> Delete</button>
                 </div>
             </div>
         `;
@@ -637,6 +637,9 @@
         });
 
         document.body.appendChild(overlay);
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
     }
 
     /**
@@ -787,6 +790,10 @@
             wrapper.textContent = 'No themes available.';
         }
 
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
         highlightActiveCard(window.availableThemes[typeof window.currentThemeIndex !== 'undefined' ? window.currentThemeIndex : 0]?.value || 'default');
     }
 
@@ -826,7 +833,7 @@
             deleteBtn.type = 'button';
             deleteBtn.className = 'theme-card-delete';
             deleteBtn.setAttribute('aria-label', `Delete ${theme.name || 'theme'}`);
-            deleteBtn.textContent = '×';
+            deleteBtn.innerHTML = '<i data-lucide="trash-2"></i>';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 confirmDeleteTheme(theme);
@@ -920,18 +927,23 @@
                     deleteNavBtn.type = 'button';
                     deleteNavBtn.id = 'nav-theme-delete-btn';
                     deleteNavBtn.className = 'theme-nav-delete-btn';
-                    deleteNavBtn.innerHTML = '🗑 Delete';
+                    deleteNavBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete';
                     nameElement.parentNode.insertBefore(deleteNavBtn, nameElement.nextSibling);
                 }
                 deleteNavBtn.style.display = 'inline-flex';
 
                 // Re-bind click listener with latest theme reference
                 const newBtn = deleteNavBtn.cloneNode(true);
+                newBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete';
                 deleteNavBtn.parentNode.replaceChild(newBtn, deleteNavBtn);
                 newBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     confirmDeleteTheme(theme);
                 });
+
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
             } else if (deleteNavBtn) {
                 deleteNavBtn.style.display = 'none';
             }
