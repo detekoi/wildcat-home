@@ -163,11 +163,13 @@ export class CreatorInstanceManager {
             item.draggable = true;
             if (id === this.currentInstanceId) item.classList.add('active');
 
+            const statusText = instance.syncToken ? 'Sync Active' : 'Local Scene';
+
             item.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div>
                         <div style="font-weight: 600;">${UIHelpers.escapeHtml(instance.name)}</div>
-                        <div style="font-size: 11px; opacity: 0.6;">${id}${instance.syncToken ? ' • Sync Active' : ''}</div>
+                        <div style="font-size: 11px; opacity: 0.6;">${statusText}</div>
                     </div>
                     <i data-lucide="grip-vertical" style="opacity: 0.4; cursor: grab;"></i>
                 </div>

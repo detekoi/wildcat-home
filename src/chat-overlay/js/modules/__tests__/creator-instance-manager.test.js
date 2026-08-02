@@ -117,4 +117,32 @@ describe('CreatorInstanceManager - Sync Token Handling', () => {
             expect(persisted[id].syncToken).toBe(result);
         });
     });
+
+    describe('renderInstanceList', () => {
+        it('should render items with name and status without leaking raw scene IDs in list text', () => {
+            const container = document.createElement('div');
+            const sceneId = instanceManager.createInstance('Gaming Scene');
+
+            instanceManager.renderInstanceList(container, vi.fn());
+
+            const item = container.querySelector('.instance-item');
+            expect(item).not.toBeNull();
+            expect(item.textContent).toContain('Gaming Scene');
+            expect(item.textContent).toContain('Sync Active');
+            expect(item.textContent).not.toContain(sceneId);
+            expect(item.dataset.id).toBe(sceneId);
+        });
+
+        it('should display "Local Scene" when instance has no sync token', () => {
+            const container = document.createElement('div');
+            const sceneId = instanceManager.createInstance('Local Gaming Scene');
+            delete instanceManager.instances[sceneId].syncToken;
+
+            instanceManager.renderInstanceList(container, vi.fn());
+
+            const item = container.querySelector('.instance-item');
+            expect(item.textContent).toContain('Local Scene');
+            expect(item.textContent).not.toContain('Sync Active');
+        });
+    });
 });
