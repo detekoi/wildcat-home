@@ -228,4 +228,14 @@ describe('ConfigManager - State Persistence', () => {
             expect(config.bgColorOpacity).toBe(0.85);
         });
     });
+
+    describe('applyConfiguration', () => {
+        it('should invoke switchChatModeCallback with applyVisualsOnly set to true', () => {
+            const callback = vi.fn();
+            configManager.setSwitchChatModeCallback(callback);
+            configManager.applyConfiguration({ chatMode: 'popup', theme: 'default' });
+            expect(callback).toHaveBeenCalledWith('popup', true);
+        });
+    });
 });
+

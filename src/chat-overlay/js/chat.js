@@ -173,7 +173,6 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                 }
 
                 const popupMessages = document.getElementById('popup-messages');
-                if (popupMessages) popupMessages.innerHTML = '';
 
                 const isPopup = (mode === 'popup');
                 popupContainer.style.display = isPopup ? 'block' : 'none';
@@ -181,10 +180,13 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                 document.body.classList.toggle('popup-mode', isPopup);
                 document.body.classList.toggle('window-mode', !isPopup);
 
-                if (!applyVisualsOnly && chatMessages) {
-                    chatMessages.innerHTML = '';
-                    chatRenderer.addSystemMessage(isPopup ? 'Switched to popup mode.' : 'Switched to window mode.');
-                    chatRenderer.addChatMessage({ username: 'System', message: 'Chat mode switched.', color: configManager.config.usernameColor, tags: {} });
+                if (!applyVisualsOnly) {
+                    if (popupMessages) popupMessages.innerHTML = '';
+                    if (chatMessages) {
+                        chatMessages.innerHTML = '';
+                        chatRenderer.addSystemMessage(isPopup ? 'Switched to popup mode.' : 'Switched to window mode.');
+                        chatRenderer.addChatMessage({ username: 'System', message: 'Chat mode switched.', color: configManager.config.usernameColor, tags: {} });
+                    }
                 }
 
                 if (isPopup && popupMessages && configManager.config.popup) {
@@ -196,6 +198,24 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                     popupMessages.removeAttribute('style');
                     popupMessages.style.top = position.top;
                     popupMessages.style.bottom = position.bottom;
+
+                    // Update direction class on existing popups
+                    popupMessages.querySelectorAll('.popup-message').forEach(el => {
+                        el.classList.remove('from-top', 'from-bottom', 'from-left', 'from-right');
+                        el.classList.add(direction);
+                    });
+
+                    // Enforce maxMessages on active popups if maxMessages reduced
+                    const maxMessages = configManager.config.popup.maxMessages;
+                    if (maxMessages && maxMessages > 0) {
+                        const activePopups = Array.from(popupMessages.querySelectorAll('.popup-message:not([data-removing])'));
+                        if (activePopups.length > maxMessages) {
+                            const removeCount = activePopups.length - maxMessages;
+                            for (let i = 0; i < removeCount; i++) {
+                                chatRenderer.removePopup(activePopups[i]);
+                            }
+                        }
+                    }
                 }
 
                 updateModeSpecificSettingsVisibility(mode);
@@ -830,6 +850,16 @@ import { SceneSyncManager } from './modules/scene-sync-manager.js';
                     chatRenderer.config = configManager.config;
                     if (thirdPartyEmoteManager) thirdPartyEmoteManager.config = configManager.config;
                     UIHelpers.fixCssVariables();
+
+                    if (configManager.config.chatMode === 'popup') {
+                        const popupMessages = document.getElementById('popup-messages');
+                        const activePopups = popupMessages ? popupMessages.querySelectorAll('.popup-message:not([data-removing])') : [];
+                        if (!popupMessages || activePopups.length === 0) {
+                            const msg = demoMessages[demoIndex % demoMessages.length];
+                            chatRenderer.addChatMessage({ username: msg.username, message: msg.message, color: msg.color, tags: {} });
+                            demoIndex++;
+                        }
+                    }
                 }
             });
         } else {
