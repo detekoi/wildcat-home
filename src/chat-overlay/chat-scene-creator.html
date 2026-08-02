@@ -72,6 +72,7 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="createInstanceBtn"><i data-lucide="plus" class="lucide-inline"></i> New Chat Scene</button>
+                    <button class="btn btn-secondary" id="importSceneBtn"><i data-lucide="link" class="lucide-inline"></i> Link Scene</button>
                     <button class="btn btn-secondary" id="importBtn"><i data-lucide="upload" class="lucide-inline"></i> Import</button>
                     <button class="btn btn-secondary" id="exportAllBtn"><i data-lucide="download" class="lucide-inline"></i> Export All</button>
                 </div>
@@ -91,23 +92,6 @@
                 <div class="config-layout" id="configLayout" style="display: none;">
                     <!-- Settings Column -->
                     <div class="settings-container">
-                        <!-- Sync Management -->
-                        <div class="settings-section">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <h3 style="margin: 0;">Live Sync</h3>
-                                <span id="syncBadge" style="padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background: var(--bg-tertiary, #1f1f23); color: var(--text-muted, #adadb8); border: 1px solid var(--border-color, #333);">Web Sync: Disabled</span>
-                            </div>
-                            <p style="font-size: 13px; color: #666; margin-bottom: 12px;">
-                                Enable live sync to instantly push edits to your OBS browser source without re-adding URLs.
-                            </p>
-                            <div class="sync-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button class="btn btn-primary" id="enableSyncBtn"><i data-lucide="cloud-lightning" class="lucide-inline"></i> Enable Web Customization</button>
-                                <button class="btn btn-secondary" id="regenerateTokenBtn" style="display: none;"><i data-lucide="refresh-cw" class="lucide-inline"></i> Regenerate Token</button>
-                                <button class="btn btn-secondary" id="linkExistingTokenBtn"><i data-lucide="link" class="lucide-inline"></i> Link Existing Scene</button>
-                                <button class="btn btn-danger" id="disableSyncBtn" style="display: none;"><i data-lucide="cloud-off" class="lucide-inline"></i> Disable Sync</button>
-                            </div>
-                        </div>
-
                         <!-- Basic Information -->
                         <div class="settings-section">
                             <h3>Basic Information</h3>
@@ -328,6 +312,24 @@
                 <a href="chat.html" class="btn btn-secondary" style="margin-right: 10px;">Skip</a>
                 <button id="modalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
                 <button id="modalCreateBtn" class="btn btn-primary"><i data-lucide="plus" class="lucide-inline"></i> Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for linking an existing chat scene by sync token -->
+    <div id="importSceneModal" class="modal-container">
+        <div class="modal-content">
+            <h2>Link Existing Scene</h2>
+            <div style="margin: 20px 0;">
+                <div>
+                    <label for="importSceneToken" class="modal-label">Sync Token:</label>
+                    <input type="text" id="importSceneToken" style="width: 100%;" placeholder="e.g., 3f2a9c81-...">
+                    <p class="modal-description">Paste the sync token from the scene's OBS URL (the <code>&amp;sync=</code> value) to edit that scene from this browser. Scenes are stored per-browser, so this is how you reach one created elsewhere.</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <button id="importModalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
+                <button id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
             </div>
         </div>
     </div>

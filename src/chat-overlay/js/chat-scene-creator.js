@@ -89,11 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 creatorYoutubeTarget: document.getElementById('creatorYoutubeTarget'),
                 applyChannelBtn: document.getElementById('applyChannelBtn'),
                 saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-                syncBadge: document.getElementById('syncBadge'),
-                enableSyncBtn: document.getElementById('enableSyncBtn'),
-                regenerateTokenBtn: document.getElementById('regenerateTokenBtn'),
-                linkExistingTokenBtn: document.getElementById('linkExistingTokenBtn'),
-                disableSyncBtn: document.getElementById('disableSyncBtn'),
                 instanceUrlConfig: document.getElementById('instanceUrlConfig'),
                 instanceUrlSetup: document.getElementById('instanceUrlSetup'),
                 copyUrlBtnConfig: document.getElementById('copyUrlBtnConfig'),
@@ -107,7 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalTitle: document.getElementById('modalTitle'),
                 modalInstanceName: document.getElementById('modalInstanceName'),
                 modalCancelBtn: document.getElementById('modalCancelBtn'),
-                modalCreateBtn: document.getElementById('modalCreateBtn')
+                modalCreateBtn: document.getElementById('modalCreateBtn'),
+                importSceneBtn: document.getElementById('importSceneBtn'),
+                importSceneModal: document.getElementById('importSceneModal'),
+                importSceneToken: document.getElementById('importSceneToken'),
+                importModalCancelBtn: document.getElementById('importModalCancelBtn'),
+                importModalConfirmBtn: document.getElementById('importModalConfirmBtn')
             };
         }
 
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.instanceManager.renderInstanceList(this.dom.instanceList, (id) => this.selectInstance(id));
         }
 
-        selectInstance(instanceId) {
+        async selectInstance(instanceId) {
             const instance = this.instanceManager.instances[instanceId];
             if (!instance) {
                 UIHelpers.showNotification('Error', 'Instance not found.', 'error');
@@ -134,8 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateSyncBadgeUI(instance, this.dom);
             this.syncManager.updateInstanceUrl(instance, instanceId, this.dom);
+
+            // Backfill scenes created before tokens were minted automatically. Must run
+            // before subscribing so the subscription always has a token to attach to.
+            await this.ensureSyncTokenAndPush(instanceId);
 
             this.syncManager.subscribeToRemoteChanges(
                 instance.syncToken,
@@ -194,97 +197,76 @@ document.addEventListener('DOMContentLoaded', () => {
             UIHelpers.showNotification('Channel Connection Updated', `Connected to Twitch: ${twitch || 'None'}, YouTube: ${youtube || 'None'}`);
         }
 
-        async enableSync() {
-            const currentId = this.instanceManager.currentInstanceId;
-            const instance = this.instanceManager.instances[currentId];
-            if (!currentId || !instance) return;
+        // Mint and push must happen atomically: a token that exists locally but has no
+        // matching Firestore doc yet is a race waiting to happen. The overlay's own
+        // handleSnapshot treats a missing doc as "nobody has claimed this yet" and uploads
+        // its local config to claim it — so if the OBS browser source connects before this
+        // push lands, it silently overwrites the streamer's in-progress edits here.
+        async ensureSyncTokenAndPush(instanceId) {
+            const instance = this.instanceManager.instances[instanceId];
+            if (!instance) return;
 
-            const newToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sync-${Date.now()}`;
-            instance.syncToken = newToken;
+            const minted = this.instanceManager.ensureSyncToken(instanceId);
+            if (!minted) return;
 
-            this.instanceManager.saveInstances();
-            this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateSyncBadgeUI(instance, this.dom);
-            this.syncManager.updateInstanceUrl(instance, currentId, this.dom);
-
-            const pushResult = await this.syncManager.pushToCloud(newToken, instance.config, instance.name);
-            if (pushResult.success) {
-                UIHelpers.showNotification('Live Sync Enabled', 'Firestore sync token minted. OBS browser source will sync edits live.');
-                this.syncManager.subscribeToRemoteChanges(
-                    newToken,
-                    currentId,
-                    (id) => this.instanceManager.instances[id],
-                    () => this.instanceManager.saveInstances(),
-                    () => this.instanceManager.currentInstanceId
-                );
-            } else {
-                UIHelpers.showNotification('Sync Created', 'Minted token locally, but initial cloud push failed.', 'warning');
+            const pushResult = await this.syncManager.pushToCloud(minted, instance.config, instance.name);
+            if (!pushResult.success) {
+                UIHelpers.showNotification('Sync Pending', 'Scene saved locally; cloud sync will retry on next save.', 'warning');
             }
+
+            this.syncManager.updateInstanceUrl(instance, instanceId, this.dom);
         }
 
-        async regenerateToken() {
-            const currentId = this.instanceManager.currentInstanceId;
-            const instance = this.instanceManager.instances[currentId];
-            if (!currentId || !instance) return;
-            if (!window.confirm('Generating a new token will orphan any OBS browser sources using the current token. Proceed?')) return;
+        importScene() {
+            if (this.dom.importSceneToken) this.dom.importSceneToken.value = '';
+            if (this.dom.importSceneModal) this.dom.importSceneModal.style.display = 'flex';
+        }
 
-            const newToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sync-${Date.now()}`;
-            instance.syncToken = newToken;
+        closeImportSceneModal() {
+            if (this.dom.importSceneModal) this.dom.importSceneModal.style.display = 'none';
+        }
 
-            this.instanceManager.saveInstances();
-            this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateSyncBadgeUI(instance, this.dom);
-            this.syncManager.updateInstanceUrl(instance, currentId, this.dom);
-
-            const pushResult = await this.syncManager.pushToCloud(newToken, instance.config, instance.name);
-            if (pushResult.success) {
-                UIHelpers.showNotification('Token Regenerated', 'New token created. Remember to update your OBS Browser Source URL.');
-                this.syncManager.subscribeToRemoteChanges(
-                    newToken,
-                    currentId,
-                    (id) => this.instanceManager.instances[id],
-                    () => this.instanceManager.saveInstances(),
-                    () => this.instanceManager.currentInstanceId
-                );
-            } else {
-                UIHelpers.showNotification('Token Regenerated', 'New token created, but cloud push failed.', 'warning');
+        confirmImportScene() {
+            const token = this.dom.importSceneToken?.value?.trim();
+            if (!token) {
+                UIHelpers.showNotification('Error', 'Enter a sync token to link.', 'error');
+                return;
             }
+
+            // Two local scenes on one token would share a Firestore doc and overwrite each
+            // other — the same failure duplicate mints a fresh token to avoid.
+            const existingId = Object.keys(this.instanceManager.instances)
+                .find((id) => this.instanceManager.instances[id].syncToken === token);
+            if (existingId) {
+                this.closeImportSceneModal();
+                this.selectInstance(existingId);
+                UIHelpers.showNotification('Already Linked', 'That scene is already in this browser.');
+                return;
+            }
+
+            // Linking gets its own scene rather than repointing the selected one, which would
+            // orphan that scene's OBS source. Sharing the remote token is the entire point
+            // here, unlike duplicate. Deliberately no push: this scene's config is still
+            // empty defaults and would overwrite the remote scene — the Firestore snapshot
+            // populates it instead.
+            const newId = this.instanceManager.createInstance('Linked Scene');
+            this.instanceManager.instances[newId].syncToken = token;
+            this.instanceManager.saveInstances();
+
+            this.closeImportSceneModal();
+            this.renderInstanceList();
+            this.selectInstance(newId);
+            UIHelpers.showNotification('Scene Linked', 'Pulling this scene\'s settings from the cloud.');
         }
 
-        async linkExistingToken() {
-            const currentId = this.instanceManager.currentInstanceId;
-            const instance = this.instanceManager.instances[currentId];
-            if (!currentId || !instance) return;
-            const token = prompt('Enter existing scene sync token (UUID):')?.trim();
-            if (!token) return;
-
-            instance.syncToken = token;
-            this.instanceManager.saveInstances();
-            this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateSyncBadgeUI(instance, this.dom);
-            this.syncManager.updateInstanceUrl(instance, currentId, this.dom);
-
-            this.syncManager.subscribeToRemoteChanges(
-                token,
-                currentId,
-                (id) => this.instanceManager.instances[id],
-                () => this.instanceManager.saveInstances(),
-                () => this.instanceManager.currentInstanceId
-            );
-            UIHelpers.showNotification('Linked', `Linked to sync token: ${token}`);
-        }
-
-        disableSync() {
-            const currentId = this.instanceManager.currentInstanceId;
-            const instance = this.instanceManager.instances[currentId];
-            if (!currentId || !instance) return;
-            delete instance.syncToken;
-            this.instanceManager.saveInstances();
-            this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateSyncBadgeUI(instance, this.dom);
-            this.syncManager.updateInstanceUrl(instance, currentId, this.dom);
-            this.syncManager.unsubscribeRemote();
-            UIHelpers.showNotification('Sync Disabled', 'Live sync disabled for this scene.');
+        // createInstance/duplicateCurrentInstance mint a syncToken but have no sync manager
+        // access to push it — same atomicity requirement as ensureSyncTokenAndPush above.
+        async pushFreshTokenToCloud(instance) {
+            if (!instance || !instance.syncToken) return;
+            const pushResult = await this.syncManager.pushToCloud(instance.syncToken, instance.config, instance.name);
+            if (!pushResult.success) {
+                UIHelpers.showNotification('Sync Pending', 'Scene saved locally; cloud sync will retry on next save.', 'warning');
+            }
         }
 
         setupEventListeners() {
@@ -304,11 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             if (this.dom.modalCreateBtn) {
-                this.dom.modalCreateBtn.addEventListener('click', () => {
+                this.dom.modalCreateBtn.addEventListener('click', async () => {
                     const newId = this.instanceManager.createInstance(this.dom.modalInstanceName.value);
                     this.instanceManager.closeInstanceModal(this.dom.instanceModal);
                     this.renderInstanceList();
-                    this.selectInstance(newId);
+                    await this.selectInstance(newId);
+                    await this.pushFreshTokenToCloud(this.instanceManager.instances[newId]);
                 });
             }
 
@@ -316,11 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.dom.applyChannelBtn) this.dom.applyChannelBtn.addEventListener('click', () => this.applyChannel());
 
             if (this.dom.duplicateBtn) {
-                this.dom.duplicateBtn.addEventListener('click', () => {
+                this.dom.duplicateBtn.addEventListener('click', async () => {
                     const newId = this.instanceManager.duplicateCurrentInstance();
                     if (newId) {
                         this.renderInstanceList();
-                        this.selectInstance(newId);
+                        await this.selectInstance(newId);
+                        await this.pushFreshTokenToCloud(this.instanceManager.instances[newId]);
                     }
                 });
             }
@@ -415,10 +399,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            if (this.dom.enableSyncBtn) this.dom.enableSyncBtn.addEventListener('click', () => this.enableSync());
-            if (this.dom.regenerateTokenBtn) this.dom.regenerateTokenBtn.addEventListener('click', () => this.regenerateToken());
-            if (this.dom.disableSyncBtn) this.dom.disableSyncBtn.addEventListener('click', () => this.disableSync());
-            if (this.dom.linkExistingTokenBtn) this.dom.linkExistingTokenBtn.addEventListener('click', () => this.linkExistingToken());
+            if (this.dom.importSceneBtn) this.dom.importSceneBtn.addEventListener('click', () => this.importScene());
+            if (this.dom.importModalCancelBtn) this.dom.importModalCancelBtn.addEventListener('click', () => this.closeImportSceneModal());
+            if (this.dom.importModalConfirmBtn) this.dom.importModalConfirmBtn.addEventListener('click', () => this.confirmImportScene());
+            if (this.dom.importSceneModal) {
+                this.dom.importSceneModal.addEventListener('click', (e) => {
+                    if (e.target === this.dom.importSceneModal) {
+                        this.closeImportSceneModal();
+                    }
+                });
+            }
         }
 
         setupPreviewBgSelector() {

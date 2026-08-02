@@ -63,6 +63,17 @@ export class CreatorInstanceManager {
         }
     }
 
+    /**
+     * Mints a new sync token used as the Firestore document key (sceneConfigs/<syncToken>)
+     * for live-syncing a scene's config to an OBS browser source.
+     * @returns {string} A new bare UUID token
+     */
+    mintSyncToken() {
+        return typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `sync-${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    }
+
     createInstance(nameInput) {
         const name = (nameInput || '').trim() || 'New Chat Scene';
         const id = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -74,7 +85,8 @@ export class CreatorInstanceManager {
             name: name,
             config: this.getDefaultConfig(),
             createdAt: new Date().toISOString(),
-            lastModified: new Date().toISOString()
+            lastModified: new Date().toISOString(),
+            syncToken: this.mintSyncToken()
         };
 
         this.instanceOrder.push(id);
@@ -96,7 +108,10 @@ export class CreatorInstanceManager {
             name: newName,
             config: typeof structuredClone === 'function' ? structuredClone(current.config) : JSON.parse(JSON.stringify(current.config)),
             createdAt: new Date().toISOString(),
-            lastModified: new Date().toISOString()
+            lastModified: new Date().toISOString(),
+            // Deliberately a fresh token, never copied from `current` — sharing a token would
+            // mean sharing one Firestore doc between two instances, causing silent data loss.
+            syncToken: this.mintSyncToken()
         };
 
         this.instanceOrder.push(newId);
@@ -119,6 +134,25 @@ export class CreatorInstanceManager {
 
         this.onNotification('Deleted', `Deleted chat scene: ${deletedName}`);
         return deletedId;
+    }
+
+    /**
+     * Backfills a sync token for scenes created before tokens were minted automatically.
+     * A non-null return means a new token was minted and the caller MUST push the config
+     * to the cloud immediately — a minted-but-never-pushed token can otherwise be claimed
+     * by whichever client connects first.
+     * @param {string} instanceId
+     * @returns {string|null} The newly minted token, or null if none was minted
+     */
+    ensureSyncToken(instanceId) {
+        const instance = this.instances[instanceId];
+        if (!instance) return null;
+        if (instance.syncToken) return null;
+
+        const token = this.mintSyncToken();
+        instance.syncToken = token;
+        this.saveInstances();
+        return token;
     }
 
     renderInstanceList(container, onSelectCallback) {

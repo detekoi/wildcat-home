@@ -101,30 +101,6 @@ export class CreatorSyncManager {
         }
     }
 
-    updateSyncBadgeUI(instance, domRefs = {}) {
-        if (!domRefs.syncBadge) return;
-
-        if (instance && instance.syncToken) {
-            domRefs.syncBadge.textContent = 'Web Sync: Active';
-            domRefs.syncBadge.style.background = '#1b5e20';
-            domRefs.syncBadge.style.color = '#e8f5e9';
-            domRefs.syncBadge.style.border = '1px solid #2e7d32';
-
-            if (domRefs.enableSyncBtn) domRefs.enableSyncBtn.style.display = 'none';
-            if (domRefs.regenerateTokenBtn) domRefs.regenerateTokenBtn.style.display = 'inline-flex';
-            if (domRefs.disableSyncBtn) domRefs.disableSyncBtn.style.display = 'inline-flex';
-        } else {
-            domRefs.syncBadge.textContent = 'Web Sync: Disabled';
-            domRefs.syncBadge.style.background = 'var(--bg-tertiary, #1f1f23)';
-            domRefs.syncBadge.style.color = 'var(--text-muted, #adadb8)';
-            domRefs.syncBadge.style.border = '1px solid var(--border-color, #333)';
-
-            if (domRefs.enableSyncBtn) domRefs.enableSyncBtn.style.display = 'inline-flex';
-            if (domRefs.regenerateTokenBtn) domRefs.regenerateTokenBtn.style.display = 'none';
-            if (domRefs.disableSyncBtn) domRefs.disableSyncBtn.style.display = 'none';
-        }
-    }
-
     updateInstanceUrl(instance, currentInstanceId, domRefs = {}) {
         if (!currentInstanceId || !instance) return;
         const baseUrl = window.location.href.split('chat-scene-creator.html')[0] + 'chat.html';
