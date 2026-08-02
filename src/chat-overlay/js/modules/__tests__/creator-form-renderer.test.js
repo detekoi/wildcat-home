@@ -314,3 +314,66 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
     });
 });
 
+
+describe('CreatorFormRenderer - Background Image Upload', () => {
+    let formRenderer;
+    let configManager;
+    let container;
+    let previewIframe;
+    let postMessageSpy;
+
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <div id="formContainer"></div>
+            <iframe id="previewIframe"></iframe>
+            <div id="fontPickerMount"></div>
+        `;
+
+        container = document.getElementById('formContainer');
+        previewIframe = document.getElementById('previewIframe');
+
+        postMessageSpy = vi.fn();
+        Object.defineProperty(previewIframe, 'contentWindow', {
+            value: { postMessage: postMessageSpy },
+            writable: true,
+            configurable: true
+        });
+
+        configManager = new ConfigManager();
+        formRenderer = new CreatorFormRenderer({
+            configManager: configManager,
+            previewIframe: previewIframe
+        });
+    });
+
+    it('renders the upload controls alongside the Background Color swatch', () => {
+        formRenderer.renderSchemaForm(container);
+
+        // Regression: bgColor uses the 'color' control, whose branch returns early.
+        // The upload box has to be appended from inside that branch or it never renders.
+        expect(document.getElementById('schema-input-bgColor')).not.toBeNull();
+        expect(document.getElementById('creatorBgFile')).not.toBeNull();
+        expect(document.getElementById('creatorBgClear')).not.toBeNull();
+        expect(document.getElementById('creatorBgPreview').textContent).toBe('No background image set');
+    });
+
+    it('readFormConfig() emits bgImage as a data URL so the proxy can upload it to GCS', () => {
+        formRenderer.renderSchemaForm(container);
+        formRenderer.currentBgImage = 'data:image/jpeg;base64,AAAA';
+
+        expect(formRenderer.readFormConfig().bgImage).toBe('data:image/jpeg;base64,AAAA');
+    });
+
+    it('Clear Image writes bgImage: null instead of omitting the key', () => {
+        formRenderer.renderSchemaForm(container);
+        formRenderer.currentBgImage = 'data:image/jpeg;base64,AAAA';
+
+        document.getElementById('creatorBgClear').dispatchEvent(new Event('click', { bubbles: true }));
+
+        const config = formRenderer.readFormConfig();
+        // Omitting the key left the old image in the saved instance and on the server.
+        expect('bgImage' in config).toBe(true);
+        expect(config.bgImage).toBeNull();
+        expect(document.getElementById('creatorBgPreview').textContent).toBe('No background image set');
+    });
+});

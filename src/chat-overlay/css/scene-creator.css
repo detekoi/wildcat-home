@@ -458,3 +458,10 @@ input[type="color"]:disabled::-webkit-color-swatch,
     to { transform: rotate(360deg); }
 }
 
+
+.creator-bg-image-box {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg-secondary, #18181b);
+    border-radius: 6px;
+}

@@ -304,6 +304,7 @@ export class CreatorFormRenderer {
                     wrapper.appendChild(hexInput);
                     row.appendChild(wrapper);
                     groupDiv.appendChild(row);
+                    if (item.key === 'bgColor') groupDiv.appendChild(this.createBgImageBox());
                     return;
                 } else if (item.control === 'range') {
                     input = document.createElement('input');
@@ -331,25 +332,6 @@ export class CreatorFormRenderer {
                 }
 
                 row.appendChild(input);
-
-                if (item.key === 'bgColor') {
-                    const bgImgBox = document.createElement('div');
-                    bgImgBox.style.marginTop = '10px';
-                    bgImgBox.style.padding = '10px';
-                    bgImgBox.style.background = 'var(--bg-secondary, #18181b)';
-                    bgImgBox.style.borderRadius = '6px';
-                    bgImgBox.innerHTML = `
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">Background Image</label>
-                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-                            <input type="file" id="creatorBgFile" accept="image/*" style="font-size: 12px; flex: 1;">
-                            <button type="button" class="btn btn-secondary" id="creatorBgClear" style="padding: 4px 8px; font-size: 12px;">Clear Image</button>
-                        </div>
-                        <div id="creatorBgPreview" style="font-size: 12px; opacity: 0.7;">No background image set</div>
-                    `;
-                    groupDiv.appendChild(row);
-                    groupDiv.appendChild(bgImgBox);
-                    return;
-                }
 
                 groupDiv.appendChild(row);
 
@@ -410,6 +392,26 @@ export class CreatorFormRenderer {
         if (window.lucide) window.lucide.createIcons();
 
         this.setupBgImageAndAiListeners();
+    }
+
+    /**
+     * Build the background-image upload box that sits under the Background Color
+     * control. Kept separate from the render loop because the 'color' branch
+     * returns early, so it has to be appended from inside that branch.
+     * @returns {HTMLDivElement}
+     */
+    createBgImageBox() {
+        const bgImgBox = document.createElement('div');
+        bgImgBox.className = 'creator-bg-image-box';
+        bgImgBox.innerHTML = `
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">Background Image</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                <input type="file" id="creatorBgFile" accept="image/*" style="font-size: 12px; flex: 1; min-width: 0;">
+                <button type="button" class="btn btn-secondary" id="creatorBgClear" style="padding: 4px 8px; font-size: 12px;">Clear Image</button>
+            </div>
+            <div id="creatorBgPreview" style="font-size: 12px; opacity: 0.7;">No background image set</div>
+        `;
+        return bgImgBox;
     }
 
     setupBgImageAndAiListeners() {
@@ -889,9 +891,9 @@ export class CreatorFormRenderer {
             }
         });
 
-        if (this.currentBgImage) {
-            config.bgImage = this.currentBgImage;
-        }
+        // Always written, including as null: omitting the key on clear left the
+        // previously saved image in place both locally and on the sync server.
+        config.bgImage = this.currentBgImage || null;
 
         applyChromaKey(config, config.chromaKey);
 
