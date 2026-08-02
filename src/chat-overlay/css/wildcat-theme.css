@@ -547,6 +547,8 @@ input:disabled {
     border-color: var(--border-color) !important;
     font-family: 'Atkinson Hyperlegible Mono', monospace;
     font-size: 0.85rem;
+    display: flex;
+    align-items: center;
 }
 
 /* =====================================================
