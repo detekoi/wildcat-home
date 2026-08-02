@@ -755,57 +755,85 @@ button:hover {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: var(--config-bg-color, rgba(35, 35, 35, 0.95));
-    padding: 0;
+    background-color: var(--config-bg-color, rgba(24, 24, 27, 0.96));
+    padding: 8px 10px;
     box-sizing: border-box;
     z-index: 10;
-    border-left: 1px solid var(--config-border-color, #6c757d);
-    border-right: 1px solid var(--config-border-color, #6c757d);
-    border-top: 1px solid var(--config-border-color, #6c757d);
-    border-radius: 3px;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+    border-left: 1px solid var(--config-border-color, #444);
+    border-right: 1px solid var(--config-border-color, #444);
+    border-top: 1px solid var(--config-border-color, #444);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    backdrop-filter: blur(8px);
 }
 
-#config-panel-actions > div {
+.config-action-row {
     display: flex;
-    justify-content: space-between;
-    gap: 5px;
-    margin: 0;
-    padding: 5px 10px;
+    gap: 6px;
+    width: 100%;
 }
 
 #config-panel-actions button {
-    padding: 4px 8px;
-    font-size: 0.85em;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 0.82em;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
     margin-top: 0;
+    line-height: 1.2;
 }
 
-/* Save/Copy/Regen/Cancel/Reset use these variant classes to distinguish
-   intent instead of all falling back to the generic (primary-purple) button
-   look above. */
 #config-panel-actions .btn-primary {
-    background-color: var(--primary-color);
+    background-color: var(--primary-color, #9147ff);
     color: var(--button-text-color, white);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 #config-panel-actions .btn-primary:hover {
     background-color: var(--primary-dark, #772ce8);
+    transform: translateY(-1px);
 }
 
 #config-panel-actions .btn-secondary {
-    background-color: var(--config-border-color, #555);
+    background-color: var(--config-border-color, #3f3f46);
     color: var(--config-text-color, #fff);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 #config-panel-actions .btn-secondary:hover {
+    background-color: #52525b;
     filter: brightness(1.15);
+    transform: translateY(-1px);
 }
 
 #config-panel-actions .btn-danger {
-    background-color: var(--danger-color, #aa5555);
+    background-color: var(--danger-color, #dc2626);
     color: var(--button-text-color, white);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 #config-panel-actions .btn-danger:hover {
-    filter: brightness(1.1);
+    background-color: var(--danger-dark, #b91c1c);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 340px) {
+    .config-action-row {
+        flex-wrap: wrap;
+    }
+    #config-panel-actions button {
+        font-size: 0.78em;
+        padding: 6px 6px;
+    }
 }

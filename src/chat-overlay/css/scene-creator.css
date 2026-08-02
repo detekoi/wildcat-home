@@ -331,5 +331,29 @@ input[type="color"]:disabled::-webkit-color-swatch,
     background-size: 20px 20px !important;
 }
 
+/* OBS Tip Banner */
+.obs-tip-banner {
+    margin-top: 12px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: rgba(145, 71, 255, 0.08);
+    border: 1px solid rgba(145, 71, 255, 0.22);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-color, #e4e4e7);
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.obs-tip-icon {
+    color: #eab308;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
 
 
