@@ -135,9 +135,9 @@ button:hover {
     margin-top: 4px;
 }
 
-#channel-form {
+#channel-form,
+.connection-row {
     margin-bottom: 15px;
-    order: -1;
 }
 
 #channel-input {
@@ -598,31 +598,54 @@ button:hover {
     gap: 10px;
 }
 
-#config-panel #channel-form {
+#config-panel #channel-form,
+#config-panel #twitch-channel-form,
+#config-panel #youtube-channel-form,
+#config-panel .connection-row div[id$="-channel-form"] {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
     width: 100%;
     margin-bottom: 0;
 }
 
-#config-panel #channel-form label {
+#config-panel #channel-form label,
+#config-panel #twitch-channel-form label,
+#config-panel #youtube-channel-form label {
     flex-shrink: 0;
     margin-bottom: 0;
 }
 
-#config-panel #channel-form input[type="text"] {
+#config-panel #channel-form input[type="text"],
+#config-panel #twitch-channel-form input[type="text"],
+#config-panel #youtube-channel-form input[type="text"],
+#config-panel .connection-row input[type="text"] {
     flex-grow: 1;
     min-width: 100px;
+    margin: 0;
+    box-sizing: border-box;
 }
 
-#config-panel #channel-form button {
+#config-panel #channel-form button,
+#config-panel #twitch-channel-form button,
+#config-panel #youtube-channel-form button,
+#config-panel #twitch-connect-btn,
+#config-panel #youtube-connect-btn,
+#config-panel .connection-row button:not(#twitch-disconnect-btn):not(#youtube-disconnect-btn) {
     flex-shrink: 0;
     padding: 6px 12px;
     margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
-#config-panel #disconnect-btn {
+#config-panel #disconnect-btn,
+#config-panel #twitch-disconnect-btn,
+#config-panel #youtube-disconnect-btn {
     width: 100%;
     margin-top: 5px;
     padding: 8px 15px;
