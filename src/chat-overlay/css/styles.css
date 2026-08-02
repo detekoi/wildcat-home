@@ -332,9 +332,16 @@ header p {
 
 .action-buttons {
     display: flex;
+    flex-direction: column;
     gap: var(--spacing-sm);
-    flex-wrap: wrap;
-    justify-content: space-between;
+}
+
+.action-buttons .btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 /* Configuration Workspace */
