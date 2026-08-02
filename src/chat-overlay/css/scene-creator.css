@@ -354,6 +354,107 @@ input[type="color"]:disabled::-webkit-color-swatch,
     flex-shrink: 0;
     margin-top: 1px;
 }
+/* =====================================================
+   FONT PICKER — search dropdown for createFontPicker()
+   Mirrors the font search dropdown from config-panel.css
+   so the standalone font picker used in the creator form
+   gets the same treatment: searchable input, Google Fonts
+   remote results, loading spinner, section labels, etc.
+   ===================================================== */
 
+.font-picker-wrapper {
+    position: relative;
+}
 
+.font-picker-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* The base state is hidden; FontManager toggles the .visible class */
+.font-search-results {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background-color: var(--panel-color, #0a0a0a);
+    border: 1px solid var(--primary-color, #fffdd9);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 1100;
+    scrollbar-width: thin;
+    scrollbar-color: #555 var(--panel-color, #0a0a0a);
+}
+
+.font-search-results.visible {
+    display: block;
+}
+
+.font-search-result {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted, #a1a1aa);
+    border-bottom: 1px solid var(--border-color, #333);
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.font-search-result:last-child {
+    border-bottom: none;
+}
+
+.font-search-result:hover,
+.font-search-result.highlighted {
+    background-color: rgba(255, 253, 217, 0.12);
+    color: var(--text-color, #ffffff);
+}
+
+.font-search-result .font-category {
+    font-size: 10px;
+    color: var(--text-muted, #71717a);
+    margin-left: 6px;
+    font-family: var(--font-sans);
+}
+
+.font-search-section-label {
+    padding: 5px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted, #71717a);
+    background-color: var(--background-color, #000000);
+    border-bottom: 1px solid var(--border-color, #333);
+    font-family: var(--font-sans);
+    user-select: none;
+}
+
+.font-search-loading {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--text-muted, #71717a);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+}
+
+.font-search-loading .mini-spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color, #333);
+    border-top-color: var(--primary-color, #fffdd9);
+    animation: spin 0.8s infinite linear;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 

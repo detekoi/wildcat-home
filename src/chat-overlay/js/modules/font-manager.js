@@ -593,14 +593,6 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
 
     const resultsContainer = document.createElement('div');
     resultsContainer.className = 'font-search-results font-picker-dropdown';
-    resultsContainer.style.display = 'none';
-    resultsContainer.style.position = 'absolute';
-    resultsContainer.style.top = '100%';
-    resultsContainer.style.left = '0';
-    resultsContainer.style.right = '0';
-    resultsContainer.style.zIndex = '1000';
-    resultsContainer.style.maxHeight = '240px';
-    resultsContainer.style.overflowY = 'auto';
 
     wrapper.appendChild(input);
     wrapper.appendChild(resultsContainer);
