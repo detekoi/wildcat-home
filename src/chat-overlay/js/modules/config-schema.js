@@ -301,7 +301,8 @@ export const CONFIG_SCHEMA = [
                 options: [
                     { label: 'From Bottom', value: 'from-bottom' },
                     { label: 'From Top', value: 'from-top' },
-                    { label: 'Fade In', value: 'fade-in' }
+                    { label: 'From Left', value: 'from-left' },
+                    { label: 'From Right', value: 'from-right' }
                 ],
                 default: 'from-bottom'
             },

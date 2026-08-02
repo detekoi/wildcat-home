@@ -298,5 +298,19 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         hexInput.value = '#00ffea80';
         expect(formRenderer.readFormConfig().borderColor).toBe('#00ffea80');
     });
+
+    it('renders directional options (from-bottom, from-top, from-left, from-right) for popup animation direction', () => {
+        formRenderer.renderSchemaForm(container);
+        const dirSelect = document.getElementById('schema-popup-direction');
+        expect(dirSelect).not.toBeNull();
+
+        const options = Array.from(dirSelect.options).map(opt => ({ value: opt.value, label: opt.textContent.trim() }));
+        expect(options).toEqual([
+            { value: 'from-bottom', label: 'From Bottom' },
+            { value: 'from-top', label: 'From Top' },
+            { value: 'from-left', label: 'From Left' },
+            { value: 'from-right', label: 'From Right' }
+        ]);
+    });
 });
 

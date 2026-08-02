@@ -214,13 +214,21 @@ export class CreatorFormRenderer {
                     popupContainer.style.borderRadius = '8px';
                     popupContainer.style.marginTop = '8px';
 
+                    const directionSubfield = item.subFields?.find(sf => sf.key === 'direction');
+                    const optionsHtml = directionSubfield?.options ?
+                        directionSubfield.options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('') :
+                        `
+                            <option value="from-bottom">From Bottom</option>
+                            <option value="from-top">From Top</option>
+                            <option value="from-left">From Left</option>
+                            <option value="from-right">From Right</option>
+                        `;
+
                     popupContainer.innerHTML = `
                         <div class="settings-row" style="margin-bottom: 8px;">
                             <label for="schema-popup-direction">Animation Direction</label>
                             <select id="schema-popup-direction" class="form-control">
-                                <option value="from-bottom">From Bottom</option>
-                                <option value="from-top">From Top</option>
-                                <option value="fade-in">Fade In</option>
+                                ${optionsHtml}
                             </select>
                         </div>
                         <div class="settings-row" style="margin-bottom: 8px;">
