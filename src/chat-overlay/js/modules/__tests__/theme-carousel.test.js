@@ -218,5 +218,20 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             window.themeCarousel.addTheme(theme);
             expect(window.availableThemes.length).toBe(countAfterFirst);
         });
+
+        it('should insert a theme whose name matches an existing theme but whose value differs', () => {
+            window.themeCarousel.mount(container);
+
+            window.themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-1', bgColor: '#000000' });
+            const countAfterFirst = window.availableThemes.length;
+
+            // Same display name, new unique value — must still be inserted so that
+            // applying the new value doesn't fall back to the default theme.
+            window.themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-2', bgColor: '#001100' });
+
+            expect(window.availableThemes.length).toBe(countAfterFirst + 1);
+            expect(window.availableThemes[0].value).toBe('generated-2');
+            expect(window.availableThemes.find(t => t.value === 'generated-1')).toBeDefined();
+        });
     });
 });

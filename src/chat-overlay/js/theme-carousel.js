@@ -348,6 +348,13 @@
         container.innerHTML = CAROUSEL_MARKUP;
         mountedRoot = container;
 
+        // The nav chevrons are <i data-lucide> tags in freshly-injected markup;
+        // any page-level lucide.createIcons() ran before mount, so run it again
+        // here or the arrow buttons render empty (invisible).
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
         // Hosts that already show a live preview of the theme elsewhere (the scene
         // creator renders one beside the form) can drop the built-in swatch rather
         // than reserve vertical space for a second copy of the same information.
@@ -520,8 +527,12 @@
         generatedThemes.unshift(themeWithFlag);
 
         if (window.availableThemes && Array.isArray(window.availableThemes)) {
+            // Dedupe strictly by value: values are unique per generation, while
+            // names legitimately repeat (the model often reuses a name for
+            // similar prompts). Matching on name here used to skip the insert,
+            // so applying the new theme's value fell back to the default theme.
             const existingInMainIndex = window.availableThemes.findIndex(t =>
-                t.name === theme.name || t.value === theme.value);
+                t.value === theme.value);
 
             if (existingInMainIndex === -1) {
                 console.log(`Adding theme to main themes carousel: ${theme.name}`);

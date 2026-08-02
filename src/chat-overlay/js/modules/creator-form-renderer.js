@@ -478,37 +478,15 @@ export class CreatorFormRenderer {
 
                     if (result && result.themeData) {
                         const theme = result.themeData;
-                        if (theme.background_color) {
-                            this.updateColorControl('bgColor', theme.background_color);
-                            const parsed = UIHelpers.parseColor(theme.background_color);
-                            const bgOpacityInput = document.getElementById('schema-input-bgColorOpacity');
-                            if (bgOpacityInput && parsed.opacity !== undefined) {
-                                bgOpacityInput.value = parsed.opacity;
-                                const valDisplay = document.getElementById('schema-val-bgColorOpacity');
-                                if (valDisplay) valDisplay.textContent = `${Math.round(parsed.opacity * 100)}%`;
-                            }
-                        }
-                        if (theme.border_color) {
-                            this.updateColorControl('borderColor', theme.border_color);
-                        }
-                        if (theme.text_color) {
-                            this.updateColorControl('textColor', theme.text_color);
-                        }
-                        if (theme.username_color) {
-                            this.updateColorControl('usernameColor', theme.username_color);
-                        }
-                        if (result.compressedImage) {
-                            this.currentBgImage = result.compressedImage;
-                            const previewEl = document.getElementById('creatorBgPreview');
-                            if (previewEl) previewEl.textContent = 'AI Background Image generated';
-                        }
 
                         // Persist the generated theme to the shared cloud library so it doesn't
                         // vanish once this form is closed. Reuse theme-generator.js's own
                         // construction logic (unique `generated-...` value, "(Variant N)" dedupe
-                        // naming) instead of duplicating it here.
+                        // naming) instead of duplicating it here. It returns the constructed
+                        // theme object, which carries every style property the AI produced.
+                        let addedTheme = null;
                         if (typeof window.processAndAddTheme === 'function') {
-                            window.processAndAddTheme(theme, result.compressedImage || null);
+                            addedTheme = window.processAndAddTheme(theme, result.compressedImage || null);
                             if (this.themeCarouselController && typeof this.themeCarouselController.refresh === 'function') {
                                 this.themeCarouselController.refresh();
                             }
@@ -516,8 +494,32 @@ export class CreatorFormRenderer {
                             console.warn('[creator-form-renderer] window.processAndAddTheme unavailable; generated theme was not persisted to the theme library.');
                         }
 
+                        if (addedTheme) {
+                            // Apply the full theme (colors, opacity, font, radius, shadows,
+                            // timestamp/pronoun colors, background image) through the same
+                            // path the carousel uses, so nothing the AI returned is dropped.
+                            this.applyThemeToForm(addedTheme);
+                        } else {
+                            // Library unavailable — degrade to applying the raw colors.
+                            if (theme.background_color) {
+                                this.updateColorControl('bgColor', theme.background_color);
+                                const parsed = UIHelpers.parseColor(theme.background_color);
+                                if (parsed.opacity !== undefined) {
+                                    this.updateRangeControl('bgColorOpacity', parsed.opacity, v => `${Math.round(v * 100)}%`);
+                                }
+                            }
+                            if (theme.border_color) this.updateColorControl('borderColor', theme.border_color);
+                            if (theme.text_color) this.updateColorControl('textColor', theme.text_color);
+                            if (theme.username_color) this.updateColorControl('usernameColor', theme.username_color);
+                            if (result.compressedImage) {
+                                this.currentBgImage = result.compressedImage;
+                                const previewEl = document.getElementById('creatorBgPreview');
+                                if (previewEl) previewEl.textContent = 'AI Background Image generated';
+                            }
+                            this.sendPreviewUpdate();
+                        }
+
                         if (statusEl) statusEl.textContent = 'Theme applied!';
-                        this.sendPreviewUpdate();
                     }
                 } catch (err) {
                     console.error('AI Theme Generation failed:', err);
@@ -526,6 +528,18 @@ export class CreatorFormRenderer {
                     aiGenBtn.disabled = false;
                 }
             });
+
+            // Enter in the prompt field triggers generation, matching the
+            // config-panel generator's behavior (theme-generator.js).
+            const aiPromptInput = document.getElementById('creatorAiPrompt');
+            if (aiPromptInput) {
+                aiPromptInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !aiGenBtn.disabled) {
+                        e.preventDefault();
+                        aiGenBtn.click();
+                    }
+                });
+            }
         }
     }
 

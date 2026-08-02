@@ -401,8 +401,15 @@
                 ? window.themeCarousel.getThemes()
                 : (window.availableThemes || []); // Fallback to availableThemes if carousel API missing
 
+            // Cloud round-trips may predate originalThemeName being persisted, so
+            // also match on the visible name (base or "(Variant N)" forms) — otherwise
+            // a re-generated prompt reusing the same theme_name gets no suffix and
+            // collides with the stored copy.
+            const baseName = themeData.theme_name;
             const existingThemesWithSameName = existingThemes.filter(t =>
-                t.originalThemeName === themeData.theme_name);
+                t.originalThemeName === baseName ||
+                t.name === baseName ||
+                (typeof t.name === 'string' && t.name.startsWith(`${baseName} (Variant `)));
 
             const variantNum = existingThemesWithSameName.length;
             const nameSuffix = variantNum > 0 ? ` (Variant ${variantNum + 1})` : '';
@@ -419,6 +426,11 @@
                 borderRadiusValue: themeData.border_radius_value || window.getBorderRadiusValue(themeData.border_radius || 'Subtle'), // CSS value from proxy (or fallback)
                 boxShadow: themeData.box_shadow || 'Soft',              // Preset name from proxy
                 boxShadowValue: themeData.box_shadow_value || window.getBoxShadowValue(themeData.box_shadow || 'Soft'),      // CSS value from proxy (or fallback)
+                // Lowercased to match the config-schema preset slugs ('none'…'glow')
+                textShadow: typeof themeData.text_shadow === 'string' ? themeData.text_shadow.toLowerCase() : undefined,
+                timestampColor: themeData.timestamp_color || undefined,
+                pronounBadgeColor: themeData.pronoun_badge_color || undefined,
+                bgImageOpacity: typeof themeData.bg_image_opacity === 'number' ? themeData.bg_image_opacity : undefined,
                 description: themeData.description,
                 backgroundImage: compressedImageDataUrl, // Use compressed image
                 fontFamily: themeData.font_family,
@@ -478,11 +490,13 @@
                 document.dispatchEvent(themeProcessedEvent);
                 console.log("Dispatched theme-data-processed event");
 
+                return addedTheme;
             } else {
                 console.error('Theme carousel API (window.themeCarousel.addTheme) not found or invalid. Cannot add generated theme.');
                 if (typeof addSystemMessage === 'function') {
                     addSystemMessage('❌ Error: Could not add or apply generated theme via carousel API.');
                 }
+                return null;
             }
 
         } catch (error) {
@@ -490,6 +504,7 @@
             if (typeof addSystemMessage === 'function') {
                 addSystemMessage(`❌ Error processing theme: ${error.message || 'Unknown error'}`);
             }
+            return null;
         }
     }
 
