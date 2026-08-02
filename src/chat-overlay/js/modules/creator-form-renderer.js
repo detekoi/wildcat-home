@@ -338,6 +338,9 @@ export class CreatorFormRenderer {
                 if (item.helpText || item.helpUrl) {
                     const helpDiv = document.createElement('div');
                     helpDiv.className = 'help-text';
+                    // Help text is a sibling of the row, not a child, so anything that
+                    // hides a row (applyChatModeVisibility) has to hide this by id too.
+                    helpDiv.id = `schema-help-${item.key}`;
                     if (item.indent) {
                         const indentPx = item.indent === 1 ? 20 : 35;
                         helpDiv.style.marginLeft = `${indentPx}px`;
@@ -547,16 +550,7 @@ export class CreatorFormRenderer {
                 }
 
                 if (item.key === 'chatMode') {
-                    const isPopup = input.value === 'popup';
-                    const popupBlock = document.getElementById('popupModeBlock');
-                    if (popupBlock) popupBlock.style.display = isPopup ? 'block' : 'none';
-
-                    const rowHeight = document.getElementById('schema-row-chatHeight');
-                    const rowMaxMsg = document.getElementById('schema-row-maxMessages');
-                    const rowTopFade = document.getElementById('schema-row-topFade');
-                    if (rowHeight) rowHeight.style.display = isPopup ? 'none' : 'flex';
-                    if (rowMaxMsg) rowMaxMsg.style.display = isPopup ? 'none' : 'flex';
-                    if (rowTopFade) rowTopFade.style.display = isPopup ? 'none' : 'flex';
+                    this.applyChatModeVisibility(input.value === 'popup');
                 }
 
                 this.sendPreviewUpdate();
@@ -570,6 +564,25 @@ export class CreatorFormRenderer {
                 input.addEventListener('change', () => this.sendPreviewUpdate());
                 input.addEventListener('input', () => this.sendPreviewUpdate());
             }
+        });
+    }
+
+    /**
+     * Show/hide the controls that only apply to one chat mode. Popup mode replaces
+     * the window-mode sizing/history settings with the popup block, so those rows —
+     * and their help text, which renders as a sibling of the row rather than inside
+     * it — have to be hidden together or the blurb is left stranded on its own.
+     * @param {boolean} isPopup
+     */
+    applyChatModeVisibility(isPopup) {
+        const popupBlock = document.getElementById('popupModeBlock');
+        if (popupBlock) popupBlock.style.display = isPopup ? 'block' : 'none';
+
+        ['chatHeight', 'maxMessages', 'topFade'].forEach(key => {
+            const row = document.getElementById(`schema-row-${key}`);
+            if (row) row.style.display = isPopup ? 'none' : 'flex';
+            const help = document.getElementById(`schema-help-${key}`);
+            if (help) help.style.display = isPopup ? 'none' : '';
         });
     }
 
@@ -820,16 +833,7 @@ export class CreatorFormRenderer {
             previewEl.textContent = this.currentBgImage ? 'Background image active' : 'No background image set';
         }
 
-        const isPopup = config.chatMode === 'popup';
-        const popupBlock = document.getElementById('popupModeBlock');
-        if (popupBlock) popupBlock.style.display = isPopup ? 'block' : 'none';
-
-        const rowHeight = document.getElementById('schema-row-chatHeight');
-        const rowMaxMsg = document.getElementById('schema-row-maxMessages');
-        const rowTopFade = document.getElementById('schema-row-topFade');
-        if (rowHeight) rowHeight.style.display = isPopup ? 'none' : 'flex';
-        if (rowMaxMsg) rowMaxMsg.style.display = isPopup ? 'none' : 'flex';
-        if (rowTopFade) rowTopFade.style.display = isPopup ? 'none' : 'flex';
+        this.applyChatModeVisibility(config.chatMode === 'popup');
 
         const chromaKeyInput = document.getElementById('schema-input-chromaKey');
         if (chromaKeyInput) {

@@ -8,10 +8,7 @@ export const RUNTIME_KEYS = new Set([
     'googleFontFamily',
     'lastTwitchChannel',
     'lastYouTubeTarget',
-    'preChromaKeyOpacity',
-    'showSuperChats',
-    'showMembershipEvents',
-    'showPlatformBadges'
+    'preChromaKeyOpacity'
 ]);
 
 /**
@@ -221,10 +218,26 @@ export const CONFIG_SCHEMA = [
     },
 
     // --- Message Elements ---
+    // Order mirrors the Message Elements block of the runtime config panel
+    // (chat.html) so the two surfaces read the same top to bottom.
     {
-        key: 'showTimestamps',
+        key: 'showPlatformBadges',
         group: 'message_elements',
-        label: 'Show Timestamps',
+        label: 'Show Platform Badges',
+        control: 'checkbox',
+        default: true
+    },
+    {
+        key: 'showSuperChats',
+        group: 'message_elements',
+        label: 'Show Super Chats',
+        control: 'checkbox',
+        default: true
+    },
+    {
+        key: 'showMembershipEvents',
+        group: 'message_elements',
+        label: 'Show Membership Events',
         control: 'checkbox',
         default: true
     },
@@ -244,6 +257,13 @@ export const CONFIG_SCHEMA = [
         helpText: 'Users can set theirs at',
         helpUrl: 'https://pr.alejo.io/',
         helpLinkText: 'pr.alejo.io'
+    },
+    {
+        key: 'showTimestamps',
+        group: 'message_elements',
+        label: 'Show Timestamps',
+        control: 'checkbox',
+        default: true
     },
     {
         key: 'enlargeSingleEmotes',

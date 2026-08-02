@@ -265,10 +265,15 @@ export class ChatRenderer {
 
             const eventType = data.eventType || 'chat';
             if (eventType === 'superchat' || eventType === 'supersticker') {
-                this.renderSuperChat(data, targetContainer, currentScrollArea);
+                // Undefined means "not configured yet", which predates the toggle — treat as on.
+                if (this.config.showSuperChats !== false) {
+                    this.renderSuperChat(data, targetContainer, currentScrollArea);
+                }
                 return;
             } else if (eventType === 'new-member' || eventType === 'member-milestone' || eventType === 'gift-purchase' || eventType === 'gift-received') {
-                this.renderMembershipEvent(data, targetContainer, currentScrollArea);
+                if (this.config.showMembershipEvents !== false) {
+                    this.renderMembershipEvent(data, targetContainer, currentScrollArea);
+                }
                 return;
             }
 
