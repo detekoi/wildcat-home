@@ -267,7 +267,7 @@ export class CreatorFormRenderer {
                     hexInput.type = 'text';
                     hexInput.id = `schema-hex-${item.key}`;
                     hexInput.className = 'form-control color-hex-input';
-                    hexInput.maxLength = 7;
+                    hexInput.maxLength = 11;
                     hexInput.value = safeDefault.toUpperCase();
                     hexInput.placeholder = '#RRGGBB';
 
@@ -276,7 +276,12 @@ export class CreatorFormRenderer {
                     });
 
                     const syncHexToSwatch = () => {
-                        let val = hexInput.value.trim();
+                        let val = hexInput.value.trim().toLowerCase();
+                        if (val === 'transparent') {
+                            input.value = '#000000';
+                            this.sendPreviewUpdate();
+                            return;
+                        }
                         if (val && !val.startsWith('#')) val = '#' + val;
                         const parsed = UIHelpers.parseColor(val);
                         if (parsed.hex && parsed.hex.length === 7) {
@@ -560,10 +565,17 @@ export class CreatorFormRenderer {
 
     updateColorControl(key, colorStr) {
         if (!colorStr) return;
-        const parsed = UIHelpers.parseColor(colorStr);
-        const hex = (parsed && parsed.hex) ? parsed.hex : '#121212';
         const swatchInput = document.getElementById(`schema-input-${key}`);
         const hexInput = document.getElementById(`schema-hex-${key}`);
+
+        if (typeof colorStr === 'string' && colorStr.trim().toLowerCase() === 'transparent') {
+            if (swatchInput) swatchInput.value = '#000000';
+            if (hexInput) hexInput.value = 'TRANSPARENT';
+            return;
+        }
+
+        const parsed = UIHelpers.parseColor(colorStr);
+        const hex = (parsed && parsed.hex) ? parsed.hex : '#121212';
         if (swatchInput) swatchInput.value = hex;
         if (hexInput) hexInput.value = hex.toUpperCase();
     }
@@ -590,14 +602,7 @@ export class CreatorFormRenderer {
             if (opacity !== undefined) this.updateRangeControl('bgColorOpacity', opacity, v => `${Math.round(v * 100)}%`);
         }
 
-        // parseColor() has no notion of named colours and maps 'transparent' to its
-        // #121212 fallback, so preserve it explicitly the way theme-manager.js does.
-        if (theme.borderColor === 'transparent') {
-            const borderSwatch = document.getElementById('schema-input-borderColor');
-            const borderHex = document.getElementById('schema-hex-borderColor');
-            if (borderSwatch) borderSwatch.value = '#000000';
-            if (borderHex) borderHex.value = 'TRANSPARENT';
-        } else if (theme.borderColor) {
+        if (theme.borderColor) {
             this.updateColorControl('borderColor', theme.borderColor);
         }
 
@@ -859,6 +864,18 @@ export class CreatorFormRenderer {
                 config[item.key] = parseInt(input.value || item.default, 10);
             } else if (item.control === 'range') {
                 config[item.key] = parseFloat(input.value ?? item.default);
+            } else if (item.control === 'color') {
+                const hexInput = document.getElementById(`schema-hex-${item.key}`);
+                const hexVal = hexInput?.value?.trim()?.toLowerCase();
+                if (hexVal === 'transparent') {
+                    config[item.key] = 'transparent';
+                } else if (hexVal && /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(hexVal)) {
+                    config[item.key] = hexVal;
+                } else if (hexVal && /^(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(hexVal)) {
+                    config[item.key] = '#' + hexVal;
+                } else {
+                    config[item.key] = input.value || item.default;
+                }
             } else {
                 config[item.key] = input.value || item.default;
             }

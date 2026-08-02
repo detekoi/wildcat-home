@@ -244,4 +244,59 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         expect(carouselController.selectByValue).toHaveBeenCalledWith('cyberpunk-theme');
         expect(document.getElementById('schema-input-theme').value).toBe('cyberpunk-theme');
     });
+
+    it('correctly handles transparent border color in applyThemeToForm and readFormConfig', () => {
+        formRenderer.renderSchemaForm(container);
+        expect(typeof capturedOnApply).toBe('function');
+
+        capturedOnApply({
+            value: 'transparent-theme',
+            name: 'Transparent Dark',
+            bgColor: 'rgba(0, 0, 0, 0)',
+            bgColorOpacity: 0,
+            borderColor: 'transparent',
+            textColor: '#efeff1',
+            usernameColor: '#00ffea'
+        });
+
+        expect(document.getElementById('schema-hex-borderColor').value).toBe('TRANSPARENT');
+        
+        const readConfig = formRenderer.readFormConfig();
+        expect(readConfig.borderColor).toBe('transparent');
+
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'PREVIEW_CONFIG_UPDATE',
+                config: expect.objectContaining({
+                    theme: 'transparent-theme',
+                    borderColor: 'transparent'
+                })
+            }),
+            window.location.origin
+        );
+    });
+
+    it('validates hex string lengths in readFormConfig and rejects malformed hexes', () => {
+        formRenderer.renderSchemaForm(container);
+        const hexInput = document.getElementById('schema-hex-borderColor');
+        const swatchInput = document.getElementById('schema-input-borderColor');
+        swatchInput.value = '#9147ff';
+
+        // Malformed 5-character hex should fall back to swatch value
+        hexInput.value = '12345';
+        expect(formRenderer.readFormConfig().borderColor).toBe('#9147ff');
+
+        // Malformed 7-character hex (# + 6 digits is 7 chars total; 7 digits without # is invalid)
+        hexInput.value = '1234567';
+        expect(formRenderer.readFormConfig().borderColor).toBe('#9147ff');
+
+        // Valid 6-character hex without #
+        hexInput.value = '00ffea';
+        expect(formRenderer.readFormConfig().borderColor).toBe('#00ffea');
+
+        // Valid 8-character hex with #
+        hexInput.value = '#00ffea80';
+        expect(formRenderer.readFormConfig().borderColor).toBe('#00ffea80');
+    });
 });
+
