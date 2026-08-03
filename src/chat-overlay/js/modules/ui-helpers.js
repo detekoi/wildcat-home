@@ -316,14 +316,23 @@ export class UIHelpers {
             <button class="toast-close" aria-label="Close notification">&times;</button>
         `;
 
+        let autoDismissTimer = null;
+
+        const removeToast = () => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        };
+
         const dismiss = () => {
+            if (autoDismissTimer) {
+                clearTimeout(autoDismissTimer);
+                autoDismissTimer = null;
+            }
             if (toast.classList.contains('toast-hiding')) return;
             toast.classList.add('toast-hiding');
-            toast.addEventListener('animationend', () => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, { once: true });
+            toast.addEventListener('animationend', removeToast, { once: true });
+            setTimeout(removeToast, 350);
         };
 
         const closeBtn = toast.querySelector('.toast-close');
@@ -334,7 +343,7 @@ export class UIHelpers {
         container.appendChild(toast);
 
         if (duration > 0) {
-            setTimeout(dismiss, duration);
+            autoDismissTimer = setTimeout(dismiss, duration);
         }
 
         return toast;

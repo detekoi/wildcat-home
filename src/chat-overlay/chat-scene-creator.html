@@ -331,6 +331,18 @@
                 <button id="importModalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
                 <button id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
             </div>
+    <!-- Modal for unsaved changes confirmation -->
+    <div id="unsavedChangesModal" class="modal-container" style="display: none;">
+        <div class="modal-content">
+            <h2 id="unsavedModalTitle">Unsaved Changes</h2>
+            <div style="margin: 20px 0;">
+                <p id="unsavedModalMessage" class="modal-description">You have unsaved changes in this scene. What would you like to do before proceeding?</p>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button id="unsavedCancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="unsavedDiscardBtn" class="btn btn-danger">Discard Changes</button>
+                <button id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>
+            </div>
         </div>
     </div>
 

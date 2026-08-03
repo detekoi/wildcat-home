@@ -287,6 +287,7 @@ export class CreatorFormRenderer {
                         if (val === 'transparent') {
                             input.value = '#000000';
                             this.sendPreviewUpdate();
+                            if (this.onFormChange) this.onFormChange();
                             return;
                         }
                         if (val && !val.startsWith('#')) val = '#' + val;
@@ -294,6 +295,7 @@ export class CreatorFormRenderer {
                         if (parsed.hex && parsed.hex.length === 7) {
                             input.value = parsed.hex;
                             this.sendPreviewUpdate();
+                            if (this.onFormChange) this.onFormChange();
                         }
                     };
                     hexInput.addEventListener('input', syncHexToSwatch);
@@ -389,7 +391,10 @@ export class CreatorFormRenderer {
             this.fontPicker = createFontPicker(fontMount, {
                 initialValue: "'Inter', 'Helvetica Neue', Arial, sans-serif",
                 styleTarget: fontMount,
-                onSelect: () => this.sendPreviewUpdate()
+                onSelect: () => {
+                    this.sendPreviewUpdate();
+                    if (this.onFormChange) this.onFormChange();
+                }
             });
         }
 

@@ -113,7 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 importSceneModal: document.getElementById('importSceneModal'),
                 importSceneToken: document.getElementById('importSceneToken'),
                 importModalCancelBtn: document.getElementById('importModalCancelBtn'),
-                importModalConfirmBtn: document.getElementById('importModalConfirmBtn')
+                importModalConfirmBtn: document.getElementById('importModalConfirmBtn'),
+                unsavedChangesModal: document.getElementById('unsavedChangesModal'),
+                unsavedModalTitle: document.getElementById('unsavedModalTitle'),
+                unsavedModalMessage: document.getElementById('unsavedModalMessage'),
+                unsavedSaveBtn: document.getElementById('unsavedSaveBtn'),
+                unsavedDiscardBtn: document.getElementById('unsavedDiscardBtn'),
+                unsavedCancelBtn: document.getElementById('unsavedCancelBtn')
             };
         }
 
@@ -166,12 +172,58 @@ document.addEventListener('DOMContentLoaded', () => {
         async confirmSaveIfDirty(actionDescription = 'switching scenes') {
             if (!this.isDirty || !this.instanceManager.currentInstanceId) return true;
             const currentName = this.instanceManager.instances[this.instanceManager.currentInstanceId]?.name || 'Current scene';
-            const saveFirst = window.confirm(`You have unsaved changes in "${currentName}". Save changes before ${actionDescription}?`);
-            if (saveFirst) {
-                await this.saveCurrentInstance({ includeChannel: false });
-                return true;
+
+            const modal = this.dom.unsavedChangesModal;
+            if (!modal) {
+                const saveFirst = window.confirm(`You have unsaved changes in "${currentName}". Save changes before ${actionDescription}?`);
+                if (saveFirst) {
+                    await this.saveCurrentInstance({ includeChannel: false });
+                    return true;
+                }
+                return false;
             }
-            return false;
+
+            if (this.dom.unsavedModalMessage) {
+                this.dom.unsavedModalMessage.textContent = `You have unsaved changes in "${currentName}". What would you like to do before ${actionDescription}?`;
+            }
+
+            modal.style.display = 'flex';
+
+            return new Promise((resolve) => {
+                const cleanup = () => {
+                    modal.style.display = 'none';
+                    if (this.dom.unsavedSaveBtn) this.dom.unsavedSaveBtn.removeEventListener('click', handleSave);
+                    if (this.dom.unsavedDiscardBtn) this.dom.unsavedDiscardBtn.removeEventListener('click', handleDiscard);
+                    if (this.dom.unsavedCancelBtn) this.dom.unsavedCancelBtn.removeEventListener('click', handleCancel);
+                    modal.removeEventListener('click', handleBackdrop);
+                };
+
+                const handleSave = async () => {
+                    cleanup();
+                    await this.saveCurrentInstance({ includeChannel: false });
+                    resolve(true);
+                };
+
+                const handleDiscard = () => {
+                    cleanup();
+                    this.setDirty(false);
+                    resolve(true);
+                };
+
+                const handleCancel = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                const handleBackdrop = (e) => {
+                    if (e.target === modal) handleCancel();
+                };
+
+                if (this.dom.unsavedSaveBtn) this.dom.unsavedSaveBtn.addEventListener('click', handleSave);
+                if (this.dom.unsavedDiscardBtn) this.dom.unsavedDiscardBtn.addEventListener('click', handleDiscard);
+                if (this.dom.unsavedCancelBtn) this.dom.unsavedCancelBtn.addEventListener('click', handleCancel);
+                modal.addEventListener('click', handleBackdrop);
+            });
         }
 
         renderInstanceList() {
@@ -460,7 +512,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (this.dom.importBtn) {
-                this.dom.importBtn.addEventListener('click', () => {
+                this.dom.importBtn.addEventListener('click', async () => {
+                    const confirmed = await this.confirmSaveIfDirty('importing scenes');
+                    if (!confirmed) return;
                     CreatorIOManager.importInstanceFile(
                         (parsed) => {
                             let importedCount = 0;
@@ -541,7 +595,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            if (this.dom.importSceneBtn) this.dom.importSceneBtn.addEventListener('click', () => this.importScene());
+            if (this.dom.importSceneBtn) {
+                this.dom.importSceneBtn.addEventListener('click', async () => {
+                    const confirmed = await this.confirmSaveIfDirty('linking a scene');
+                    if (!confirmed) return;
+                    this.importScene();
+                });
+            }
             if (this.dom.importModalCancelBtn) this.dom.importModalCancelBtn.addEventListener('click', () => this.closeImportSceneModal());
             if (this.dom.importModalConfirmBtn) this.dom.importModalConfirmBtn.addEventListener('click', () => this.confirmImportScene());
             if (this.dom.importSceneModal) {
