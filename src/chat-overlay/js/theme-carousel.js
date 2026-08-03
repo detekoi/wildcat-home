@@ -316,7 +316,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
     function selectByValue(value) {
         if (!availableThemes || !value) return;
         const idx = availableThemes.findIndex(t => t.value === value);
-        if (idx !== -1) applyAndScrollToTheme(idx);
+        if (idx !== -1) applyAndScrollToTheme(idx, { userInitiated: false });
     }
 
     /**
@@ -348,7 +348,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
                         if (idx !== -1) {
                             console.log(`[ThemeCarousel] Remote active theme change: ${meta.activeTheme}`);
                             suppressSync = true;
-                            applyAndScrollToTheme(idx);
+                            applyAndScrollToTheme(idx, { userInitiated: false });
                             suppressSync = false;
                         }
                     }
@@ -547,7 +547,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
             renderCarousel();
 
             if (wasActive && availableThemes.length > 0) {
-                applyAndScrollToTheme(currentThemeIndex);
+                applyAndScrollToTheme(currentThemeIndex, { userInitiated: false });
             }
         }
 
@@ -741,7 +741,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
      * Applies the theme at the given index and scrolls the carousel to it.
      * @param {number} index - The index of the theme in availableThemes.
      */
-    function applyAndScrollToTheme(index) {
+    function applyAndScrollToTheme(index, { userInitiated = true } = {}) {
         if (!availableThemes || index < 0 || index >= availableThemes.length) {
             console.error("Invalid theme index for apply/scroll:", index);
             return;
@@ -756,7 +756,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
         currentThemeIndex = index;
 
         if (onApplyCallback) {
-            onApplyCallback(theme);
+            onApplyCallback(theme, { userInitiated });
         } else if (typeof window.applyTheme === 'function') {
             window.applyTheme(theme.value);
         } else {

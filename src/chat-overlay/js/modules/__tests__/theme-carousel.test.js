@@ -97,7 +97,7 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             nextBtn.click();
 
             expect(themeCarousel.getCurrentThemeIndex()).toBe(1);
-            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[1]);
+            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[1], { userInitiated: true });
             expect(container.querySelector('#selected-theme-name').textContent).toBe(themeCarousel.getAvailableThemes()[1].name);
         });
 
@@ -111,7 +111,7 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             prevBtn.click();
 
             expect(themeCarousel.getCurrentThemeIndex()).toBe(lastIndex);
-            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[lastIndex]);
+            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[lastIndex], { userInitiated: true });
         });
 
         it('should select theme by value using selectByValue()', () => {
@@ -124,7 +124,7 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             controller.selectByValue('pink-theme');
 
             expect(themeCarousel.getAvailableThemes()[themeCarousel.getCurrentThemeIndex()].value).toBe('pink-theme');
-            expect(onApplySpy).toHaveBeenCalledWith(targetTheme);
+            expect(onApplySpy).toHaveBeenCalledWith(targetTheme, { userInitiated: false });
         });
     });
 

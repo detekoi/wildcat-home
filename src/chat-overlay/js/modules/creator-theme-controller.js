@@ -209,7 +209,7 @@ export class CreatorThemeController {
      * modules/theme-manager.js:79-92.
      * @param {Object} theme
      */
-    applyThemeToForm(theme) {
+    applyThemeToForm(theme, { suppressDirty = false } = {}) {
         if (!theme) return;
 
         if (theme.bgColor) {
@@ -274,6 +274,6 @@ export class CreatorThemeController {
         this.renderer.bgImageHandler.updatePreviewText(theme.backgroundImage ? 'Background image active' : 'No background image set');
 
         this.renderer.sendPreviewUpdate();
-        if (this.renderer.onFormChange) this.renderer.onFormChange();
+        if (!suppressDirty && this.renderer.onFormChange) this.renderer.onFormChange();
     }
 }

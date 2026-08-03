@@ -205,7 +205,7 @@ export class CreatorFormRenderer {
                     if (typeof mount === 'function') {
                         try {
                             this.themeCarouselController = mount(mountDiv, {
-                                onApply: (theme) => this.themeController.applyThemeToForm(theme),
+                                onApply: (theme, { userInitiated } = {}) => this.themeController.applyThemeToForm(theme, { suppressDirty: !userInitiated }),
                                 // The creator already renders a live preview beside the form,
                                 // so the carousel's own swatch would just be a duplicate.
                                 showPreview: false
