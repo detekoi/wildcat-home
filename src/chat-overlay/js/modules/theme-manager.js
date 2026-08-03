@@ -4,6 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
+import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
 
 export class ThemeManager {
     /**
@@ -38,14 +39,14 @@ export class ThemeManager {
      * Apply a selected theme by name/value.
      */
     applyTheme(themeName) {
-        if (!window.availableThemes?.length) {
+        if (!availableThemes?.length) {
             console.error('Available themes not initialized yet.');
             return;
         }
-        let theme = window.availableThemes.find(t => t.value === themeName || t.name === themeName);
+        let theme = availableThemes.find(t => t.value === themeName || t.name === themeName);
         if (!theme) {
             console.warn(`Theme "${themeName}" not found. Applying default.`);
-            theme = window.availableThemes.find(t => t.value === 'default') || window.availableThemes[0];
+            theme = availableThemes.find(t => t.value === 'default') || availableThemes[0];
             if (!theme) return;
         }
 
@@ -107,7 +108,7 @@ export class ThemeManager {
 
         // Update font family from theme
         if (theme.fontFamily) {
-            let fontIndex = window.availableFonts?.findIndex(f => {
+            let fontIndex = availableFonts?.findIndex(f => {
                 const themeFont = typeof theme.fontFamily === 'string' ? theme.fontFamily.trim() : '';
                 return (f.name?.trim().toLowerCase() === themeFont.toLowerCase()) || (f.value?.trim() === themeFont);
             }) ?? -1;
@@ -124,23 +125,23 @@ export class ThemeManager {
                     };
                     this._fontManager.addAndSelectGoogleFont(fontObj);
                     // addAndSelectGoogleFont already calls updateFontDisplay; also update config
-                    const addedIdx = window.availableFonts?.findIndex(f => f.name === fontObj.name) ?? 0;
-                    this._configManager.updateConfig('fontFamily', window.availableFonts[addedIdx]?.value || fontObj.value);
+                    const addedIdx = availableFonts?.findIndex(f => f.name === fontObj.name) ?? 0;
+                    this._configManager.updateConfig('fontFamily', availableFonts[addedIdx]?.value || fontObj.value);
                 } else {
                     console.warn(`[applyTheme] Theme font "${theme.fontFamily}" not found in local list. Using default.`);
-                    fontIndex = window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
+                    fontIndex = availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0;
                     this._fontManager.currentFontIndex = fontIndex;
-                    this._configManager.updateConfig('fontFamily', window.availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
+                    this._configManager.updateConfig('fontFamily', availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
                     this._fontManager.updateFontDisplay();
                 }
             } else {
                 this._fontManager.currentFontIndex = fontIndex;
-                this._configManager.updateConfig('fontFamily', window.availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
+                this._configManager.updateConfig('fontFamily', availableFonts[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
                 this._fontManager.updateFontDisplay();
             }
 
         } else {
-            this._configManager.updateConfig('fontFamily', window.availableFonts?.[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
+            this._configManager.updateConfig('fontFamily', availableFonts?.[this._fontManager.currentFontIndex]?.value || "'Atkinson Hyperlegible Next', sans-serif");
         }
 
         // Apply the merged configuration visually

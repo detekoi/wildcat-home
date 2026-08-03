@@ -1,175 +1,38 @@
+export let availableFonts = DEFAULT_FONTS.slice();
+export function getAvailableFonts() { return availableFonts; }
+export let availableThemes = DEFAULT_THEMES.slice();
+export let currentThemeIndex = 0;
+export function setCurrentThemeIndex(idx) { currentThemeIndex = idx; }
+export function setAvailableThemes(themes) { availableThemes = themes; }
+export function getAvailableThemes() { return availableThemes; }
+export function getCurrentThemeIndex() { return currentThemeIndex; }
+import { DEFAULT_FONTS } from './data/font-data.js';
+import { DEFAULT_THEMES } from './data/builtin-themes.js';
+import * as themeLibraryClient from './modules/theme-library-client.js';
+
 /**
  * Theme Carousel implementation for Twitch Chat Overlay
  *
- * This module implements a carousel to store, manage, and apply themes, including AI-generated ones.
- * It works with the theme generation system to integrate generated themes into the main theme carousel.
+ * This ES module implements a carousel to store, manage, and apply themes,
+ * including AI-generated ones. It works with the theme generation system to
+ * integrate generated themes into the main theme carousel.
  *
- * theme-carousel.js is a classic (non-module) script so it can be loaded directly by any page with a
- * plain <script> tag. It reaches ES modules (theme-library-client.js, scene-sync-manager.js) via dynamic
- * import() — that works fine from classic scripts, it just isn't a module itself.
- *
- * Mounting: call `window.themeCarousel.mount(container, { onApply, showDelete })` with an empty
- * HTMLElement. mount() injects the carousel markup itself and returns `{ destroy(), refresh(),
- * selectByValue(value) }`. Only one carousel is expected to be mounted per page (chat.html and
- * chat-scene-creator.html each mount their own, in separate documents) — the legacy `window.*` globals
- * below always refer to whichever mount is most recent on this page.
+ * Mounting: call `mount(container, { onApply, showDelete })` with an empty
+ * HTMLElement. mount() injects the carousel markup itself and returns
+ * `{ destroy(), refresh(), selectByValue(value) }`. Only one carousel is
+ * expected to be mounted per page (chat.html and chat-scene-creator.html each
+ * mount their own, in separate documents).
  */
 
-(function () {
     console.log('Initializing theme carousel module');
 
     // Define available fonts globally
-    window.availableFonts = [
-        // Custom fonts
-        { name: 'Atkinson Hyperlegible Next', value: "'Atkinson Hyperlegible Next', sans-serif", description: 'The next generation of the acclaimed legibility-focused typeface.', custom: true, isGoogleFont: true, googleFontFamily: 'Atkinson Hyperlegible Next', googleFontUrl: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap' },
-        { name: 'EB Garamond', value: "'EB Garamond', serif", description: 'Elegant serif font with classical old-style proportions, perfect for literary or historical themes.', custom: true },
-        { name: 'Tektur', value: "'Tektur', sans-serif", description: 'Modern and slightly angular typeface with a technical/sci-fi aesthetic.', custom: true },
-        { name: 'MedievalSharp', value: "'MedievalSharp', cursive", description: 'Evokes a medieval/fantasy atmosphere with calligraphic details.', custom: true },
-        { name: 'Press Start 2P', value: "'Press Start 2P', monospace", description: 'Pixelated retro gaming font that resembles 8-bit text.', custom: true },
-        { name: 'Jacquard', value: "'Jacquard', monospace", description: 'Clean monospaced font inspired by classic computer terminals.', custom: true },
-        { name: 'Chicle', value: "'Chicle', serif", description: 'Playful display font with a fun, hand-drawn character.', custom: true, isGoogleFont: true, googleFontFamily: 'Chicle' },
-
-        // System fonts organized by categories
-        // Sans-serif fonts
-        { name: 'System UI', value: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
-        { name: 'Arial', value: "Arial, sans-serif", description: 'Classic sans-serif font with good readability.' },
-        { name: 'Helvetica', value: "Helvetica, Arial, sans-serif", description: 'Clean modern sans-serif font widely used in design.' },
-        { name: 'Verdana', value: "Verdana, Geneva, sans-serif", description: 'Sans-serif designed for good readability on screens.' },
-        { name: 'Tahoma', value: "Tahoma, Geneva, sans-serif", description: 'Compact sans-serif with good readability at small sizes.' },
-        { name: 'Trebuchet MS', value: "'Trebuchet MS', sans-serif", description: 'Humanist sans-serif with distinctive character shapes.' },
-        { name: 'Calibri', value: "Calibri, sans-serif", description: 'Modern sans-serif with rounded details and good readability.' },
-
-        // Serif fonts
-        { name: 'Times New Roman', value: "'Times New Roman', Times, serif", description: 'Classic serif font with traditional letterforms.' },
-        { name: 'Georgia', value: "Georgia, serif", description: 'Elegant serif font designed for screen readability.' },
-        { name: 'Palatino', value: "'Palatino Linotype', 'Book Antiqua', Palatino, serif", description: 'Elegant serif based on Renaissance letterforms.' },
-        { name: 'Garamond', value: "Garamond, Baskerville, 'Baskerville Old Face', serif", description: 'Classical serif with elegant proportions.' }, // Note: EB Garamond is custom/imported
-
-        // Monospace fonts
-        { name: 'Courier New', value: "'Courier New', Courier, monospace", description: 'Classic monospaced font resembling typewriter text.' },
-        { name: 'Consolas', value: "'Consolas', monaco, monospace", description: 'Modern monospaced font designed for coding.' },
-        { name: 'Lucida Console', value: "'Lucida Console', Monaco, monospace", description: 'Clear monospace font with good readability.' },
-
-        // Display/Decorative fonts that are commonly available
-        { name: 'Impact', value: "Impact, Haettenschweiler, sans-serif", description: 'Bold condensed sans-serif font, often used for headlines.' },
-        { name: 'Comic Sans MS', value: "'Comic Sans MS', cursive", description: 'Casual script-like font with a friendly appearance.' },
-        { name: 'Arial Black', value: "'Arial Black', Gadget, sans-serif", description: 'Extra bold version of Arial for strong emphasis.' }
-    ];
-    console.log('Available fonts defined globally in theme-carousel.js');
+    
 
     // The built-in, non-generated themes. Never mutated in place — always spread
-    // into a fresh window.availableThemes so a stray unshift() elsewhere can't
+    // into a fresh availableThemes so a stray unshift() elsewhere can't
     // corrupt the canonical list.
-    const DEFAULT_THEMES = [
-        {
-            name: 'Default Dark',
-            value: 'default',
-            bgColor: '#121212',
-            bgColorOpacity: 0.85,
-            borderColor: '#9147ff',
-            textColor: '#efeff1',
-            usernameColor: '#9147ff',
-            timestampColor: '#adadb8',
-            pronounBadgeColor: '#adadb8',
-            fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
-            borderRadius: 'Subtle',
-            borderRadiusValue: '8px',
-            boxShadow: 'Soft',
-            boxShadowValue: 'rgba(99, 99, 99, 0.2) 0px 2px 8px 0px',
-            backgroundImage: null,
-            description: 'Classic Twitch purple accents on a dark background. Balanced and readable.'
-        },
-        {
-            name: 'Default Light',
-            value: 'light-theme',
-            bgColor: '#ffffff',
-            bgColorOpacity: 0.9,
-            borderColor: '#cccccc',
-            textColor: '#1a1a1a',
-            usernameColor: '#9147ff',
-            timestampColor: '#737373',
-            pronounBadgeColor: '#737373',
-            fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
-            borderRadius: 'Subtle',
-            borderRadiusValue: '8px',
-            boxShadow: 'Soft',
-            boxShadowValue: 'rgba(99, 99, 99, 0.2) 0px 2px 8px 0px',
-            backgroundImage: null,
-            description: 'A clean, bright theme with dark text on a light background.'
-        },
-        {
-            name: 'Natural',
-            value: 'natural-theme',
-            bgColor: '#f5f2e6',
-            bgColorOpacity: 0.9,
-            borderColor: '#7e6852',
-            textColor: '#4e3629',
-            usernameColor: '#508d69',
-            timestampColor: '#aca192',
-            pronounBadgeColor: '#aca192',
-            fontFamily: "'EB Garamond', serif",
-            borderRadius: 'Rounded',
-            borderRadiusValue: '16px',
-            boxShadow: 'Simple 3D',
-            boxShadowValue: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px',
-            backgroundImage: null,
-            description: 'Earthy tones with wood-like borders and a classic serif font.'
-        },
-        {
-            name: 'Transparent Dark',
-            value: 'transparent-theme',
-            bgColor: 'rgba(0, 0, 0, 0)',
-            bgColorOpacity: 0,
-            borderColor: 'transparent',
-            textColor: '#efeff1',
-            usernameColor: '#00ffea',
-            timestampColor: 'rgba(255, 255, 255, 0.6)',
-            pronounBadgeColor: 'rgba(255, 255, 255, 0.6)',
-            fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
-            borderRadius: 'Subtle',
-            borderRadiusValue: '8px',
-            boxShadow: 'none',
-            boxShadowValue: 'none',
-            backgroundImage: null,
-            description: 'Minimalist dark theme with no background or border, only text.'
-        },
-        {
-            name: 'Sakura Pink',
-            value: 'pink-theme',
-            bgColor: '#ffdeec',
-            bgColorOpacity: 0.8,
-            borderColor: '#ff6bcb',
-            textColor: '#8e2651',
-            usernameColor: '#b81670',
-            timestampColor: '#d67bb2',
-            pronounBadgeColor: '#d67bb2',
-            fontFamily: "'Atkinson Hyperlegible Next', sans-serif",
-            borderRadius: 'Rounded',
-            borderRadiusValue: '16px',
-            boxShadow: 'Soft',
-            boxShadowValue: 'rgba(255, 107, 203, 0.2) 0px 2px 8px 0px',
-            backgroundImage: null,
-            description: 'Soft pink background with darker pink/berry text and accents.'
-        },
-        {
-            name: 'Cyberpunk Night',
-            value: 'cyberpunk-theme',
-            bgColor: '#0c0c28',
-            bgColorOpacity: 0.85,
-            borderColor: '#00ffb3',
-            textColor: '#00ffea',
-            usernameColor: '#ff2e97',
-            timestampColor: '#fffd88',
-            pronounBadgeColor: '#fffd88',
-            fontFamily: "'Tektur', sans-serif",
-            borderRadius: 'Sharp',
-            borderRadiusValue: '0px',
-            boxShadow: 'Sharp',
-            boxShadowValue: '8px 8px 0px 0px rgba(0, 255, 179, 0.7)',
-            backgroundImage: null,
-            description: 'Neon on dark blue. Tech font, sharp edges, and vibrant accents.'
-        }
-    ];
+    
 
     const CAROUSEL_MARKUP = `
         <div class="theme-carousel-container" role="group" aria-labelledby="theme-selector-label">
@@ -212,38 +75,26 @@
     let suppressSync = false;          // True while applying a remote theme change.
 
     // Lazily import the theme-library-client ES module from this classic script.
-    let libraryClientPromise = null;
-    function getLibraryClient() {
-        if (!libraryClientPromise) {
-            libraryClientPromise = import('./modules/theme-library-client.js');
-        }
-        return libraryClientPromise;
-    }
+    function getLibraryClient() { return Promise.resolve(themeLibraryClient); }
 
     // Carousel API - publicly accessible functions
-    const carouselAPI = {
-        mount,
-        addTheme: addThemeToCarousel,
-        getThemes: () => generatedThemes,
-        applyTheme: applyThemeFromCarousel
-    };
-    window.themeCarousel = carouselAPI;
-    window.addThemeToCarousel = addThemeToCarousel;
+    export function getThemes() { return generatedThemes; }
+    
+    
 
     // Make key functions globally available for other classic scripts/modules
     // (chat.js, theme-generator.js, settings-panel-manager.js, font-manager.js).
-    window.updateThemeDetails = updateThemeDetails;
-    window.highlightActiveCard = highlightActiveCard;
-    window.applyAndScrollToTheme = applyAndScrollToTheme;
-    window.scrollToThemeCard = scrollToThemeCard;
-    window.loadGoogleFont = loadGoogleFont;
+    
+    
+    
+    
+    
 
-    // window.availableThemes / window.currentThemeIndex are populated once mount()
+    // availableThemes / currentThemeIndex are populated once mount()
     // runs (they need real DOM to render into). Seed availableThemes immediately
     // anyway so any code that reads it before mount() still gets the defaults
     // instead of undefined.
-    window.availableThemes = DEFAULT_THEMES.slice();
-    window.currentThemeIndex = 0;
+    
 
     // Add CSS handler for border-radius/box-shadow preset names (independent of mounting).
     addPresetCSSHandler();
@@ -251,18 +102,22 @@
     // Fetch updated font list from proxy (independent of DOM/mounting).
     fetchAvailableFonts();
 
-    // Dispatch readiness immediately — this used to fire at the end of DOMContentLoaded
-    // init(), after default themes + fonts were both set up. Both are set up above by
-    // the time this script finishes executing, so listeners (theme-generator.js) that
-    // wait for this event can now safely assume window.availableThemes/availableFonts exist.
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            document.dispatchEvent(new CustomEvent('theme-carousel-ready'));
-            console.log('Dispatched theme-carousel-ready event');
-        });
-    } else {
+    // Dispatch readiness after all ES module imports in the dependency chain
+    // have finished executing. queueMicrotask() defers until the current
+    // microtask checkpoint — i.e. after every module in the static import
+    // graph has run its top-level code and registered its listeners.
+    // In the pre-ESM IIFE world the event fired synchronously at the end of
+    // DOMContentLoaded init(); with ES modules that would fire before
+    // chat.js / theme-generator.js register their listeners (since static
+    // dependencies execute first).
+    const dispatchReady = () => {
         document.dispatchEvent(new CustomEvent('theme-carousel-ready'));
         console.log('Dispatched theme-carousel-ready event');
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', dispatchReady);
+    } else {
+        queueMicrotask(dispatchReady);
     }
 
     /**
@@ -375,16 +230,16 @@
         // Reset to the default catalog; generated themes get prepended once the
         // library (cache, then cloud) loads below.
         generatedThemes = [];
-        window.availableThemes = DEFAULT_THEMES.slice();
-        window.currentThemeIndex = 0;
+        availableThemes = DEFAULT_THEMES.slice();
+        currentThemeIndex = 0;
 
         attachNavListeners();
         renderCarousel();
 
         // Show the initially selected theme's name/description straight away rather
         // than leaving the placeholder text visible until the first selection.
-        if (window.availableThemes[window.currentThemeIndex]) {
-            updateThemeDetails(window.availableThemes[window.currentThemeIndex]);
+        if (availableThemes[currentThemeIndex]) {
+            updateThemeDetails(availableThemes[currentThemeIndex]);
         }
 
         initializeThemeLibrary();
@@ -402,18 +257,18 @@
         const nextThemeBtn = mountedRoot.querySelector('#next-theme');
 
         prevBtnHandler = () => {
-            if (window.availableThemes && window.availableThemes.length > 0) {
-                let idx = window.currentThemeIndex !== undefined ? window.currentThemeIndex : 0;
-                idx = (idx - 1 + window.availableThemes.length) % window.availableThemes.length;
+            if (availableThemes && availableThemes.length > 0) {
+                let idx = currentThemeIndex !== undefined ? currentThemeIndex : 0;
+                idx = (idx - 1 + availableThemes.length) % availableThemes.length;
                 applyAndScrollToTheme(idx);
             } else {
                 console.warn('Cannot navigate previous theme: availableThemes not ready.');
             }
         };
         nextBtnHandler = () => {
-            if (window.availableThemes && window.availableThemes.length > 0) {
-                let idx = window.currentThemeIndex !== undefined ? window.currentThemeIndex : 0;
-                idx = (idx + 1) % window.availableThemes.length;
+            if (availableThemes && availableThemes.length > 0) {
+                let idx = currentThemeIndex !== undefined ? currentThemeIndex : 0;
+                idx = (idx + 1) % availableThemes.length;
                 applyAndScrollToTheme(idx);
             } else {
                 console.warn('Cannot navigate next theme: availableThemes not ready.');
@@ -459,8 +314,8 @@
     }
 
     function selectByValue(value) {
-        if (!window.availableThemes || !value) return;
-        const idx = window.availableThemes.findIndex(t => t.value === value);
+        if (!availableThemes || !value) return;
+        const idx = availableThemes.findIndex(t => t.value === value);
         if (idx !== -1) applyAndScrollToTheme(idx);
     }
 
@@ -487,9 +342,9 @@
                 // Cross-page active theme sync: if another page changed the
                 // active theme, select it here (echo suppression via clientId).
                 if (meta && meta.activeTheme && meta.activeThemeUpdatedBy !== myClientId) {
-                    const currentValue = window.availableThemes?.[window.currentThemeIndex]?.value;
+                    const currentValue = availableThemes?.[currentThemeIndex]?.value;
                     if (meta.activeTheme !== currentValue) {
-                        const idx = window.availableThemes?.findIndex(t => t.value === meta.activeTheme) ?? -1;
+                        const idx = availableThemes?.findIndex(t => t.value === meta.activeTheme) ?? -1;
                         if (idx !== -1) {
                             console.log(`[ThemeCarousel] Remote active theme change: ${meta.activeTheme}`);
                             suppressSync = true;
@@ -505,7 +360,7 @@
     }
 
     /**
-     * Replace the generated-themes portion of window.availableThemes with a new
+     * Replace the generated-themes portion of availableThemes with a new
      * list from the library client, preserving the currently active theme
      * (by value) across the rebuild wherever possible.
      */
@@ -513,20 +368,20 @@
         if (!mountedRoot) return; // Mount was torn down while this resolved.
 
         const incoming = (Array.isArray(themes) ? themes : []).map(t => ({ ...t, isGenerated: true }));
-        const activeValue = window.availableThemes?.[window.currentThemeIndex]?.value;
+        const activeValue = availableThemes?.[currentThemeIndex]?.value;
 
         generatedThemes = incoming;
-        window.availableThemes = [...generatedThemes, ...DEFAULT_THEMES];
+        availableThemes = [...generatedThemes, ...DEFAULT_THEMES];
 
         if (activeValue) {
-            const idx = window.availableThemes.findIndex(t => t.value === activeValue);
-            window.currentThemeIndex = idx !== -1 ? idx : 0;
-        } else if (window.currentThemeIndex === undefined || window.currentThemeIndex >= window.availableThemes.length) {
-            window.currentThemeIndex = 0;
+            const idx = availableThemes.findIndex(t => t.value === activeValue);
+            currentThemeIndex = idx !== -1 ? idx : 0;
+        } else if (currentThemeIndex === undefined || currentThemeIndex >= availableThemes.length) {
+            currentThemeIndex = 0;
         }
 
         renderCarousel();
-        scrollToThemeCard(window.currentThemeIndex);
+        scrollToThemeCard(currentThemeIndex);
     }
 
     /**
@@ -551,18 +406,18 @@
         const themeWithFlag = { ...theme, isGenerated: true };
         generatedThemes.unshift(themeWithFlag);
 
-        if (window.availableThemes && Array.isArray(window.availableThemes)) {
+        if (availableThemes && Array.isArray(availableThemes)) {
             // Dedupe strictly by value: values are unique per generation, while
             // names legitimately repeat (the model often reuses a name for
             // similar prompts). Matching on name here used to skip the insert,
             // so applying the new theme's value fell back to the default theme.
-            const existingInMainIndex = window.availableThemes.findIndex(t =>
+            const existingInMainIndex = availableThemes.findIndex(t =>
                 t.value === theme.value);
 
             if (existingInMainIndex === -1) {
                 console.log(`Adding theme to main themes carousel: ${theme.name}`);
-                window.availableThemes.unshift(themeWithFlag);
-                window.currentThemeIndex = 0;
+                availableThemes.unshift(themeWithFlag);
+                currentThemeIndex = 0;
             }
         }
 
@@ -582,7 +437,7 @@
      * Fire-and-forget push of a newly-added theme to the cloud library. On
      * success, mutates the theme object in place with the server's authoritative
      * fields (e.g. an assigned id, backgroundImage rewritten to a GCS URL) so
-     * both `generatedThemes` and `window.availableThemes` (which hold the same
+     * both `generatedThemes` and `availableThemes` (which hold the same
      * object reference) pick it up automatically.
      */
     async function pushThemeToCloud(themeWithFlag) {
@@ -652,20 +507,20 @@
 
         generatedThemes = generatedThemes.filter(t => (t.id || t.value) !== id);
 
-        if (window.availableThemes) {
-            const removedIndex = window.availableThemes.findIndex(t => (t.id || t.value) === id);
-            const wasActive = removedIndex === window.currentThemeIndex;
+        if (availableThemes) {
+            const removedIndex = availableThemes.findIndex(t => (t.id || t.value) === id);
+            const wasActive = removedIndex === currentThemeIndex;
 
-            if (removedIndex !== -1) window.availableThemes.splice(removedIndex, 1);
+            if (removedIndex !== -1) availableThemes.splice(removedIndex, 1);
 
-            if (window.currentThemeIndex >= window.availableThemes.length) {
-                window.currentThemeIndex = Math.max(0, window.availableThemes.length - 1);
+            if (currentThemeIndex >= availableThemes.length) {
+                currentThemeIndex = Math.max(0, availableThemes.length - 1);
             }
 
             renderCarousel();
 
-            if (wasActive && window.availableThemes.length > 0) {
-                applyAndScrollToTheme(window.currentThemeIndex);
+            if (wasActive && availableThemes.length > 0) {
+                applyAndScrollToTheme(currentThemeIndex);
             }
         }
 
@@ -684,19 +539,19 @@
     function applyThemeFromCarousel(theme) {
         console.log(`Applying theme from carousel: ${theme.name}`);
 
-        if (window.availableThemes && Array.isArray(window.availableThemes)) {
-            const themeIndex = window.availableThemes.findIndex(t => t.value === theme.value);
+        if (availableThemes && Array.isArray(availableThemes)) {
+            const themeIndex = availableThemes.findIndex(t => t.value === theme.value);
 
             if (themeIndex >= 0) {
-                if (typeof window.currentThemeIndex !== 'undefined') {
-                    window.currentThemeIndex = themeIndex;
+                if (typeof currentThemeIndex !== 'undefined') {
+                    currentThemeIndex = themeIndex;
                     if (typeof window.updateThemeDisplay === 'function') {
                         window.updateThemeDisplay();
                     }
                 }
             } else {
-                window.availableThemes.unshift(theme);
-                window.currentThemeIndex = 0;
+                availableThemes.unshift(theme);
+                currentThemeIndex = 0;
                 if (typeof window.updateThemeDisplay === 'function') {
                     window.updateThemeDisplay();
                     return;
@@ -781,8 +636,8 @@
 
         wrapper.innerHTML = '';
 
-        if (window.availableThemes && window.availableThemes.length > 0) {
-            window.availableThemes.forEach((theme, index) => {
+        if (availableThemes && availableThemes.length > 0) {
+            availableThemes.forEach((theme, index) => {
                 const card = createThemeCard(theme, index);
                 wrapper.appendChild(card);
             });
@@ -794,13 +649,13 @@
             window.lucide.createIcons();
         }
 
-        highlightActiveCard(window.availableThemes[typeof window.currentThemeIndex !== 'undefined' ? window.currentThemeIndex : 0]?.value || 'default');
+        highlightActiveCard(availableThemes[typeof currentThemeIndex !== 'undefined' ? currentThemeIndex : 0]?.value || 'default');
     }
 
     /**
      * Creates a theme card element for the carousel
      * @param {Object} theme - The theme object to create a card for
-     * @param {number} index - The index of the theme in window.availableThemes
+     * @param {number} index - The index of the theme in availableThemes
      * @returns {HTMLElement} The created theme card element
      */
     function createThemeCard(theme, index) {
@@ -818,7 +673,7 @@
         nameSpan.textContent = theme.name || 'Unnamed Theme';
         textDiv.appendChild(nameSpan);
 
-        if (index === window.currentThemeIndex) {
+        if (index === currentThemeIndex) {
             card.classList.add('active');
         }
 
@@ -846,21 +701,21 @@
 
     /**
      * Applies the theme at the given index and scrolls the carousel to it.
-     * @param {number} index - The index of the theme in window.availableThemes.
+     * @param {number} index - The index of the theme in availableThemes.
      */
     function applyAndScrollToTheme(index) {
-        if (!window.availableThemes || index < 0 || index >= window.availableThemes.length) {
+        if (!availableThemes || index < 0 || index >= availableThemes.length) {
             console.error("Invalid theme index for apply/scroll:", index);
             return;
         }
 
-        const theme = window.availableThemes[index];
+        const theme = availableThemes[index];
         if (!theme) {
             console.error("Could not find theme at index:", index);
             return;
         }
 
-        window.currentThemeIndex = index;
+        currentThemeIndex = index;
 
         if (onApplyCallback) {
             onApplyCallback(theme);
@@ -970,7 +825,7 @@
             if (index >= 0 && index < cards.length && cards[index]) {
                 const card = cards[index];
                 const scrollLeft = card.offsetLeft - (wrapper.offsetWidth - card.offsetWidth) / 2;
-                wrapper.scrollTo({
+                if(wrapper.scrollTo) wrapper.scrollTo({
                     left: scrollLeft,
                     behavior: 'smooth'
                 });
@@ -991,7 +846,7 @@
     let fontFetchRetried = false;
 
     async function fetchAvailableFonts() {
-        const localCustomFonts = (window.availableFonts || []).filter(f => f.custom);
+        const localCustomFonts = (availableFonts || []).filter(f => f.custom);
 
         try {
             const { getProxyBaseUrl } = await import('./modules/scene-sync-manager.js');
@@ -1004,8 +859,8 @@
                 if (Array.isArray(fonts) && fonts.length > 0) {
                     const proxyFontNames = new Set(fonts.map(f => f.name));
                     const missingLocalFonts = localCustomFonts.filter(f => !proxyFontNames.has(f.name));
-                    window.availableFonts = [...missingLocalFonts, ...fonts];
-                    console.log(`Updated available fonts list with ${window.availableFonts.length} fonts (${missingLocalFonts.length} local + ${fonts.length} from proxy).`);
+                    availableFonts = [...missingLocalFonts, ...fonts];
+                    console.log(`Updated available fonts list with ${availableFonts.length} fonts (${missingLocalFonts.length} local + ${fonts.length} from proxy).`);
 
                     document.dispatchEvent(new CustomEvent('fonts-updated'));
 
@@ -1040,6 +895,5 @@
         console.log(`Loaded Google Font: ${fontFamily}`);
     }
 
-    // Return the carousel API for modules that load this script directly
-    return carouselAPI;
-})();
+
+export { mount, addThemeToCarousel as addTheme, addThemeToCarousel, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, applyThemeFromCarousel as applyTheme, applyThemeFromCarousel };

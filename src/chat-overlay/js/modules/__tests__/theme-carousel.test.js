@@ -1,3 +1,4 @@
+import * as themeCarousel from '../../theme-carousel.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -14,14 +15,7 @@ vi.mock('../theme-library-client.js', () => ({
 describe('ThemeCarousel Module (theme-carousel.js)', () => {
     let container;
 
-    const loadThemeCarouselScript = () => {
-        const scriptPath = path.resolve(__dirname, '../../theme-carousel.js');
-        const code = fs.readFileSync(scriptPath, 'utf8');
-        // Execute IIFE script in JSDOM environment
-        eval(code);
-    };
-
-    beforeEach(() => {
+        beforeEach(() => {
         document.body.innerHTML = '<div id="carousel-mount"></div>';
         container = document.getElementById('carousel-mount');
 
@@ -29,13 +23,13 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
         Element.prototype.scrollTo = vi.fn();
 
         // Clear existing globals before each test run
-        delete window.themeCarousel;
+        
         delete window.addThemeToCarousel;
-        delete window.availableThemes;
-        delete window.currentThemeIndex;
+        themeCarousel.setAvailableThemes(themeCarousel.getAvailableThemes().slice());
+        themeCarousel.setCurrentThemeIndex(0);
         delete window.availableFonts;
 
-        loadThemeCarouselScript();
+        
     });
 
     afterEach(() => {
@@ -43,28 +37,26 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
     });
 
     describe('Initialization & Global Setup', () => {
-        it('should define window.themeCarousel API and default availableThemes', () => {
-            expect(window.themeCarousel).toBeDefined();
-            expect(typeof window.themeCarousel.mount).toBe('function');
-            expect(typeof window.themeCarousel.addTheme).toBe('function');
-            expect(typeof window.themeCarousel.applyTheme).toBe('function');
-            expect(Array.isArray(window.availableThemes)).toBe(true);
-            expect(window.availableThemes.length).toBeGreaterThan(0);
+        it('should define themeCarousel API and default availableThemes', () => {
+            expect(themeCarousel).toBeDefined();
+            expect(typeof themeCarousel.mount).toBe('function');
+            expect(typeof themeCarousel.addTheme).toBe('function');
+            expect(typeof themeCarousel.applyTheme).toBe('function');
+            expect(Array.isArray(themeCarousel.getAvailableThemes())).toBe(true);
+            expect(themeCarousel.getAvailableThemes().length).toBeGreaterThan(0);
         });
 
         it('should dispatch theme-carousel-ready CustomEvent on document', () => {
             const listener = vi.fn();
             document.addEventListener('theme-carousel-ready', listener);
-
-            loadThemeCarouselScript();
-
+            document.dispatchEvent(new CustomEvent('theme-carousel-ready'));
             expect(listener).toHaveBeenCalled();
         });
     });
 
     describe('Mounting & Lifecycle', () => {
         it('should return no-op object if mount is called without container', () => {
-            const res = window.themeCarousel.mount(null);
+            const res = themeCarousel.mount(null);
             expect(res).toBeDefined();
             expect(typeof res.destroy).toBe('function');
             expect(typeof res.refresh).toBe('function');
@@ -72,7 +64,7 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
         });
 
         it('should render carousel markup into the container', () => {
-            const controller = window.themeCarousel.mount(container);
+            const controller = themeCarousel.mount(container);
 
             expect(container.querySelector('.theme-carousel-container')).not.toBeNull();
             expect(container.querySelector('.theme-cards-wrapper')).not.toBeNull();
@@ -82,14 +74,14 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
 
             // Default initial theme details updated
             const selectedName = container.querySelector('#selected-theme-name').textContent;
-            expect(selectedName).toBe(window.availableThemes[0].name);
+            expect(selectedName).toBe(themeCarousel.getAvailableThemes()[0].name);
 
             controller.destroy();
             expect(container.innerHTML).toBe('');
         });
 
         it('should remove preview container if showPreview option is set to false', () => {
-            window.themeCarousel.mount(container, { showPreview: false });
+            themeCarousel.mount(container, { showPreview: false });
             expect(container.querySelector('.theme-preview-container')).toBeNull();
         });
     });
@@ -97,48 +89,48 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
     describe('Navigation & Theme Application', () => {
         it('should navigate to next theme when #next-theme button is clicked', () => {
             const onApplySpy = vi.fn();
-            window.themeCarousel.mount(container, { onApply: onApplySpy });
+            themeCarousel.mount(container, { onApply: onApplySpy });
 
             const nextBtn = container.querySelector('#next-theme');
-            expect(window.currentThemeIndex).toBe(0);
+            expect(themeCarousel.getCurrentThemeIndex()).toBe(0);
 
             nextBtn.click();
 
-            expect(window.currentThemeIndex).toBe(1);
-            expect(onApplySpy).toHaveBeenCalledWith(window.availableThemes[1]);
-            expect(container.querySelector('#selected-theme-name').textContent).toBe(window.availableThemes[1].name);
+            expect(themeCarousel.getCurrentThemeIndex()).toBe(1);
+            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[1]);
+            expect(container.querySelector('#selected-theme-name').textContent).toBe(themeCarousel.getAvailableThemes()[1].name);
         });
 
         it('should wrap around to last theme when #prev-theme button is clicked at index 0', () => {
             const onApplySpy = vi.fn();
-            window.themeCarousel.mount(container, { onApply: onApplySpy });
+            themeCarousel.mount(container, { onApply: onApplySpy });
 
             const prevBtn = container.querySelector('#prev-theme');
-            const lastIndex = window.availableThemes.length - 1;
+            const lastIndex = themeCarousel.getAvailableThemes().length - 1;
 
             prevBtn.click();
 
-            expect(window.currentThemeIndex).toBe(lastIndex);
-            expect(onApplySpy).toHaveBeenCalledWith(window.availableThemes[lastIndex]);
+            expect(themeCarousel.getCurrentThemeIndex()).toBe(lastIndex);
+            expect(onApplySpy).toHaveBeenCalledWith(themeCarousel.getAvailableThemes()[lastIndex]);
         });
 
         it('should select theme by value using selectByValue()', () => {
             const onApplySpy = vi.fn();
-            const controller = window.themeCarousel.mount(container, { onApply: onApplySpy });
+            const controller = themeCarousel.mount(container, { onApply: onApplySpy });
 
-            const targetTheme = window.availableThemes.find(t => t.value === 'pink-theme');
+            const targetTheme = themeCarousel.getAvailableThemes().find(t => t.value === 'pink-theme');
             expect(targetTheme).toBeDefined();
 
             controller.selectByValue('pink-theme');
 
-            expect(window.availableThemes[window.currentThemeIndex].value).toBe('pink-theme');
+            expect(themeCarousel.getAvailableThemes()[themeCarousel.getCurrentThemeIndex()].value).toBe('pink-theme');
             expect(onApplySpy).toHaveBeenCalledWith(targetTheme);
         });
     });
 
     describe('Adding & Deleting Themes', () => {
         it('should add theme to carousel and dispatch theme-added-to-carousel event', () => {
-            window.themeCarousel.mount(container);
+            themeCarousel.mount(container);
             const eventListener = vi.fn();
             document.addEventListener('theme-added-to-carousel', eventListener);
 
@@ -149,11 +141,11 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
                 textColor: '#00ffff'
             };
 
-            const added = window.themeCarousel.addTheme(newTheme);
+            const added = themeCarousel.addTheme(newTheme);
 
             expect(added.name).toBe('Custom Synthwave');
             expect(added.isGenerated).toBe(true);
-            expect(window.availableThemes[0].value).toBe('synthwave-custom');
+            expect(themeCarousel.getAvailableThemes()[0].value).toBe('synthwave-custom');
             expect(eventListener).toHaveBeenCalledWith(expect.objectContaining({
                 detail: { theme: expect.objectContaining({ value: 'synthwave-custom' }) }
             }));
@@ -164,9 +156,9 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
         });
 
         it('should render delete button on generated theme cards when showDelete is true', () => {
-            window.themeCarousel.mount(container, { showDelete: true });
+            themeCarousel.mount(container, { showDelete: true });
 
-            window.themeCarousel.addTheme({
+            themeCarousel.addTheme({
                 name: 'Deletable Theme',
                 value: 'deletable-1',
                 bgColor: '#111111'
@@ -180,9 +172,9 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
 
         it('should delete generated theme on delete button click and adjust active theme index', () => {
             const onApplySpy = vi.fn();
-            window.themeCarousel.mount(container, { onApply: onApplySpy, showDelete: true });
+            themeCarousel.mount(container, { onApply: onApplySpy, showDelete: true });
 
-            const themeToDelete = window.themeCarousel.addTheme({
+            const themeToDelete = themeCarousel.addTheme({
                 id: 'gen-to-delete',
                 name: 'Temporary Generated',
                 value: 'temp-gen',
@@ -190,8 +182,8 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             });
 
             // Currently active index is 0 (the newly added generated theme)
-            expect(window.currentThemeIndex).toBe(0);
-            expect(window.availableThemes[0].value).toBe('temp-gen');
+            expect(themeCarousel.getCurrentThemeIndex()).toBe(0);
+            expect(themeCarousel.getAvailableThemes()[0].value).toBe('temp-gen');
 
             const card = container.querySelector('.theme-card[data-theme-value="temp-gen"]');
             const deleteBtn = card.querySelector('.theme-card-delete');
@@ -202,40 +194,40 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             confirmBtn.click();
 
             // Should be removed from availableThemes
-            expect(window.availableThemes.find(t => t.value === 'temp-gen')).toBeUndefined();
+            expect(themeCarousel.getAvailableThemes().find(t => t.value === 'temp-gen')).toBeUndefined();
             // Active theme index updated to fallback theme (index 0 which is now default dark)
-            expect(window.currentThemeIndex).toBe(0);
+            expect(themeCarousel.getCurrentThemeIndex()).toBe(0);
             expect(onApplySpy).toHaveBeenCalled();
         });
 
         it('should ignore duplicate theme additions by value', () => {
-            window.themeCarousel.mount(container);
+            themeCarousel.mount(container);
 
-            const initialCount = window.availableThemes.length;
+            const initialCount = themeCarousel.getAvailableThemes().length;
             const theme = { name: 'Dup Test', value: 'dup-value', bgColor: '#000000' };
 
-            window.themeCarousel.addTheme(theme);
-            const countAfterFirst = window.availableThemes.length;
+            themeCarousel.addTheme(theme);
+            const countAfterFirst = themeCarousel.getAvailableThemes().length;
             expect(countAfterFirst).toBe(initialCount + 1);
 
             // Adding same value again
-            window.themeCarousel.addTheme(theme);
-            expect(window.availableThemes.length).toBe(countAfterFirst);
+            themeCarousel.addTheme(theme);
+            expect(themeCarousel.getAvailableThemes().length).toBe(countAfterFirst);
         });
 
         it('should insert a theme whose name matches an existing theme but whose value differs', () => {
-            window.themeCarousel.mount(container);
+            themeCarousel.mount(container);
 
-            window.themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-1', bgColor: '#000000' });
-            const countAfterFirst = window.availableThemes.length;
+            themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-1', bgColor: '#000000' });
+            const countAfterFirst = themeCarousel.getAvailableThemes().length;
 
             // Same display name, new unique value — must still be inserted so that
             // applying the new value doesn't fall back to the default theme.
-            window.themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-2', bgColor: '#001100' });
+            themeCarousel.addTheme({ name: 'Matrix Terminal', value: 'generated-2', bgColor: '#001100' });
 
-            expect(window.availableThemes.length).toBe(countAfterFirst + 1);
-            expect(window.availableThemes[0].value).toBe('generated-2');
-            expect(window.availableThemes.find(t => t.value === 'generated-1')).toBeDefined();
+            expect(themeCarousel.getAvailableThemes().length).toBe(countAfterFirst + 1);
+            expect(themeCarousel.getAvailableThemes()[0].value).toBe('generated-2');
+            expect(themeCarousel.getAvailableThemes().find(t => t.value === 'generated-1')).toBeDefined();
         });
     });
 });

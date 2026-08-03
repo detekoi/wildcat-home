@@ -1,9 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as themeCarousel from '../../theme-carousel.js';
+
+// Mock theme-carousel.js so we can control loadGoogleFont per-test.
+// Default loadGoogleFont to undefined to simulate pages (e.g. chat-scene-creator.html)
+// that don't load the full carousel. Tests needing it override via vi.spyOn.
+vi.mock('../../theme-carousel.js', () => ({
+    mount: vi.fn(),
+    addTheme: vi.fn(),
+    getThemes: vi.fn(() => []),
+    applyTheme: vi.fn(),
+    updateThemeDetails: vi.fn(),
+    highlightActiveCard: vi.fn(),
+    applyAndScrollToTheme: vi.fn(),
+    scrollToThemeCard: vi.fn(),
+    loadGoogleFont: undefined,
+    availableFonts: [],
+    availableThemes: [],
+    currentThemeIndex: 0,
+}));
+
 import { FontManager, createFontPicker } from '../font-manager.js';
 
 describe('FontManager - resilience without theme-carousel.js', () => {
     // chat-scene-creator.html loads font-manager.js but not theme-carousel.js,
-    // so window.availableFonts / window.loadGoogleFont may be undefined (or an
+    // so availableFonts / loadGoogleFont may be undefined (or an
     // empty array, since font-manager.js itself initializes it to `[]`) at
     // runtime. None of this should ever throw, and — critically — an empty
     // local list must not prevent the remote search dropdown from opening.
@@ -16,7 +36,9 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         vi.restoreAllMocks();
         document.body.innerHTML = '';
         document.head.querySelectorAll('link[id^="google-font-"]').forEach(el => el.remove());
-        window.availableFonts = [];
+        delete window.availableFonts;
+        // Reset the mock's availableFonts to an empty array each test
+        themeCarousel.availableFonts.length = 0;
 
         fontSearchInput = document.createElement('input');
         fontSearchResults = document.createElement('div');
@@ -36,7 +58,6 @@ describe('FontManager - resilience without theme-carousel.js', () => {
     });
 
     afterEach(() => {
-        delete window.loadGoogleFont;
         delete global.fetch;
         document.documentElement.style.removeProperty('--font-family');
     });
@@ -89,16 +110,16 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         expect(document.documentElement.style.getPropertyValue('--font-family')).toBe('');
     });
 
-    it('does not throw when window.availableFonts is undefined during a remote font search', async () => {
-        // Simulate the exact failure mode: carousel script never ran, so this global
-        // was never initialized (or something else cleared it).
-        window.availableFonts = undefined;
+    it('does not throw when availableFonts is undefined during a remote font search', async () => {
+        // Simulate the exact failure mode: carousel script never ran, so
+        // availableFonts is empty.
+        themeCarousel.availableFonts.length = 0;
 
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ([
-                { name: 'Roboto', value: "'Roboto', sans-serif", isGoogleFont: true, googleFontFamily: 'Roboto', category: 'sans-serif' }
-            ])
+            json: async () => [
+                { name: 'Roboto', value: "'Roboto', sans-serif", isGoogleFont: true }
+            ]
         });
 
         fontSearchResults.classList.add('visible');
@@ -117,13 +138,13 @@ describe('FontManager - resilience without theme-carousel.js', () => {
 
     it('opens the dropdown and renders remote results when typing, even though the local list is empty (regression)', async () => {
         // Regression for a follow-up bug in the first fix: `_openFontDropdown`
-        // early-returned on `!window.availableFonts?.length`, which is true for
+        // early-returned on `!availableFonts?.length`, which is true for
         // an EMPTY ARRAY just as much as for `undefined`. That guard fired on
         // every keystroke, so the dropdown never opened and _fetchRemoteFonts
         // was never reached — "does not throw" tests alone couldn't catch this
         // because they called the private fetch method directly, bypassing the
         // guard entirely. This test drives the real 'input' event instead.
-        expect(window.availableFonts).toEqual([]);
+        themeCarousel.availableFonts.length = 0;
 
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -150,8 +171,8 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         expect(fontSearchResults.textContent).toContain('More from Google Fonts');
     });
 
-    it('loads a Google Font via an injected <link> when window.loadGoogleFont is not defined', () => {
-        expect(window.loadGoogleFont).toBeUndefined();
+    it('loads a Google Font via an injected <link> when loadGoogleFont is not available', () => {
+        // loadGoogleFont defaults to undefined in the mock, so this exercises the fallback path
 
         fontManager._addAndSelectGoogleFont({
             name: 'Roboto',
@@ -166,8 +187,10 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         expect(link.href).toContain('fonts.googleapis.com');
     });
 
-    it('prefers window.loadGoogleFont when the carousel script has defined it', () => {
-        window.loadGoogleFont = vi.fn();
+    it('prefers loadGoogleFont when the carousel module has defined it', () => {
+        // Override loadGoogleFont to be a real function for this test
+        const mockLoadGoogleFont = vi.fn();
+        themeCarousel.loadGoogleFont = mockLoadGoogleFont;
 
         fontManager._addAndSelectGoogleFont({
             name: 'Roboto',
@@ -176,9 +199,12 @@ describe('FontManager - resilience without theme-carousel.js', () => {
             googleFontFamily: 'Roboto'
         });
 
-        expect(window.loadGoogleFont).toHaveBeenCalledWith('Roboto', undefined);
+        expect(mockLoadGoogleFont).toHaveBeenCalledWith('Roboto', undefined);
         // No fallback <link> should be injected when the carousel handles it.
         expect(document.getElementById('google-font-roboto')).toBeNull();
+
+        // Restore
+        themeCarousel.loadGoogleFont = undefined;
     });
 });
 
@@ -189,13 +215,12 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         vi.restoreAllMocks();
         document.body.innerHTML = '';
         document.head.querySelectorAll('link[id^="google-font-"]').forEach(el => el.remove());
-        window.availableFonts = [];
+        themeCarousel.availableFonts.length = 0;
         container = document.createElement('div');
         document.body.appendChild(container);
     });
 
     afterEach(() => {
-        delete window.loadGoogleFont;
         delete global.fetch;
         document.documentElement.style.removeProperty('--font-family');
     });
@@ -223,7 +248,7 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(document.documentElement.style.getPropertyValue('--font-family')).toBe('');
     });
 
-    it('clicking a remote result pushes it into window.availableFonts, applies it to the picker config, and loads its stylesheet', async () => {
+    it('clicking a remote result pushes it into availableFonts, applies it to the picker config, and loads its stylesheet', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ([
@@ -247,11 +272,11 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         // Selection is bound on mousedown (so it fires before the input's blur).
         resultItem.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
 
-        // 1) Pushed into window.availableFonts
-        expect(window.availableFonts.some(f => f.name === 'Orbitron')).toBe(true);
+        // 1) Pushed into availableFonts
+        expect(themeCarousel.availableFonts.some(f => f.name === 'Orbitron')).toBe(true);
         // 2) Applied to config (surfaced via getValue(), which reads the picker's config)
         expect(picker.getValue()).toBe("'Orbitron', sans-serif");
-        // 3) Loaded via the ensureGoogleFontLoaded fallback (no window.loadGoogleFont on this page)
+        // 3) Loaded via the ensureGoogleFontLoaded fallback (no loadGoogleFont on this page)
         expect(document.getElementById('google-font-orbitron')).not.toBeNull();
     });
 
@@ -265,7 +290,7 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(picker.getValue()).toBe("'Press Start 2P', cursive");
         expect(picker.getGoogleFontFamily()).toBe('Press Start 2P');
         expect(document.getElementById('google-font-press-start-2p')).not.toBeNull();
-        expect(window.availableFonts.some(f => f.googleFontFamily === 'Press Start 2P')).toBe(true);
+        expect(themeCarousel.availableFonts.some(f => f.googleFontFamily === 'Press Start 2P')).toBe(true);
     });
 
     it('setFont adds the full font object, updates picker value, and loads stylesheet', () => {
@@ -284,7 +309,7 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(picker.getValue()).toBe("'Monoton', display");
         expect(picker.getGoogleFontFamily()).toBe('Monoton');
         expect(document.getElementById('google-font-monoton')).not.toBeNull();
-        expect(window.availableFonts.some(f => f.name === 'Monoton')).toBe(true);
+        expect(themeCarousel.availableFonts.some(f => f.name === 'Monoton')).toBe(true);
     });
 });
 

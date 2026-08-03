@@ -5,6 +5,7 @@
 
 import { UIHelpers } from './ui-helpers.js';
 import { CONFIG_VERSION } from './config-manager.js';
+import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
 
 export class SettingsPanelManager {
     /**
@@ -152,7 +153,7 @@ export class SettingsPanelManager {
             const bgImageOpacityValue = getOpacity(bgImageOpacityInput, this._configManager.config.bgImageOpacity ?? 0.55);
             const currentBgColorHex = getColor(bgColorHex, '.color-buttons [data-target="bg"]', this._configManager.config.bgColor || '#121212');
             const currentBgOpacity = getOpacity(bgOpacityInput, this._configManager.config.bgColorOpacity ?? 0.85);
-            const currentFullTheme = window.availableThemes?.find(t => t.value === currentThemeValue) || {};
+            const currentFullTheme = availableThemes?.find(t => t.value === currentThemeValue) || {};
 
             const newConfig = {
                 // newConfig replaces the config wholesale, so the schema version has to be carried
@@ -335,13 +336,13 @@ export class SettingsPanelManager {
         if (this._themeManager) {
             this._themeManager.lastAppliedThemeValue = savedThemeVal;
         }
-        const themeIndex = window.availableThemes?.findIndex(t => t.value === savedThemeVal) ?? -1;
-        const currentThemeIdx = (themeIndex !== -1) ? themeIndex : (window.availableThemes?.findIndex(t => t.value === 'default') ?? 0);
-        const currentTheme = window.availableThemes?.[currentThemeIdx];
+        const themeIndex = availableThemes?.findIndex(t => t.value === savedThemeVal) ?? -1;
+        const currentThemeIdx = (themeIndex !== -1) ? themeIndex : (availableThemes?.findIndex(t => t.value === 'default') ?? 0);
+        const currentTheme = availableThemes?.[currentThemeIdx];
         if (currentTheme) {
-            if (typeof window.updateThemeDetails === 'function') window.updateThemeDetails(currentTheme);
-            if (typeof window.highlightActiveCard === 'function') window.highlightActiveCard(currentTheme.value);
-            if (typeof window.scrollToThemeCard === 'function') window.scrollToThemeCard(currentThemeIdx);
+            updateThemeDetails(currentTheme);
+            highlightActiveCard(currentTheme.value);
+            scrollToThemeCard(currentThemeIdx);
         }
 
         if (twitchChannelInput) twitchChannelInput.value = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel || '';

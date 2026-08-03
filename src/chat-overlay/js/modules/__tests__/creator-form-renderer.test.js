@@ -1,4 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as themeCarousel from '../../theme-carousel.js';
+vi.mock('../../theme-carousel.js', () => ({
+    mount: vi.fn().mockReturnValue({
+        destroy: vi.fn(),
+        refresh: vi.fn(),
+        selectByValue: vi.fn()
+    }),
+    getAvailableThemes: () => [
+        { name: 'Dark', value: 'dark' },
+        { name: 'Light', value: 'light' }
+    ],
+    getAvailableFonts: () => [
+        { name: 'Arial', value: 'Arial' }
+    ],
+    availableFonts: [],
+    availableThemes: [],
+    currentThemeIndex: 0
+}));
 import { CreatorFormRenderer } from '../creator-form-renderer.js';
 import { ConfigManager } from '../config-manager.js';
 
@@ -112,7 +130,7 @@ describe('CreatorFormRenderer - Range Slider Live Drag Updates', () => {
 });
 
 // theme-carousel.js is owned by a concurrent agent, so these tests stub the
-// window.themeCarousel.mount({ onApply, showDelete }) -> { destroy, refresh, selectByValue }
+// themeCarousel.mount({ onApply, showDelete }) -> { destroy, refresh, selectByValue }
 // contract rather than depending on the real implementation.
 describe('CreatorFormRenderer - Theme Carousel Control', () => {
     let formRenderer;
@@ -120,8 +138,9 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
     let container;
     let previewIframe;
     let postMessageSpy;
-    let themeCarouselMock;
+    
     let capturedOnApply;
+    beforeEach(() => { themeCarousel.mount.mockClear(); });
     let carouselController;
 
     beforeEach(() => {
@@ -147,14 +166,11 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
             refresh: vi.fn(),
             selectByValue: vi.fn()
         };
-        themeCarouselMock = {
-            mount: vi.fn((mountEl, opts) => {
-                capturedOnApply = opts.onApply;
-                return carouselController;
-            }),
-            addTheme: vi.fn()
-        };
-        window.themeCarousel = themeCarouselMock;
+        themeCarousel.mount.mockImplementation((mountEl, opts) => {
+            capturedOnApply = opts.onApply;
+            return carouselController;
+        });
+        
 
         configManager = new ConfigManager();
         formRenderer = new CreatorFormRenderer({
@@ -167,15 +183,15 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         delete window.themeCarousel;
     });
 
-    it('renders an empty mount point and hands it to window.themeCarousel.mount()', () => {
+    it('renders an empty mount point and hands it to themeCarousel.mount()', () => {
         formRenderer.renderSchemaForm(container);
 
         const mountDiv = document.getElementById('schema-themecarousel-theme');
         expect(mountDiv).not.toBeNull();
         expect(mountDiv.children.length).toBe(0);
 
-        expect(themeCarouselMock.mount).toHaveBeenCalledTimes(1);
-        expect(themeCarouselMock.mount.mock.calls[0][0]).toBe(mountDiv);
+        expect(themeCarousel.mount).toHaveBeenCalledTimes(1);
+        expect(themeCarousel.mount.mock.calls[0][0]).toBe(mountDiv);
         expect(typeof capturedOnApply).toBe('function');
 
         // No plain <select> is rendered for the theme control anymore.
@@ -186,8 +202,8 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         expect(document.querySelector('select#schema-input-theme')).toBeNull();
     });
 
-    it('still renders the rest of the form when window.themeCarousel is absent', () => {
-        delete window.themeCarousel;
+    it('still renders the rest of the form when themeCarousel.mount throws', () => {
+        themeCarousel.mount.mockImplementationOnce(() => { throw new Error('mount unavailable'); });
         formRenderer.renderSchemaForm(container);
 
         expect(document.getElementById('schema-themecarousel-theme')).not.toBeNull();
@@ -218,7 +234,7 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         expect(document.getElementById('schema-input-timestampColor').value.toLowerCase()).toBe('#abcdef');
         expect(document.getElementById('schema-input-pronounBadgeColor').value.toLowerCase()).toBe('#654321');
         expect(document.getElementById('schema-input-theme').value).toBe('pink-theme');
-        expect(formRenderer.currentBgImage).toBe('data:image/png;base64,abc');
+        expect(formRenderer.bgImageHandler.currentBgImage).toBe('data:image/png;base64,abc');
 
         expect(postMessageSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -359,14 +375,14 @@ describe('CreatorFormRenderer - Background Image Upload', () => {
 
     it('readFormConfig() emits bgImage as a data URL so the proxy can upload it to GCS', () => {
         formRenderer.renderSchemaForm(container);
-        formRenderer.currentBgImage = 'data:image/jpeg;base64,AAAA';
+        formRenderer.bgImageHandler.currentBgImage = 'data:image/jpeg;base64,AAAA';
 
         expect(formRenderer.readFormConfig().bgImage).toBe('data:image/jpeg;base64,AAAA');
     });
 
     it('Clear Image writes bgImage: null instead of omitting the key', () => {
         formRenderer.renderSchemaForm(container);
-        formRenderer.currentBgImage = 'data:image/jpeg;base64,AAAA';
+        formRenderer.bgImageHandler.currentBgImage = 'data:image/jpeg;base64,AAAA';
 
         document.getElementById('creatorBgClear').dispatchEvent(new Event('click', { bubbles: true }));
 

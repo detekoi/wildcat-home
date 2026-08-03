@@ -1,3 +1,4 @@
+import { setAvailableThemes, availableThemes, currentThemeIndex, setCurrentThemeIndex } from '../../theme-carousel.js';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ThemeManager } from '../theme-manager.js';
 
@@ -24,7 +25,7 @@ describe('ThemeManager - DOM State Hydration', () => {
         };
 
         // Window configuration structure expected by ThemeManager
-        window.availableThemes = [
+        setAvailableThemes([
             { 
                 value: 'default', 
                 name: 'Default', 
@@ -42,7 +43,7 @@ describe('ThemeManager - DOM State Hydration', () => {
                 bgColorOpacity: 1.0,
                 borderColor: '#00ffff'
             }
-        ];
+        ]);
 
         window.availableFonts = [
             { name: 'Roboto', value: "'Roboto', sans-serif" }
@@ -78,7 +79,7 @@ describe('ThemeManager - DOM State Hydration', () => {
             // Apply a corrupted theme name
             themeManager.applyTheme('themeThatWasDeletedFromRegistry');
             
-            // We expect the fallback logic to find 'default' from window.availableThemes and apply that
+            // We expect the fallback logic to find 'default' from availableThemes and apply that
             expect(mockConfigManager.updateConfig).toHaveBeenCalledWith('theme', 'default');
             expect(mockConfigManager.updateConfig).toHaveBeenCalledWith('bgColor', '#444444');
             expect(mockConfigManager.updateConfig).toHaveBeenCalledWith('bgColorOpacity', 0.8);

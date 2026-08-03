@@ -7,19 +7,11 @@ import { CONFIG_VERSION, applyChromaKey } from './config-manager.js';
 import { CONFIG_SCHEMA, SCHEMA_GROUPS, getVisibleSchemaItems } from './config-schema.js';
 import { createFontPicker } from './font-manager.js';
 import { UIHelpers } from './ui-helpers.js';
+import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
+import { CreatorBgImageHandler } from './creator-bg-image-handler.js';
+import { CreatorThemeController } from './creator-theme-controller.js';
 
-/**
- * Normalize a shadow preset's display name to the slug the preset buttons use,
- * e.g. 'Simple 3D' -> 'simple3d', 'Soft' -> 'soft'. Returns null for CSS values
- * (which contain characters no slug has) so they don't activate a wrong button.
- * @param {string} [name]
- * @returns {string|null}
- */
-function slugifyPreset(name) {
-    if (!name || typeof name !== 'string') return null;
-    if (/[(),#]/.test(name)) return null; // a raw CSS value, not a preset name
-    return name.toLowerCase().replace(/[^a-z0-9]/g, '');
-}
+
 
 export class CreatorFormRenderer {
     /**
@@ -31,7 +23,8 @@ export class CreatorFormRenderer {
         this.configManager = configManager;
         this.previewIframe = previewIframe;
         this.fontPicker = null;
-        this.currentBgImage = null;
+        this.bgImageHandler = new CreatorBgImageHandler(this);
+        this.themeController = new CreatorThemeController(this);
         this.stashedBgColor = null;
         this.stashedBgOpacity = null;
     }
@@ -192,15 +185,20 @@ export class CreatorFormRenderer {
                     row.appendChild(mountDiv);
                     groupDiv.appendChild(row);
 
-                    if (window.themeCarousel && typeof window.themeCarousel.mount === 'function') {
-                        this.themeCarouselController = window.themeCarousel.mount(mountDiv, {
-                            onApply: (theme) => this.applyThemeToForm(theme),
-                            // The creator already renders a live preview beside the form,
-                            // so the carousel's own swatch would just be a duplicate.
-                            showPreview: false
-                        });
+                    if (typeof mount === 'function') {
+                        try {
+                            this.themeCarouselController = mount(mountDiv, {
+                                onApply: (theme) => this.themeController.applyThemeToForm(theme),
+                                // The creator already renders a live preview beside the form,
+                                // so the carousel's own swatch would just be a duplicate.
+                                showPreview: false
+                            });
+                        } catch (err) {
+                            console.warn('[creator-form-renderer] themeCarousel.mount() threw:', err);
+                            mountDiv.textContent = 'Theme picker unavailable.';
+                        }
                     } else {
-                        console.warn('[creator-form-renderer] window.themeCarousel not found; theme picker will not render.');
+                        console.warn('[creator-form-renderer] themeCarousel not found; theme picker will not render.');
                         mountDiv.textContent = 'Theme picker unavailable.';
                     }
                     return;
@@ -302,7 +300,7 @@ export class CreatorFormRenderer {
                     wrapper.appendChild(hexInput);
                     row.appendChild(wrapper);
                     groupDiv.appendChild(row);
-                    if (item.key === 'bgColor') groupDiv.appendChild(this.createBgImageBox());
+                    if (item.key === 'bgColor') groupDiv.appendChild(this.bgImageHandler.createBgImageBox());
                     return;
                 } else if (item.control === 'range') {
                     input = document.createElement('input');
@@ -394,153 +392,8 @@ export class CreatorFormRenderer {
 
         if (window.lucide) window.lucide.createIcons();
 
-        this.setupBgImageAndAiListeners();
-    }
-
-    /**
-     * Build the background-image upload box that sits under the Background Color
-     * control. Kept separate from the render loop because the 'color' branch
-     * returns early, so it has to be appended from inside that branch.
-     * @returns {HTMLDivElement}
-     */
-    createBgImageBox() {
-        const bgImgBox = document.createElement('div');
-        bgImgBox.className = 'creator-bg-image-box creator-subcard';
-        bgImgBox.innerHTML = `
-            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">Background Image</label>
-            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-                <input type="file" id="creatorBgFile" accept="image/*" style="font-size: 12px; flex: 1; min-width: 0;">
-                <button type="button" class="btn btn-secondary" id="creatorBgClear" style="padding: 4px 8px; font-size: 12px;">Clear Image</button>
-            </div>
-            <div id="creatorBgPreview" style="font-size: 12px; opacity: 0.7;">No background image set</div>
-        `;
-        return bgImgBox;
-    }
-
-    setupBgImageAndAiListeners() {
-        const bgFile = document.getElementById('creatorBgFile');
-        const bgClear = document.getElementById('creatorBgClear');
-        if (bgFile) {
-            bgFile.addEventListener('change', (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (evt) => {
-                    try {
-                        const compressFn = window.compressImageToBase64JPEG || (async (url) => url);
-                        this.currentBgImage = await compressFn(evt.target.result, 0.85);
-                        const previewEl = document.getElementById('creatorBgPreview');
-                        if (previewEl) previewEl.textContent = 'Custom image loaded';
-                        this.sendPreviewUpdate();
-                    } catch (err) {
-                        console.error('Failed to process background image:', err);
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-        if (bgClear) {
-            bgClear.addEventListener('click', () => {
-                this.currentBgImage = null;
-                if (bgFile) bgFile.value = '';
-                const previewEl = document.getElementById('creatorBgPreview');
-                if (previewEl) previewEl.textContent = 'No background image set';
-                this.sendPreviewUpdate();
-            });
-        }
-
-        const aiGenBtn = document.getElementById('creatorAiGenerateBtn');
-        if (aiGenBtn) {
-            aiGenBtn.addEventListener('click', async () => {
-                const promptInput = document.getElementById('creatorAiPrompt');
-                const includeBg = document.getElementById('creatorAiIncludeBg');
-                const statusEl = document.getElementById('creatorAiStatus');
-                const prompt = promptInput?.value?.trim();
-
-                if (!prompt) {
-                    alert('Please enter a vibe or theme description.');
-                    return;
-                }
-
-                try {
-                    aiGenBtn.disabled = true;
-                    if (statusEl) statusEl.textContent = 'Generating...';
-                    const generateFn = window.generateThemeApi;
-                    if (!generateFn) throw new Error('AI Theme Generator service unavailable.');
-
-                    const result = await generateFn({
-                        prompt,
-                        generateImage: !!includeBg?.checked,
-                        onStatusUpdate: (msg) => {
-                            if (statusEl) statusEl.textContent = msg;
-                        }
-                    });
-
-                    if (result && result.themeData) {
-                        const theme = result.themeData;
-
-                        // Persist the generated theme to the shared cloud library so it doesn't
-                        // vanish once this form is closed. Reuse theme-generator.js's own
-                        // construction logic (unique `generated-...` value, "(Variant N)" dedupe
-                        // naming) instead of duplicating it here. It returns the constructed
-                        // theme object, which carries every style property the AI produced.
-                        let addedTheme = null;
-                        if (typeof window.processAndAddTheme === 'function') {
-                            addedTheme = window.processAndAddTheme(theme, result.compressedImage || null);
-                            if (this.themeCarouselController && typeof this.themeCarouselController.refresh === 'function') {
-                                this.themeCarouselController.refresh();
-                            }
-                        } else {
-                            console.warn('[creator-form-renderer] window.processAndAddTheme unavailable; generated theme was not persisted to the theme library.');
-                        }
-
-                        if (addedTheme) {
-                            // Apply the full theme (colors, opacity, font, radius, shadows,
-                            // timestamp/pronoun colors, background image) through the same
-                            // path the carousel uses, so nothing the AI returned is dropped.
-                            this.applyThemeToForm(addedTheme);
-                        } else {
-                            // Library unavailable — degrade to applying the raw colors.
-                            if (theme.background_color) {
-                                this.updateColorControl('bgColor', theme.background_color);
-                                const parsed = UIHelpers.parseColor(theme.background_color);
-                                if (parsed.opacity !== undefined) {
-                                    this.updateRangeControl('bgColorOpacity', parsed.opacity, v => `${Math.round(v * 100)}%`);
-                                }
-                            }
-                            if (theme.border_color) this.updateColorControl('borderColor', theme.border_color);
-                            if (theme.text_color) this.updateColorControl('textColor', theme.text_color);
-                            if (theme.username_color) this.updateColorControl('usernameColor', theme.username_color);
-                            if (result.compressedImage) {
-                                this.currentBgImage = result.compressedImage;
-                                const previewEl = document.getElementById('creatorBgPreview');
-                                if (previewEl) previewEl.textContent = 'AI Background Image generated';
-                            }
-                            this.sendPreviewUpdate();
-                        }
-
-                        if (statusEl) statusEl.textContent = 'Theme applied!';
-                    }
-                } catch (err) {
-                    console.error('AI Theme Generation failed:', err);
-                    if (statusEl) statusEl.textContent = 'Failed: ' + err.message;
-                } finally {
-                    aiGenBtn.disabled = false;
-                }
-            });
-
-            // Enter in the prompt field triggers generation, matching the
-            // config-panel generator's behavior (theme-generator.js).
-            const aiPromptInput = document.getElementById('creatorAiPrompt');
-            if (aiPromptInput) {
-                aiPromptInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !aiGenBtn.disabled) {
-                        e.preventDefault();
-                        aiGenBtn.click();
-                    }
-                });
-            }
-        }
+        this.bgImageHandler.setupListeners();
+        this.themeController.setupAiListeners();
     }
 
     setupFormLivePreview() {
@@ -615,79 +468,6 @@ export class CreatorFormRenderer {
         const hex = (parsed && parsed.hex) ? parsed.hex : '#121212';
         if (swatchInput) swatchInput.value = hex;
         if (hexInput) hexInput.value = hex.toUpperCase();
-    }
-
-    /**
-     * Apply a theme object (fired via the theme carousel's onApply callback) to the
-     * form: writes its colors through updateColorControl(), records the selected
-     * theme's value, resolves its background image, and pushes the result to the
-     * live preview. Mirrors the field mapping applyTheme() uses in
-     * modules/theme-manager.js:79-92.
-     * @param {Object} theme
-     */
-    applyThemeToForm(theme) {
-        if (!theme) return;
-
-        if (theme.bgColor) {
-            this.updateColorControl('bgColor', theme.bgColor);
-            // A theme's alpha lives inside its bgColor (e.g. the Transparent preset
-            // is 'rgba(0, 0, 0, 0)'), so it has to be lifted into the separate
-            // opacity slider. Without this the form keeps whatever opacity was
-            // already set and transparent themes render as solid colour.
-            const parsed = UIHelpers.parseColor(theme.bgColor);
-            const opacity = theme.bgColorOpacity ?? parsed.opacity;
-            if (opacity !== undefined) this.updateRangeControl('bgColorOpacity', opacity, v => `${Math.round(v * 100)}%`);
-        }
-
-        if (theme.borderColor) {
-            this.updateColorControl('borderColor', theme.borderColor);
-        }
-
-        if (theme.textColor) this.updateColorControl('textColor', theme.textColor);
-        if (theme.usernameColor) this.updateColorControl('usernameColor', theme.usernameColor);
-        if (theme.timestampColor) this.updateColorControl('timestampColor', theme.timestampColor);
-        if (theme.pronounBadgeColor) this.updateColorControl('pronounBadgeColor', theme.pronounBadgeColor);
-
-        // Themes and the preset buttons speak different dialects: a theme carries
-        // borderRadius: 'Subtle' with borderRadiusValue: '8px', while the radius
-        // buttons are keyed by the px value. Shadows are the reverse — the buttons
-        // use slugs ('simple3d') and the theme uses display names ('Simple 3D').
-        this.updatePresetControl('borderRadius', theme.borderRadiusValue || theme.borderRadius);
-        this.updatePresetControl('boxShadow', slugifyPreset(theme.boxShadow));
-        this.updatePresetControl('textShadow', slugifyPreset(theme.textShadow));
-
-        if (theme.bgImageOpacity !== undefined) {
-            this.updateRangeControl('bgImageOpacity', theme.bgImageOpacity, v => `${Math.round(v * 100)}%`);
-        }
-
-        const topFadeInput = document.getElementById('schema-input-topFade');
-        if (topFadeInput && theme.topFade !== undefined) topFadeInput.checked = !!theme.topFade;
-
-        if (theme.fontFamily && this.fontPicker) {
-            if (theme.isGoogleFont && theme.googleFontFamily && typeof this.fontPicker.setFont === 'function') {
-                // Full metadata available (AI-generated themes): register the font,
-                // load its stylesheet, and record googleFontFamily so the preview
-                // iframe and synced configs can load it too.
-                this.fontPicker.setFont({
-                    name: theme.fontFamily,
-                    value: `'${theme.googleFontFamily}', sans-serif`,
-                    description: `${theme.googleFontFamily} from Google Fonts`,
-                    isGoogleFont: true,
-                    googleFontFamily: theme.googleFontFamily
-                });
-            } else if (typeof this.fontPicker.setValue === 'function') {
-                this.fontPicker.setValue(theme.fontFamily);
-            }
-        }
-
-        const themeInput = document.getElementById('schema-input-theme');
-        if (themeInput) themeInput.value = theme.value || theme.name || themeInput.value;
-
-        this.currentBgImage = theme.backgroundImage || null;
-        const previewEl = document.getElementById('creatorBgPreview');
-        if (previewEl) previewEl.textContent = this.currentBgImage ? 'Background image active' : 'No background image set';
-
-        this.sendPreviewUpdate();
     }
 
     /**
@@ -795,7 +575,7 @@ export class CreatorFormRenderer {
     populateForm(instance, domRefs = {}) {
         const defaults = this.configManager.getDefaultConfig();
         const config = { ...defaults, ...(instance.config || {}) };
-        this.currentBgImage = config.bgImage || null;
+        this.bgImageHandler.currentBgImage = config.bgImage || null;
 
         if (domRefs.instanceName) domRefs.instanceName.value = instance.name || '';
         if (domRefs.instanceId) domRefs.instanceId.value = instance.id || '';
@@ -806,7 +586,7 @@ export class CreatorFormRenderer {
         CONFIG_SCHEMA.forEach(item => {
             if (item.control === 'font') {
                 // Pass the saved Google Font metadata alongside the value so the
-                // picker can resolve fonts that aren't in window.availableFonts.
+                // picker can resolve fonts that aren't in availableFonts.
                 if (this.fontPicker) this.fontPicker.setValue(config.fontFamily || item.default, config.googleFontFamily ?? null);
                 return;
             }
@@ -857,10 +637,7 @@ export class CreatorFormRenderer {
             }
         });
 
-        const previewEl = document.getElementById('creatorBgPreview');
-        if (previewEl) {
-            previewEl.textContent = this.currentBgImage ? 'Background image active' : 'No background image set';
-        }
+        this.bgImageHandler.updatePreviewText(this.bgImageHandler.currentBgImage ? 'Background image active' : 'No background image set');
 
         this.applyChatModeVisibility(config.chatMode === 'popup');
 
@@ -933,7 +710,7 @@ export class CreatorFormRenderer {
 
         // Always written, including as null: omitting the key on clear left the
         // previously saved image in place both locally and on the sync server.
-        config.bgImage = this.currentBgImage || null;
+        config.bgImage = this.bgImageHandler.currentBgImage || null;
 
         applyChromaKey(config, config.chromaKey);
 

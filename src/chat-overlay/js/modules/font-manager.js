@@ -1,26 +1,15 @@
-/**
- * Font Manager Module
- * Handles font selection, search dropdown, and remote Google Font discovery
- */
-
-// Some pages that use FontManager (e.g. chat-scene-creator.html) don't load
-// theme-carousel.js, so `window.availableFonts` / `window.loadGoogleFont` may
-// not exist. Guard against that so a missing carousel script never throws.
-if (!Array.isArray(window.availableFonts)) {
-    window.availableFonts = [];
-}
+import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
 
 /**
- * Dynamically load a Google Font by injecting a <link> tag. Prefers the
- * carousel-provided `window.loadGoogleFont` (identical behavior on chat.html),
- * and falls back to an equivalent local implementation when it's unavailable
- * (e.g. on chat-scene-creator.html, which doesn't load theme-carousel.js).
+ * Dynamically load a Google Font by injecting a <link> tag. Delegates to the
+ * carousel-provided `loadGoogleFont` when available (the normal case for
+ * chat.html), and falls back to a local <link> injection otherwise.
  * @param {string} fontFamily - The font family name.
  * @param {string} [customUrl] - Optional custom Google Fonts CSS URL.
  */
 export function ensureGoogleFontLoaded(fontFamily, customUrl) {
-    if (typeof window.loadGoogleFont === 'function') {
-        window.loadGoogleFont(fontFamily, customUrl);
+    if (typeof loadGoogleFont === 'function') {
+        loadGoogleFont(fontFamily, customUrl);
         return;
     }
     if (!fontFamily) return;
@@ -82,7 +71,7 @@ export class FontManager {
      * Returns the CSS font-family value for the currently selected font.
      */
     getCurrentFontValue() {
-        return window.availableFonts?.[this._currentFontIndex]?.value ||
+        return availableFonts?.[this._currentFontIndex]?.value ||
             this._configManager.config.fontFamily ||
             "'Atkinson Hyperlegible Next', sans-serif";
     }
@@ -94,7 +83,7 @@ export class FontManager {
      */
     syncToConfig() {
         const configFontFamily = this._configManager.config.fontFamily;
-        let fontIndex = window.availableFonts?.findIndex(
+        let fontIndex = availableFonts?.findIndex(
             f => f.value === configFontFamily
         ) ?? -1;
 
@@ -106,7 +95,7 @@ export class FontManager {
 
             if (!googleFontFamily) {
                 // Backward compat: check if a saved generated theme has the metadata
-                const savedTheme = window.availableThemes?.find(t =>
+                const savedTheme = availableThemes?.find(t =>
                     t.isGoogleFont && t.googleFontFamily && (
                         t.fontFamily === configFontFamily ||
                         configFontFamily.includes(t.googleFontFamily)
@@ -124,7 +113,7 @@ export class FontManager {
                     googleFontFamily: googleFontFamily
                 };
                 // Add to the front of the fonts list and load the stylesheet
-                window.availableFonts.unshift(fontObj);
+                availableFonts.unshift(fontObj);
                 ensureGoogleFontLoaded(fontObj.googleFontFamily);
                 fontIndex = 0;
             }
@@ -132,23 +121,23 @@ export class FontManager {
 
         this._currentFontIndex = (fontIndex !== -1)
             ? fontIndex
-            : (window.availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0);
+            : (availableFonts?.findIndex(f => f.value?.includes('Atkinson')) ?? 0);
     }
 
     /**
      * Update font display in settings panel and apply to CSS.
      */
     updateFontDisplay() {
-        if (!window.availableFonts?.length) {
+        if (!availableFonts?.length) {
             console.error('Available fonts not initialized yet.');
             if (this._fontSearchInput) this._fontSearchInput.value = 'Error';
             return;
         }
-        if (this._currentFontIndex < 0 || this._currentFontIndex >= window.availableFonts.length) {
+        if (this._currentFontIndex < 0 || this._currentFontIndex >= availableFonts.length) {
             console.warn(`Invalid currentFontIndex (${this._currentFontIndex}), resetting to 0.`);
             this._currentFontIndex = 0;
         }
-        const currentFont = window.availableFonts[this._currentFontIndex];
+        const currentFont = availableFonts[this._currentFontIndex];
         if (!currentFont) {
             console.error(`Could not find font at index ${this._currentFontIndex}`);
             if (this._fontSearchInput) this._fontSearchInput.value = 'Error';
@@ -251,9 +240,9 @@ export class FontManager {
         if (!this._fontSearchResults) return;
         // Don't require a non-empty local list: pages that don't load
         // theme-carousel.js (e.g. chat-scene-creator.html) start with
-        // `window.availableFonts` as an empty array, and results should
+        // `availableFonts` as an empty array, and results should
         // still come from the remote search below.
-        const fonts = window.availableFonts || [];
+        const fonts = availableFonts || [];
         const q = query.toLowerCase().trim();
         const matches = q
             ? fonts.filter(f => f.name.toLowerCase().includes(q))
@@ -340,7 +329,8 @@ export class FontManager {
 
             if (!remoteFonts || remoteFonts.length === 0) return;
 
-            const localNames = new Set((window.availableFonts || []).map(f => f.name.toLowerCase()));
+            const currentFonts = availableFonts || [];
+            const localNames = new Set(currentFonts.map(f => f.name.toLowerCase()));
             const newResults = remoteFonts.filter(f => !localNames.has(f.name.toLowerCase()));
 
             if (newResults.length === 0) return;
@@ -434,9 +424,10 @@ export class FontManager {
 
         ensureGoogleFontLoaded(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
 
-        const existingIdx = window.availableFonts.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
+        const targetList = availableFonts;
+        const existingIdx = targetList.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
         if (existingIdx === -1) {
-            window.availableFonts.unshift(fontObj);
+            targetList.unshift(fontObj);
             this._currentFontIndex = 0;
         } else {
             this._currentFontIndex = existingIdx;
@@ -451,7 +442,7 @@ export class FontManager {
      * Select a font from the local dropdown results.
      */
     _selectFontFromDropdown(font) {
-        const idx = window.availableFonts.findIndex(f => f.value === font.value);
+        const idx = availableFonts.findIndex(f => f.value === font.value);
         if (idx !== -1) {
             this._currentFontIndex = idx;
             this.updateFontDisplay();
@@ -488,14 +479,14 @@ export class FontManager {
         // Prev/next font buttons
         if (this._prevFontBtn && !this._prevFontBtn.dataset.listenerAttached) {
             this._prevFontBtn.addEventListener('click', () => {
-                this._currentFontIndex = (this._currentFontIndex - 1 + (window.availableFonts?.length || 1)) % (window.availableFonts?.length || 1);
+                this._currentFontIndex = (this._currentFontIndex - 1 + (availableFonts?.length || 1)) % (availableFonts?.length || 1);
                 this.updateFontDisplay();
             });
             this._prevFontBtn.dataset.listenerAttached = 'true';
         }
         if (this._nextFontBtn && !this._nextFontBtn.dataset.listenerAttached) {
             this._nextFontBtn.addEventListener('click', () => {
-                this._currentFontIndex = (this._currentFontIndex + 1) % (window.availableFonts?.length || 1);
+                this._currentFontIndex = (this._currentFontIndex + 1) % (availableFonts?.length || 1);
                 this.updateFontDisplay();
             });
             this._nextFontBtn.dataset.listenerAttached = 'true';
@@ -545,7 +536,7 @@ export class FontManager {
                         break;
                     case 'Escape':
                         this.closeFontDropdown();
-                        const currentFont = window.availableFonts?.[this._currentFontIndex];
+                        const currentFont = availableFonts?.[this._currentFontIndex];
                         if (currentFont) this._fontSearchInput.value = currentFont.name;
                         this._fontSearchInput.blur();
                         break;
@@ -624,20 +615,25 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
          * @param {string} val - Font family CSS value (or bare name).
          * @param {string|null} [googleFontFamily] - Google Font metadata for `val`,
          *   seeded into the picker's config BEFORE syncToConfig so its recovery
-         *   path can resolve fonts that aren't in window.availableFonts yet.
+         *   path can resolve fonts that aren't in availableFonts yet.
          */
         setValue(val, googleFontFamily = undefined) {
             input.value = val || '';
             dummyConfigManager.config.fontFamily = val;
             if (googleFontFamily !== undefined) {
                 dummyConfigManager.config.googleFontFamily = googleFontFamily;
+                const fontObj = { name: googleFontFamily, value: val, isGoogleFont: true, googleFontFamily };
+                const list = availableFonts;
+                if (list && !list.some(f => f.googleFontFamily === googleFontFamily || f.name === googleFontFamily)) {
+                    list.unshift(fontObj);
+                }
             }
             fontManager.syncToConfig();
             // If syncToConfig resolved the value to a known font, adopt its
             // metadata: show the friendly name, record googleFontFamily so
             // readFormConfig can ship it to the preview/sync, and make sure the
             // stylesheet is loaded in this document.
-            const resolved = window.availableFonts?.[fontManager.currentFontIndex];
+            const resolved = availableFonts?.[fontManager.currentFontIndex];
             if (resolved && (resolved.value === val || resolved.name === val)) {
                 input.value = resolved.name;
                 dummyConfigManager.config.fontFamily = resolved.value;

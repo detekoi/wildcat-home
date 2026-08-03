@@ -1,3 +1,6 @@
+import { addTheme, getThemes, availableThemes, currentThemeIndex, setCurrentThemeIndex, updateThemeDetails, scrollToThemeCard } from './theme-carousel.js';
+
+
 /**
  * AI Theme Generator for Twitch Chat Overlay
  * 
@@ -5,7 +8,6 @@
  * It includes logic for API calls, error handling, retries, image compression, and UI updates.
  */
 
-(function () {
     // DOM elements related to AI theme generation
     const themePromptInput = document.getElementById('theme-prompt');
     let generateThemeBtn = document.getElementById('generate-theme-btn');
@@ -397,9 +399,7 @@
                 : (themeData.box_shadow || "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"); // Fallback
 
             // Check for existing themes with same name to add variant number
-            const existingThemes = (window.themeCarousel && typeof window.themeCarousel.getThemes === 'function')
-                ? window.themeCarousel.getThemes()
-                : (window.availableThemes || []); // Fallback to availableThemes if carousel API missing
+            const existingThemes = getThemes();
 
             // Cloud round-trips may predate originalThemeName being persisted, so
             // also match on the visible name (base or "(Variant N)" forms) — otherwise
@@ -442,11 +442,9 @@
             };
 
             // Add the theme using the theme carousel's API
-            const currentThemeCarousel = window.themeCarousel; // Get reference *now*
-
-            if (currentThemeCarousel && typeof currentThemeCarousel.addTheme === 'function') {
+            {
                 // Let the carousel handle its internal logic (like localStorage)
-                const addedTheme = currentThemeCarousel.addTheme(theme);
+                const addedTheme = addTheme(theme);
                 console.log("Theme added to carousel internal state:", addedTheme.name);
 
                 // Dispatch an event for chat.js to handle theme application and display update
@@ -462,14 +460,12 @@
                 // Note: We don't call applyAndScrollToTheme() here because the event listener
                 // above already calls applyTheme(). We only need to update the UI.
                 const themeIndex = 0; // New themes are added at index 0
-                if (window.availableThemes && window.availableThemes[themeIndex]) {
+                if (availableThemes && availableThemes[themeIndex]) {
                     // Update current theme index
-                    window.currentThemeIndex = themeIndex;
+                    setCurrentThemeIndex(themeIndex);
 
                     // Update theme details
-                    if (typeof window.updateThemeDetails === 'function') {
-                        window.updateThemeDetails(window.availableThemes[themeIndex]);
-                    }
+                    updateThemeDetails(availableThemes[themeIndex]);
 
                     // Update active state on cards
                     const cards = document.querySelectorAll('.theme-card');
@@ -478,9 +474,7 @@
                     });
 
                     // Scroll the card into view
-                    if (typeof window.scrollToThemeCard === 'function') {
-                        window.scrollToThemeCard(themeIndex);
-                    }
+                    scrollToThemeCard(themeIndex);
                 }
 
                 // Dispatch event AFTER applying and updating display
@@ -491,12 +485,6 @@
                 console.log("Dispatched theme-data-processed event");
 
                 return addedTheme;
-            } else {
-                console.error('Theme carousel API (window.themeCarousel.addTheme) not found or invalid. Cannot add generated theme.');
-                if (typeof addSystemMessage === 'function') {
-                    addSystemMessage('❌ Error: Could not add or apply generated theme via carousel API.');
-                }
-                return null;
             }
 
         } catch (error) {
@@ -509,9 +497,9 @@
     }
 
     // Expose reusable utilities on window object for use by Scene Creator and other components
-    window.compressImageToBase64JPEG = compressImageToBase64JPEG;
-    window.processAndAddTheme = processAndAddTheme;
-    window.generateThemeApi = async function ({ prompt, generateImage = false, onStatusUpdate = () => { } }) {
+    
+    
+    async function generateThemeApi ({ prompt, generateImage = false, onStatusUpdate = () => { } }) {
         let currentAttempt = 1;
         let delay = INITIAL_DELAY;
         let previousThemeData = null;
@@ -566,4 +554,5 @@
         }
     };
 
-})();
+
+export { compressImageToBase64JPEG, processAndAddTheme, generateThemeApi };
