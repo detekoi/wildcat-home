@@ -665,4 +665,79 @@ input[type="color"]:disabled::-webkit-color-swatch,
     }
 }
 
+/* =====================================================
+   DIRTY STATE (Unsaved Changes) STYLING
+   ===================================================== */
+.btn-primary.btn-dirty {
+    background: #e6c845 !important;
+    color: #050505 !important;
+    border-color: #f5e06b !important;
+    box-shadow: 0 0 10px rgba(255, 253, 217, 0.4), var(--shadow-md, 5px 5px 0 rgba(255, 255, 255, 0.18)) !important;
+    animation: dirtyPulse 2s infinite ease-in-out;
+}
+
+.unsaved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #050505;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+    margin-left: 8px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+@media (prefers-color-scheme: light) {
+    .btn-primary.btn-dirty {
+        background: #27272a !important;
+        color: #fffdd9 !important;
+    }
+    .unsaved-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fffdd9;
+    }
+}
+
+.unsaved-title-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--warning-color, #ffb300);
+    background: rgba(255, 179, 0, 0.12);
+    border: 1px solid var(--warning-color, #ffb300);
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    vertical-align: middle;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.unsaved-dot {
+    color: var(--warning-color, #ffb300);
+    font-size: 11px;
+    margin-left: 4px;
+    vertical-align: middle;
+    display: inline-block;
+    animation: dirtyDotFade 1.5s infinite ease-in-out;
+}
+
+@keyframes dirtyPulse {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(255, 253, 217, 0.2), var(--shadow-sm, 3px 3px 0 rgba(255, 255, 255, 0.15));
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(255, 253, 217, 0.5), var(--shadow-md, 5px 5px 0 rgba(255, 255, 255, 0.18));
+    }
+}
+
+@keyframes dirtyDotFade {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+
 

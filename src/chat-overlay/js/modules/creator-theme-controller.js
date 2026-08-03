@@ -183,5 +183,6 @@ export class CreatorThemeController {
         this.renderer.bgImageHandler.updatePreviewText(theme.backgroundImage ? 'Background image active' : 'No background image set');
 
         this.renderer.sendPreviewUpdate();
+        if (this.renderer.onFormChange) this.renderer.onFormChange();
     }
 }

@@ -34,6 +34,7 @@ export class CreatorBgImageHandler {
                         this.currentBgImage = await compressFn(evt.target.result, 0.85);
                         this.updatePreviewText('Custom image loaded');
                         this.renderer.sendPreviewUpdate();
+                        if (this.renderer.onFormChange) this.renderer.onFormChange();
                     } catch (err) {
                         console.error('Failed to process background image:', err);
                     }
@@ -47,6 +48,7 @@ export class CreatorBgImageHandler {
                 if (bgFile) bgFile.value = '';
                 this.updatePreviewText('No background image set');
                 this.renderer.sendPreviewUpdate();
+                if (this.renderer.onFormChange) this.renderer.onFormChange();
             });
         }
     }

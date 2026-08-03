@@ -149,7 +149,7 @@ export class CreatorInstanceManager {
         return token;
     }
 
-    renderInstanceList(container, onSelectCallback) {
+    renderInstanceList(container, onSelectCallback, isDirtyCallback) {
         if (!container) return;
         container.innerHTML = '';
 
@@ -164,11 +164,13 @@ export class CreatorInstanceManager {
             if (id === this.currentInstanceId) item.classList.add('active');
 
             const statusText = instance.syncToken ? 'Sync Active' : 'Local Scene';
+            const isDirty = (typeof isDirtyCallback === 'function' && id === this.currentInstanceId) ? isDirtyCallback() : false;
+            const unsavedTag = isDirty ? ' <span class="unsaved-dot" title="Unsaved changes">●</span>' : '';
 
             item.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div>
-                        <div style="font-weight: 600;">${UIHelpers.escapeHtml(instance.name)}</div>
+                        <div class="instance-name" style="font-weight: 600;">${UIHelpers.escapeHtml(instance.name)}${unsavedTag}</div>
                         <div style="font-size: 11px; opacity: 0.6;">${statusText}</div>
                     </div>
                     <i data-lucide="grip-vertical" style="opacity: 0.4; cursor: grab;"></i>

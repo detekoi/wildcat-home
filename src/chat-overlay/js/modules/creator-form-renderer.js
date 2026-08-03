@@ -18,10 +18,12 @@ export class CreatorFormRenderer {
      * @param {Object} opts
      * @param {Object} opts.configManager - ConfigManager helper
      * @param {HTMLIFrameElement} opts.previewIframe - Live preview iframe
+     * @param {Function} [opts.onFormChange] - Callback when form values change
      */
-    constructor({ configManager, previewIframe }) {
+    constructor({ configManager, previewIframe, onFormChange }) {
         this.configManager = configManager;
         this.previewIframe = previewIframe;
+        this.onFormChange = onFormChange || null;
         this.fontPicker = null;
         this.bgImageHandler = new CreatorBgImageHandler(this);
         this.themeController = new CreatorThemeController(this);
@@ -159,6 +161,7 @@ export class CreatorFormRenderer {
                             });
                             btn.classList.add('active');
                             this.sendPreviewUpdate();
+                            if (this.onFormChange) this.onFormChange();
                         });
 
                         presetGroup.appendChild(btn);
@@ -421,6 +424,7 @@ export class CreatorFormRenderer {
                 }
 
                 this.sendPreviewUpdate();
+                if (this.onFormChange) this.onFormChange();
             };
             eventTypes.forEach(eventType => input.addEventListener(eventType, handleUpdate));
         });
@@ -428,8 +432,12 @@ export class CreatorFormRenderer {
         ['schema-popup-direction', 'schema-popup-duration', 'schema-popup-maxMessages'].forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                input.addEventListener('change', () => this.sendPreviewUpdate());
-                input.addEventListener('input', () => this.sendPreviewUpdate());
+                const handlePopupUpdate = () => {
+                    this.sendPreviewUpdate();
+                    if (this.onFormChange) this.onFormChange();
+                };
+                input.addEventListener('change', handlePopupUpdate);
+                input.addEventListener('input', handlePopupUpdate);
             }
         });
     }

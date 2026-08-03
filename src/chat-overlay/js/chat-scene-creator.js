@@ -16,13 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor() {
             this.configManagerHelper = new ConfigManager();
             this.dom = {};
+            this.isDirty = false;
+            this.isPopulating = false;
 
             this.initializeDOM();
 
             // Instantiate modules
             this.formRenderer = new CreatorFormRenderer({
                 configManager: this.configManagerHelper,
-                previewIframe: this.dom.previewIframe
+                previewIframe: this.dom.previewIframe,
+                onFormChange: () => {
+                    if (!this.isPopulating) this.setDirty(true);
+                }
             });
 
             this.instanceManager = new CreatorInstanceManager({
@@ -112,48 +117,122 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
+        setDirty(isDirty) {
+            this.isDirty = !!isDirty;
+            this.updateDirtyUI();
+        }
+
+        updateDirtyUI() {
+            const saveBtn = this.dom.saveSettingsBtn;
+            const workspaceTitle = this.dom.workspaceTitle;
+            const currentId = this.instanceManager.currentInstanceId;
+
+            if (saveBtn && !saveBtn.disabled) {
+                if (this.isDirty) {
+                    saveBtn.classList.add('btn-dirty');
+                    saveBtn.innerHTML = '<i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings <span class="unsaved-badge">● Unsaved</span>';
+                } else {
+                    saveBtn.classList.remove('btn-dirty');
+                    saveBtn.innerHTML = '<i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings';
+                }
+                if (window.lucide) window.lucide.createIcons();
+            }
+
+            if (workspaceTitle && currentId && this.instanceManager.instances[currentId]) {
+                const name = this.instanceManager.instances[currentId].name;
+                if (this.isDirty) {
+                    workspaceTitle.innerHTML = `${UIHelpers.escapeHtml(name)} <span class="unsaved-title-badge">● Unsaved</span>`;
+                } else {
+                    workspaceTitle.textContent = name;
+                }
+            }
+
+            if (this.dom.instanceList && currentId) {
+                const activeItem = this.dom.instanceList.querySelector(`.instance-item[data-id="${currentId}"]`);
+                if (activeItem) {
+                    const nameEl = activeItem.querySelector('.instance-name');
+                    if (nameEl) {
+                        const name = this.instanceManager.instances[currentId]?.name || 'Untitled Scene';
+                        if (this.isDirty) {
+                            nameEl.innerHTML = `${UIHelpers.escapeHtml(name)} <span class="unsaved-dot" title="Unsaved changes">●</span>`;
+                        } else {
+                            nameEl.textContent = name;
+                        }
+                    }
+                }
+            }
+        }
+
+        async confirmSaveIfDirty(actionDescription = 'switching scenes') {
+            if (!this.isDirty || !this.instanceManager.currentInstanceId) return true;
+            const currentName = this.instanceManager.instances[this.instanceManager.currentInstanceId]?.name || 'Current scene';
+            const saveFirst = window.confirm(`You have unsaved changes in "${currentName}". Save changes before ${actionDescription}?`);
+            if (saveFirst) {
+                await this.saveCurrentInstance({ includeChannel: false });
+                return true;
+            }
+            return false;
+        }
+
         renderInstanceList() {
-            this.instanceManager.renderInstanceList(this.dom.instanceList, (id) => this.selectInstance(id));
+            this.instanceManager.renderInstanceList(
+                this.dom.instanceList,
+                (id) => this.selectInstance(id),
+                () => this.isDirty
+            );
         }
 
         async selectInstance(instanceId) {
+            if (this.instanceManager.currentInstanceId && this.instanceManager.currentInstanceId !== instanceId) {
+                const confirmed = await this.confirmSaveIfDirty('switching scenes');
+                if (!confirmed) return false;
+            }
+
             const instance = this.instanceManager.instances[instanceId];
             if (!instance) {
                 UIHelpers.showNotification('Error', 'Instance not found.', 'error');
-                return;
+                return false;
             }
 
-            this.instanceManager.currentInstanceId = instanceId;
+            this.isPopulating = true;
 
-            if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
-            if (this.dom.configLayout) this.dom.configLayout.style.display = 'grid';
-            if (this.dom.workspaceActions) this.dom.workspaceActions.style.display = 'flex';
-            if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
+            try {
+                this.instanceManager.currentInstanceId = instanceId;
 
-            document.querySelectorAll('.instance-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.id === instanceId);
-            });
+                if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
+                if (this.dom.configLayout) this.dom.configLayout.style.display = 'grid';
+                if (this.dom.workspaceActions) this.dom.workspaceActions.style.display = 'flex';
+                if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
 
-            this.formRenderer.populateForm(instance, this.dom);
-            this.syncManager.updateInstanceUrl(instance, instanceId, this.dom);
+                document.querySelectorAll('.instance-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.id === instanceId);
+                });
 
-            // Backfill scenes created before tokens were minted automatically. Must run
-            // before subscribing so the subscription always has a token to attach to.
-            await this.ensureSyncTokenAndPush(instanceId);
+                this.formRenderer.populateForm(instance, this.dom);
+                this.syncManager.updateInstanceUrl(instance, instanceId, this.dom);
 
-            this.syncManager.subscribeToRemoteChanges(
-                instance.syncToken,
-                instanceId,
-                (id) => this.instanceManager.instances[id],
-                () => this.instanceManager.saveInstances(),
-                () => this.instanceManager.currentInstanceId
-            );
+                // Backfill scenes created before tokens were minted automatically. Must run
+                // before subscribing so the subscription always has a token to attach to.
+                await this.ensureSyncTokenAndPush(instanceId);
 
-            if (this.dom.previewIframe) {
-                this.dom.previewIframe.src = `chat.html?demo=1&scene=${encodeURIComponent(instanceId)}`;
-                this.dom.previewIframe.addEventListener('load', () => this.formRenderer.sendPreviewUpdate(), { once: true });
+                this.syncManager.subscribeToRemoteChanges(
+                    instance.syncToken,
+                    instanceId,
+                    (id) => this.instanceManager.instances[id],
+                    () => this.instanceManager.saveInstances(),
+                    () => this.instanceManager.currentInstanceId
+                );
+
+                if (this.dom.previewIframe) {
+                    this.dom.previewIframe.src = `chat.html?demo=1&scene=${encodeURIComponent(instanceId)}`;
+                    this.dom.previewIframe.addEventListener('load', () => this.formRenderer.sendPreviewUpdate(), { once: true });
+                }
+                this.formRenderer.sendPreviewUpdate();
+            } finally {
+                this.isPopulating = false;
+                this.setDirty(false);
             }
-            this.formRenderer.sendPreviewUpdate();
+            return true;
         }
 
         async saveCurrentInstance({ includeChannel = false } = {}) {
@@ -165,10 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const saveBtn = this.dom.saveSettingsBtn;
-            let originalContent = '';
             if (saveBtn) {
-                originalContent = saveBtn.innerHTML;
                 saveBtn.disabled = true;
+                saveBtn.classList.remove('btn-dirty');
                 saveBtn.innerHTML = '<i data-lucide="loader" class="lucide-inline spin"></i> Saving & Syncing...';
                 if (window.lucide) window.lucide.createIcons();
             }
@@ -183,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.instanceManager.saveInstances();
                 localStorage.setItem(`chatConfig-${currentId}`, JSON.stringify(updatedConfig));
 
-                if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
+                this.setDirty(false);
                 this.renderInstanceList();
 
                 if (instance.syncToken) {
@@ -199,8 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 if (saveBtn) {
                     saveBtn.disabled = false;
-                    saveBtn.innerHTML = originalContent;
-                    if (window.lucide) window.lucide.createIcons();
+                    this.updateDirtyUI();
                 }
             }
         }
@@ -288,13 +365,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setupEventListeners() {
+            const handleFieldChange = () => this.setDirty(true);
+
+            if (this.dom.instanceName) {
+                this.dom.instanceName.addEventListener('input', handleFieldChange);
+                this.dom.instanceName.addEventListener('change', handleFieldChange);
+            }
+            if (this.dom.creatorTwitchChannel) {
+                this.dom.creatorTwitchChannel.addEventListener('input', handleFieldChange);
+                this.dom.creatorTwitchChannel.addEventListener('change', handleFieldChange);
+            }
+            if (this.dom.creatorYoutubeTarget) {
+                this.dom.creatorYoutubeTarget.addEventListener('input', handleFieldChange);
+                this.dom.creatorYoutubeTarget.addEventListener('change', handleFieldChange);
+            }
+
+            window.addEventListener('beforeunload', (e) => {
+                if (this.isDirty) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+
             if (this.dom.createInstanceBtn) {
-                this.dom.createInstanceBtn.addEventListener('click', () => {
+                this.dom.createInstanceBtn.addEventListener('click', async () => {
+                    const confirmed = await this.confirmSaveIfDirty('creating a new scene');
+                    if (!confirmed) return;
                     this.instanceManager.openInstanceModal(this.dom.instanceModal, this.dom.modalInstanceName);
                 });
             }
             if (this.dom.emptyStateCreateBtn) {
-                this.dom.emptyStateCreateBtn.addEventListener('click', () => {
+                this.dom.emptyStateCreateBtn.addEventListener('click', async () => {
+                    const confirmed = await this.confirmSaveIfDirty('creating a new scene');
+                    if (!confirmed) return;
                     this.instanceManager.openInstanceModal(this.dom.instanceModal, this.dom.modalInstanceName);
                 });
             }
@@ -318,6 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (this.dom.duplicateBtn) {
                 this.dom.duplicateBtn.addEventListener('click', async () => {
+                    const confirmed = await this.confirmSaveIfDirty('duplicating this scene');
+                    if (!confirmed) return;
                     const newId = this.instanceManager.duplicateCurrentInstance();
                     if (newId) {
                         this.renderInstanceList();
