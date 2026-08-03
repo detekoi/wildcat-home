@@ -311,5 +311,64 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(document.getElementById('google-font-monoton')).not.toBeNull();
         expect(themeCarousel.availableFonts.some(f => f.name === 'Monoton')).toBe(true);
     });
+
+    it('setValue with a null googleFontFamily does not seed a nameless font into availableFonts', () => {
+        // populateForm() passes `config.googleFontFamily ?? null` on every scene
+        // switch, so null is the normal case for a scene using a built-in theme.
+        const picker = createFontPicker(container, { initialValue: "'Inter', sans-serif" });
+
+        picker.setValue("'Inter', sans-serif", null);
+
+        expect(themeCarousel.availableFonts.some(f => !f?.name)).toBe(false);
+        expect(picker.getGoogleFontFamily()).toBeNull();
+    });
+
+    it('setFont still works after a scene switch seeded the picker with a null googleFontFamily', () => {
+        // Regression: selecting a scene then navigating the theme carousel onto an
+        // AI-generated theme threw in _addAndSelectGoogleFont's name lookup, which
+        // aborted applyThemeToForm partway — colors landed, but the carousel's
+        // name/description and the live preview never updated.
+        const picker = createFontPicker(container, { initialValue: "'Inter', sans-serif" });
+
+        picker.setValue("'Inter', sans-serif", null);
+        picker.setFont({
+            name: 'Chicle',
+            value: "'Chicle', serif",
+            isGoogleFont: true,
+            googleFontFamily: 'Chicle'
+        });
+
+        expect(picker.getValue()).toBe("'Chicle', serif");
+        expect(picker.getGoogleFontFamily()).toBe('Chicle');
+    });
+
+    it('font search survives a malformed entry in the shared availableFonts array', async () => {
+        // availableFonts is exported and mutated by several modules, so no single
+        // caller owns its shape. A nameless entry must degrade to "skipped", not
+        // take down the dropdown on every keystroke.
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ([
+                { name: 'Orbitron', value: "'Orbitron', sans-serif", isGoogleFont: true, googleFontFamily: 'Orbitron' },
+                { value: "'Nameless', sans-serif", isGoogleFont: true } // proxy returned a bad row
+            ])
+        });
+
+        themeCarousel.availableFonts.push(
+            { name: null, value: "'Broken', sans-serif" },
+            { name: 'Orbit Local', value: "'Orbit Local', sans-serif" }
+        );
+
+        const picker = createFontPicker(container, { initialValue: "'Inter', sans-serif" });
+        picker.input.value = 'Orbit';
+        picker.input.dispatchEvent(new Event('input'));
+        await new Promise(resolve => setTimeout(resolve, 450));
+
+        const labels = [...container.querySelectorAll('.font-search-result[role="option"]')]
+            .map(el => el.textContent);
+        expect(labels.some(t => t.includes('Orbit Local'))).toBe(true);
+        expect(labels.some(t => t.includes('Orbitron'))).toBe(true);
+        expect(labels.some(t => t.includes('Nameless'))).toBe(false);
+    });
 });
 

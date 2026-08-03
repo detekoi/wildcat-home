@@ -245,7 +245,7 @@ export class FontManager {
         const fonts = availableFonts || [];
         const q = query.toLowerCase().trim();
         const matches = q
-            ? fonts.filter(f => f.name.toLowerCase().includes(q))
+            ? fonts.filter(f => f?.name?.toLowerCase().includes(q))
             : fonts;
 
         this._fontSearchResults.innerHTML = '';
@@ -330,8 +330,10 @@ export class FontManager {
             if (!remoteFonts || remoteFonts.length === 0) return;
 
             const currentFonts = availableFonts || [];
-            const localNames = new Set(currentFonts.map(f => f.name.toLowerCase()));
-            const newResults = remoteFonts.filter(f => !localNames.has(f.name.toLowerCase()));
+            // Both lists are guarded: `availableFonts` is a shared array several
+            // modules push into, and remoteFonts comes straight off the proxy.
+            const localNames = new Set(currentFonts.map(f => f?.name?.toLowerCase()).filter(Boolean));
+            const newResults = remoteFonts.filter(f => f?.name && !localNames.has(f.name.toLowerCase()));
 
             if (newResults.length === 0) return;
             if (!this._fontSearchResults?.classList.contains('visible')) return;
@@ -425,7 +427,7 @@ export class FontManager {
         ensureGoogleFontLoaded(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
 
         const targetList = availableFonts;
-        const existingIdx = targetList.findIndex(f => f.name.toLowerCase() === fontName.toLowerCase());
+        const existingIdx = targetList.findIndex(f => f?.name?.toLowerCase() === fontName.toLowerCase());
         if (existingIdx === -1) {
             targetList.unshift(fontObj);
             this._currentFontIndex = 0;
@@ -622,10 +624,16 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
             dummyConfigManager.config.fontFamily = val;
             if (googleFontFamily !== undefined) {
                 dummyConfigManager.config.googleFontFamily = googleFontFamily;
-                const fontObj = { name: googleFontFamily, value: val, isGoogleFont: true, googleFontFamily };
-                const list = availableFonts;
-                if (list && !list.some(f => f.googleFontFamily === googleFontFamily || f.name === googleFontFamily)) {
-                    list.unshift(fontObj);
+                // Only seed a stand-in entry when there's an actual family to resolve.
+                // A null means "this config uses no Google Font" — the common case for
+                // built-in themes — and seeding `{ name: null }` for it poisoned
+                // availableFonts for every later lookup that reads f.name.
+                if (googleFontFamily) {
+                    const fontObj = { name: googleFontFamily, value: val, isGoogleFont: true, googleFontFamily };
+                    const list = availableFonts;
+                    if (list && !list.some(f => f.googleFontFamily === googleFontFamily || f.name === googleFontFamily)) {
+                        list.unshift(fontObj);
+                    }
                 }
             }
             fontManager.syncToConfig();
