@@ -67,6 +67,7 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
         const saveConfigBtn = document.getElementById('save-config');
         const cancelConfigBtn = document.getElementById('cancel-config');
         const resetConfigBtn = document.getElementById('reset-config');
+        const saveThemePresetBtn = document.getElementById('save-theme-preset-btn');
         const fontSizeSlider = document.getElementById('font-size');
         const fontSizeValue = document.getElementById('font-size-value');
         const bgColorInput = document.getElementById('bg-color');
@@ -129,7 +130,8 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
             enlargeSingleEmotesToggle, thirdPartyEmotesToggle, thirdPartyChannelEmotesToggle, thirdPartyFilter7tvTwitchDisallowedToggle, thirdPartyFilter7tvSexualToggle, thirdPartyFilter7tvEpilepsyToggle, thirdPartyFilter7tvEdgyToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
             twitchDisconnectBtn, youtubeDisconnectBtn, twitchChannelInput, youtubeChannelInput,
             initialConnectionPrompt, initialTwitchInput, initialYoutubeInput, initialConnectBtn, openSettingsFromPromptBtn,
-            twitchConnectBtn, youtubeConnectBtn, settingsBtn, popupSettingsBtn, saveConfigBtn, cancelConfigBtn, resetConfigBtn
+            twitchConnectBtn, youtubeConnectBtn, settingsBtn, popupSettingsBtn, saveConfigBtn, cancelConfigBtn, resetConfigBtn,
+            saveThemePresetBtn
         };
 
         // --- MODULE INITIALIZATION ---

@@ -317,6 +317,39 @@ button:hover {
     margin: 10px 0;
 }
 
+/* "Save Current Settings as Preset" — sits directly under the theme carousel */
+.theme-preset-row {
+    margin: 0 0 10px 0;
+}
+
+.theme-preset-save-btn {
+    width: 100%;
+    padding: 6px 10px;
+    background: #2a2a2d;
+    color: #efeff1;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.theme-preset-save-btn:hover {
+    background: #3a3a3d;
+    border-color: #9147ff;
+}
+
+.theme-preset-save-btn svg,
+.theme-preset-save-btn .lucide {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2px;
+}
+
 .color-btn {
     min-width: 60px;
     width: max-content;

@@ -143,10 +143,31 @@ describe('SceneSyncManager', () => {
         expect(syncManager._db).toBeNull();
         const ensureSpy = vi.spyOn(syncManager, '_ensureSubscribed').mockResolvedValue(true);
 
+        syncManager.setSyncToken('3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7');
+
+        expect(syncManager._token).toBe('3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7');
+        expect(ensureSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should strip a legacy sync- prefix so REST writes and Firestore reads use one id', () => {
+        // Tokens minted as `sync-<uuid>` are rejected by the proxy's validateToken.
+        // The token is both the REST path segment and the Firestore doc id, so it has
+        // to normalize to the same value the migrated scene creator writes to.
+        const ensureSpy = vi.spyOn(syncManager, '_ensureSubscribed').mockResolvedValue(true);
+
+        syncManager.setSyncToken('sync-3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7');
+
+        expect(syncManager._token).toBe('3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7');
+        expect(ensureSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject a token that is not UUID-shaped rather than syncing to a doomed id', () => {
+        const ensureSpy = vi.spyOn(syncManager, '_ensureSubscribed').mockResolvedValue(true);
+
         syncManager.setSyncToken('brand-new-token');
 
-        expect(syncManager._token).toBe('brand-new-token');
-        expect(ensureSpy).toHaveBeenCalledTimes(1);
+        expect(syncManager._token).toBeNull();
+        expect(ensureSpy).not.toHaveBeenCalled();
     });
 
     it('should not attempt to subscribe when setSyncToken is cleared to an empty token', () => {

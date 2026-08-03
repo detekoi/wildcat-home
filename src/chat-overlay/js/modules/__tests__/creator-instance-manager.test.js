@@ -19,18 +19,24 @@ describe('CreatorInstanceManager - Sync Token Handling', () => {
     });
 
     describe('mintSyncToken', () => {
-        it('should return a truthy token string that is not prefixed with scene_', () => {
+        // The token is interpolated straight into PUT /api/scene-config/<token>, and the
+        // proxy's validateToken middleware 400s anything that isn't UUID-shaped. A
+        // prefixed token silently broke all scene cloud sync (and every GCS background
+        // upload, which only happens inside that handler), so the shape is the contract.
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        it('should return a bare UUID with no prefix', () => {
             const token = instanceManager.mintSyncToken();
 
             expect(typeof token).toBe('string');
-            expect(token).toBeTruthy();
-            expect(token.startsWith('scene_')).toBe(false);
+            expect(token).toMatch(UUID_RE);
         });
 
-        it('should mint distinct tokens on the non-crypto fallback path', () => {
+        it('should mint distinct bare UUIDs on the non-crypto fallback path', () => {
             // Non-secure contexts (plain http) leave crypto.randomUUID undefined. The
             // fallback must still not collide within the same millisecond — a shared
-            // token means two scenes writing to one Firestore doc.
+            // token means two scenes writing to one Firestore doc — and must still be
+            // UUID-shaped or the proxy rejects it.
             const original = globalThis.crypto.randomUUID;
             Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true });
 
@@ -38,11 +44,44 @@ describe('CreatorInstanceManager - Sync Token Handling', () => {
                 const first = instanceManager.mintSyncToken();
                 const second = instanceManager.mintSyncToken();
 
-                expect(first).toMatch(/^sync-/);
+                expect(first).toMatch(UUID_RE);
+                expect(second).toMatch(UUID_RE);
                 expect(first).not.toBe(second);
             } finally {
                 Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true });
             }
+        });
+    });
+
+    describe('migrateSyncTokens', () => {
+        it('should strip a legacy sync- prefix, preserving the underlying UUID', () => {
+            const uuid = '3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7';
+            instanceManager.instances = { 'scene-1': { id: 'scene-1', syncToken: `sync-${uuid}` } };
+
+            const repaired = instanceManager.migrateSyncTokens();
+
+            expect(repaired).toBe(1);
+            expect(instanceManager.instances['scene-1'].syncToken).toBe(uuid);
+        });
+
+        it('should re-mint a token that is not a UUID even after stripping', () => {
+            instanceManager.instances = { 'scene-1': { id: 'scene-1', syncToken: 'sync-1712345678_ab12cd' } };
+
+            instanceManager.migrateSyncTokens();
+
+            expect(instanceManager.instances['scene-1'].syncToken).toMatch(
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            );
+        });
+
+        it('should leave already-valid tokens untouched and report nothing repaired', () => {
+            const uuid = '3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7';
+            instanceManager.instances = { 'scene-1': { id: 'scene-1', syncToken: uuid } };
+
+            const repaired = instanceManager.migrateSyncTokens();
+
+            expect(repaired).toBe(0);
+            expect(instanceManager.instances['scene-1'].syncToken).toBe(uuid);
         });
     });
 

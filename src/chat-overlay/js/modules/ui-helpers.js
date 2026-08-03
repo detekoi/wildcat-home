@@ -276,6 +276,62 @@ export class UIHelpers {
     }
 
     /**
+     * Generate a strictly UUID-shaped id.
+     *
+     * Distinct from generateSecureId(): the proxy validates every :token route
+     * param against a UUID regex and 400s anything else, so tokens must be
+     * well-formed UUIDs on EVERY code path. generateSecureId()'s last-resort
+     * fallback is `Date.now()_<random>`, which is not — using it for a token
+     * would make the resource unreachable on origins without crypto
+     * (non-secure contexts, older webviews).
+     *
+     * @returns {string} A version-4 UUID.
+     */
+    static generateUUID() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+
+        const randomByte = (typeof crypto !== 'undefined' && crypto.getRandomValues)
+            ? () => crypto.getRandomValues(new Uint8Array(1))[0]
+            : () => Math.floor(Math.random() * 256);
+
+        const bytes = Array.from({ length: 16 }, randomByte);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+        bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
+        const hex = bytes.map(b => b.toString(16).padStart(2, '0'));
+        return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10, 16).join('')}`;
+    }
+
+    /**
+     * True when `value` is a well-formed UUID — the shape the proxy's
+     * validateToken middleware requires of every token.
+     * @param {string} value
+     * @returns {boolean}
+     */
+    static isUUID(value) {
+        return typeof value === 'string'
+            && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    }
+
+    /**
+     * Coerce a sync token to the bare-UUID form the proxy accepts.
+     *
+     * A previous refactor minted tokens as `sync-<uuid>`, which the proxy rejects.
+     * Those tokens are still sitting in saved scenes and in OBS browser-source URLs,
+     * so every entry point normalizes rather than trusting its input. Critically,
+     * the token is used BOTH as the REST path segment and as the Firestore document
+     * id — normalizing in only one of those places would split reads from writes.
+     *
+     * @param {string} token
+     * @returns {string|null} The lowercased bare UUID, or null if unusable.
+     */
+    static normalizeSyncToken(token) {
+        if (typeof token !== 'string') return null;
+        const trimmed = token.trim();
+        const bare = trimmed.startsWith('sync-') ? trimmed.slice('sync-'.length) : trimmed;
+        return UIHelpers.isUUID(bare) ? bare.toLowerCase() : null;
+    }
+
+    /**
      * Notification helper function that renders a floating toast notification.
      * @param {string} title - Notification title
      * @param {string} message - Notification subtext / description

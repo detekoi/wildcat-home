@@ -230,4 +230,98 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             expect(themeCarousel.getAvailableThemes().find(t => t.value === 'generated-1')).toBeDefined();
         });
     });
+
+    describe('User preset badge', () => {
+        const cardFor = (value) => container.querySelector(`.theme-card[data-theme-value="${value}"]`);
+
+        it('badges a user-saved preset', () => {
+            themeCarousel.mount(container);
+            themeCarousel.addTheme({ name: 'My Preset', value: 'preset-1', bgColor: '#101014', isUserPreset: true });
+
+            expect(cardFor('preset-1').querySelector('.theme-card-badge')).not.toBeNull();
+        });
+
+        it('does not badge an AI-generated theme', () => {
+            themeCarousel.mount(container);
+            themeCarousel.addTheme({ name: 'Neon', value: 'generated-99', bgColor: '#101014' });
+
+            expect(cardFor('generated-99').querySelector('.theme-card-badge')).toBeNull();
+        });
+
+        it('does not badge a built-in theme', () => {
+            themeCarousel.mount(container);
+            expect(cardFor('default').querySelector('.theme-card-badge')).toBeNull();
+        });
+
+        it('still offers delete on a badged preset', () => {
+            // The badge is positioned top-left precisely so it cannot displace the
+            // top-right delete button; both must coexist.
+            themeCarousel.mount(container);
+            themeCarousel.addTheme({ name: 'My Preset', value: 'preset-2', bgColor: '#101014', isUserPreset: true });
+
+            const card = cardFor('preset-2');
+            expect(card.querySelector('.theme-card-badge')).not.toBeNull();
+            expect(card.querySelector('.theme-card-delete')).not.toBeNull();
+        });
+
+        it('keeps the preset marker through the cloud round-trip', async () => {
+            // pushThemeToCloud Object.assign()s the server copy over the local theme.
+            // If the marker were lost there the badge would vanish moments after saving.
+            themeCarousel.mount(container);
+            const added = themeCarousel.addTheme({
+                name: 'My Preset', value: 'preset-3', bgColor: '#101014', isUserPreset: true
+            });
+
+            await vi.waitFor(() => expect(added.id).toBe('cloud-id-123'));
+            expect(added.isUserPreset).toBe(true);
+        });
+    });
+
+    describe('Cloud push result reporting', () => {
+        it('announces a successful push so an explicit save can confirm it persisted', async () => {
+            themeCarousel.mount(container);
+            const results = [];
+            document.addEventListener('theme-library-push-result', (e) => results.push(e.detail));
+
+            themeCarousel.addTheme({ name: 'My Preset', value: 'preset-ok', bgColor: '#101014', isUserPreset: true });
+
+            await vi.waitFor(() => expect(results).toHaveLength(1));
+            expect(results[0].ok).toBe(true);
+            expect(results[0].theme.value).toBe('preset-ok');
+        });
+
+        it('announces a failed push so the user is not told a lost preset was saved', async () => {
+            const client = await import('../theme-library-client.js');
+            client.addTheme.mockResolvedValueOnce(null);
+
+            themeCarousel.mount(container);
+            const results = [];
+            document.addEventListener('theme-library-push-result', (e) => results.push(e.detail));
+
+            themeCarousel.addTheme({ name: 'Doomed', value: 'preset-fail', bgColor: '#101014', isUserPreset: true });
+
+            await vi.waitFor(() => expect(results).toHaveLength(1));
+            expect(results[0].ok).toBe(false);
+        });
+
+        it('flags an image the server dropped for being too large', async () => {
+            const client = await import('../theme-library-client.js');
+            client.addTheme.mockResolvedValueOnce({
+                name: 'Big', value: 'preset-img', id: 'cloud-x', backgroundImage: null
+            });
+
+            themeCarousel.mount(container);
+            const results = [];
+            document.addEventListener('theme-library-push-result', (e) => results.push(e.detail));
+
+            themeCarousel.addTheme({
+                name: 'Big', value: 'preset-img', bgColor: '#101014',
+                backgroundImage: 'data:image/jpeg;base64,AAAA', isUserPreset: true
+            });
+
+            await vi.waitFor(() => expect(results).toHaveLength(1));
+            expect(results[0].ok).toBe(true);
+            expect(results[0].imageDropped).toBe(true);
+        });
+    });
 });

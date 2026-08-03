@@ -188,6 +188,20 @@ export class CreatorFormRenderer {
                     row.appendChild(mountDiv);
                     groupDiv.appendChild(row);
 
+                    // Saving the current form as a preset is the counterpart to
+                    // picking one from the carousel, so it sits directly beneath it —
+                    // as its own block, not inside the row, whose flex layout would
+                    // squeeze it against the carousel's nav arrows.
+                    const presetActions = document.createElement('div');
+                    presetActions.className = 'theme-preset-actions';
+                    presetActions.innerHTML = `
+                        <button type="button" class="btn btn-secondary" id="creatorSavePresetBtn">
+                            <i data-lucide="bookmark-plus" class="lucide-inline"></i> Save Current Settings as Preset
+                        </button>
+                        <span id="creatorPresetStatus"></span>
+                    `;
+                    groupDiv.appendChild(presetActions);
+
                     if (typeof mount === 'function') {
                         try {
                             this.themeCarouselController = mount(mountDiv, {
@@ -402,6 +416,7 @@ export class CreatorFormRenderer {
 
         this.bgImageHandler.setupListeners();
         this.themeController.setupAiListeners();
+        this.themeController.setupPresetListeners();
     }
 
     setupFormLivePreview() {

@@ -143,6 +143,32 @@
     background: rgba(200, 40, 40, 0.85);
 }
 
+/* Origin marker for themes the user saved from their own settings.
+   Sits top-left so it can never overlap the top-right delete button, and is
+   click-through so it doesn't block the card's own select handler. */
+.theme-card-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 3;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #a970ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.theme-card-badge svg,
+.theme-card-badge .lucide {
+    width: 11px;
+    height: 11px;
+    stroke-width: 2.2px;
+}
+
 .theme-card:hover {
     transform: none; /* Removed hover effect */
     /* Optionally add a subtle border or background change on hover if desired */
@@ -278,6 +304,23 @@
 
 /* Custom confirmation modal for theme deletion (works in OBS CEF & standard browsers) */
 .theme-carousel-modal-overlay {
+    /* The modal owns its palette rather than reading shared token names directly:
+       this stylesheet is loaded by BOTH chat.html and chat-scene-creator.html, and
+       those pages define names like --panel-color with opposite meanings (the
+       overlay's variables.css sets --panel-color: #ffffff). Reading them directly
+       rendered a white dialog inside the dark overlay panel. These defaults are the
+       overlay's treatment; wildcat-theme.css remaps them to the site's own tokens
+       on the pages that load it, so both stay theme-aware. */
+    --tc-modal-bg: #0a0a0a;
+    --tc-modal-fg: #efeff1;
+    --tc-modal-border: #333338;
+    --tc-modal-shadow: 8px 8px 0 rgba(255, 255, 255, 0.18);
+    --tc-modal-accent: #efeff1;
+    --tc-modal-accent-fg: #0a0a0a;
+    --tc-modal-accent-hover: #ffffff;
+    --tc-modal-input-bg: #050505;
+    --tc-modal-warning: #ffb300;
+
     position: fixed;
     top: 0;
     left: 0;
@@ -298,68 +341,83 @@
     to { opacity: 1; }
 }
 
+/* Square corners, hard borders and offset (blurless) shadows, matching the boxy
+   treatment wildcat-theme.css applies site-wide. The custom properties resolve on
+   chat-scene-creator.html, which loads that stylesheet; the fallbacks keep the
+   dialog looking right inside the OBS overlay panel, which does not. */
 .theme-carousel-modal {
-    background: #18181b;
-    border: 1px solid #333338;
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 380px;
+    background: var(--tc-modal-bg);
+    border: 1px solid var(--tc-modal-border);
+    border-radius: 0;
+    padding: 24px;
+    max-width: 420px;
     width: 100%;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    color: #efeff1;
-    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: var(--tc-modal-shadow);
+    color: var(--tc-modal-fg);
+    font-family: inherit;
 }
 
 .theme-carousel-modal h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #ffffff;
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--tc-modal-fg);
 }
 
 .theme-carousel-modal p {
-    margin: 0 0 16px 0;
-    font-size: 13px;
-    line-height: 1.4;
-    color: #adadb8;
+    margin: 0 0 18px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--tc-modal-fg);
+    opacity: 0.75;
 }
 
 .theme-carousel-modal .theme-name-highlight {
-    color: #a970ff;
-    font-weight: 600;
+    font-weight: 700;
+    opacity: 1;
 }
 
 .theme-carousel-modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 10px;
 }
 
 .theme-carousel-modal-actions button {
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 9px 18px;
+    border-radius: 0;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    border: none;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
+    border: 1px solid var(--tc-modal-border);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    /* Layout only. `background` and `color` belong to the variant rules below:
+       this selector (class + element) outranks their single-class selectors, so
+       declaring either here would silently defeat every filled treatment. */
 }
 
 .theme-carousel-modal-cancel {
-    background: #27272a;
-    color: #efeff1;
+    background: transparent;
+    color: var(--tc-modal-fg);
 }
 
 .theme-carousel-modal-cancel:hover {
-    background: #3f3f46;
+    background: var(--tc-modal-border);
 }
 
+/* Inverted fill for the affirmative action, the same emphasis the site's
+   primary buttons use, rather than a rounded accent-coloured pill. */
 .theme-carousel-modal-delete {
-    background: #e53935;
-    color: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    background: #e53935;
+    border-color: #e53935;
+    color: #ffffff;
 }
 
 .theme-carousel-modal-delete svg,
@@ -371,6 +429,64 @@
 
 .theme-carousel-modal-delete:hover {
     background: #c62828;
+    border-color: #c62828;
+}
+
+/* Name input for the "save preset" modal */
+.theme-carousel-modal-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    border-radius: 0;
+    border: 1px solid var(--tc-modal-border);
+    background: var(--tc-modal-input-bg);
+    color: var(--tc-modal-fg);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.theme-carousel-modal-input:focus {
+    outline: none;
+    border-color: var(--tc-modal-accent);
+}
+
+.theme-carousel-modal-note {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--tc-modal-warning);
+    border-left: 3px solid var(--tc-modal-warning);
+    padding: 6px 10px;
+    margin: -8px 0 16px 0;
+}
+
+/* Inverted fill, matching the site's primary-button emphasis. */
+.theme-carousel-modal-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--tc-modal-accent);
+    border-color: var(--tc-modal-accent);
+    color: var(--tc-modal-accent-fg);
+}
+
+.theme-carousel-modal-confirm:hover:not(:disabled) {
+    background: var(--tc-modal-accent-hover);
+    border-color: var(--tc-modal-accent-hover);
+}
+
+.theme-carousel-modal-confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.theme-carousel-modal-confirm svg,
+.theme-carousel-modal-confirm .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5px;
 }
 
 /* Nav bar delete button */

@@ -123,4 +123,70 @@ describe('SettingsPanelManager - auto-provisioned sync token ends with a live su
         expect(configManager.config.chromaKey).toBe(true);
         expect(configManager.config.preChromaKeyOpacity).toBe(0.85);
     });
+
+    it('auto-provisions a UUID-shaped sync token the proxy will actually accept', async () => {
+        // The old fallback minted `sync-${Date.now()}` when crypto.randomUUID was
+        // missing, which validateToken rejects — so the tab synced to a token that
+        // could never persist. The shape has to hold on the fallback path too.
+        const original = globalThis.crypto.randomUUID;
+        Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true });
+
+        try {
+            settingsPanel.saveConfiguration();
+            await vi.waitFor(() => expect(sceneSyncManager.syncToken).not.toBeNull());
+
+            expect(sceneSyncManager.syncToken).toMatch(
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            );
+        } finally {
+            Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true });
+        }
+    });
+});
+
+describe('SettingsPanelManager - readPanelConfig reads live DOM state', () => {
+    // The colour inputs only write CSS custom properties as you edit
+    // (chat-event-bindings.js syncHexInputAndSwatch); nothing reaches
+    // configManager.config until a save. Anything built from the stored config
+    // would therefore capture the PREVIOUS colours — which is exactly the trap
+    // "save current settings as a preset" would otherwise fall into.
+    let configManager, settingsPanel, textColorHex;
+
+    beforeEach(() => {
+        localStorage.clear();
+        document.body.innerHTML = '<input type="text" id="text-color-hex">';
+        textColorHex = document.getElementById('text-color-hex');
+
+        configManager = new ConfigManager();
+        configManager.config.textColor = '#000000';
+
+        settingsPanel = new SettingsPanelManager({
+            configManager,
+            chatRenderer: { addSystemMessage: vi.fn(), addChatMessage: vi.fn(), config: {} },
+            chatConnection: {
+                getTwitchChannel: vi.fn(() => ''), getYouTubeTarget: vi.fn(() => ''),
+                isTwitchConnected: vi.fn(() => false), isYouTubeConnected: vi.fn(() => false),
+                currentBroadcasterId: null
+            },
+            badgeManager: { config: {}, fetchGlobalBadges: vi.fn(), fetchChannelBadges: vi.fn() },
+            fontManager: { getCurrentFontValue: vi.fn(() => "'Inter', sans-serif") },
+            themeManager: { lastAppliedThemeValue: 'default' },
+            domRefs: { textColorHex }
+        });
+    });
+
+    it('takes the colour from the DOM input, not the stale stored config', () => {
+        textColorHex.value = '#abcdef';
+
+        const config = settingsPanel.readPanelConfig();
+
+        expect(config.textColor).toBe('#abcdef');
+        expect(configManager.config.textColor).toBe('#000000'); // untouched: read is side-effect free
+    });
+
+    it('falls back to the stored value when the input is empty', () => {
+        textColorHex.value = '';
+
+        expect(settingsPanel.readPanelConfig().textColor).toBe('#000000');
+    });
 });

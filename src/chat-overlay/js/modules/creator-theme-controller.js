@@ -1,5 +1,9 @@
 import { UIHelpers } from './ui-helpers.js';
 import { generateThemeApi, processAndAddTheme } from '../theme-generator.js';
+import { addThemeToCarousel, getAvailableThemes, updateThemeDetails } from '../theme-carousel.js';
+import { buildThemeFromConfig, isUserPreset, MAX_PRESET_NAME_LENGTH } from './theme-preset-builder.js';
+import { promptForThemeName } from './theme-name-modal.js';
+import { MAX_LIBRARY_THEMES } from './theme-library-client.js';
 
 /**
  * Normalize a shadow preset's display name to the slug the preset buttons use,
@@ -113,6 +117,85 @@ export class CreatorThemeController {
         }
     }
 
+    setupPresetListeners() {
+        const saveBtn = document.getElementById('creatorSavePresetBtn');
+        if (!saveBtn) return;
+
+        saveBtn.addEventListener('click', () => this.saveCurrentSettingsAsPreset());
+    }
+
+    /**
+     * Snapshot the form's current look as a named theme preset in the shared cloud
+     * library, so it can be re-applied to any scene later. The counterpart to the
+     * AI generator: same destination, but the user's own settings as the source.
+     */
+    async saveCurrentSettingsAsPreset() {
+        const statusEl = document.getElementById('creatorPresetStatus');
+
+        // Read the form rather than the stored instance config: the form is the
+        // live state, and readFormConfig() also folds in the uploaded background
+        // image and the picked Google Font, neither of which is a schema key.
+        const config = this.renderer.readFormConfig();
+        const existingThemes = getAvailableThemes() || [];
+        const presetCount = existingThemes.filter(isUserPreset).length;
+
+        const name = await promptForThemeName({
+            title: 'Save Theme Preset',
+            message: 'Save the current colors, font, radius, shadows and background image as a reusable preset.',
+            note: existingThemes.length >= MAX_LIBRARY_THEMES
+                ? `Your theme library is full (${MAX_LIBRARY_THEMES}). Saving will remove the oldest theme.`
+                : '',
+            defaultValue: `My Preset ${presetCount + 1}`,
+            maxLength: MAX_PRESET_NAME_LENGTH
+        });
+
+        if (!name) return;
+
+        const theme = buildThemeFromConfig(config, { name, existingThemes });
+
+        // Report what actually persisted. addThemeToCarousel() is optimistic — it
+        // inserts locally and pushes in the background — so without this an
+        // unreachable proxy would look like a successful save until the next reload.
+        const onPushResult = (e) => {
+            if (e.detail?.theme?.value !== theme.value) return;
+            document.removeEventListener('theme-library-push-result', onPushResult);
+
+            if (!e.detail.ok) {
+                if (statusEl) statusEl.textContent = 'Saved for this session only.';
+                UIHelpers.showNotification(
+                    'Preset Not Synced',
+                    'Could not reach the theme library. This preset will be lost when you reload.',
+                    'warning'
+                );
+                return;
+            }
+
+            if (statusEl) statusEl.textContent = 'Preset saved!';
+            UIHelpers.showNotification(
+                'Preset Saved',
+                e.detail.imageDropped
+                    ? `"${theme.name}" was saved, but its background image was too large to store.`
+                    : `"${theme.name}" was added to your theme library.`,
+                e.detail.imageDropped ? 'warning' : 'success'
+            );
+        };
+        document.addEventListener('theme-library-push-result', onPushResult);
+
+        if (statusEl) statusEl.textContent = 'Saving...';
+        const added = addThemeToCarousel(theme);
+
+        // Point the form's hidden theme input at the new preset and refresh the
+        // details pane. Deliberately NOT selectByValue(): that fires onApply ->
+        // applyThemeToForm, which would rewrite every control from the theme we
+        // just derived from them — wasteful, and it churns the bg image reference
+        // while the cloud push is still in flight.
+        const themeInput = document.getElementById('schema-input-theme');
+        if (themeInput) themeInput.value = added.value;
+        updateThemeDetails(added);
+
+        if (this.renderer.onFormChange) this.renderer.onFormChange();
+    }
+
     /**
      * Apply a theme object (fired via the theme carousel's onApply callback) to the
      * form: writes its colors through updateColorControl(), records the selected
@@ -172,7 +255,10 @@ export class CreatorThemeController {
                     googleFontFamily: theme.googleFontFamily
                 });
             } else if (typeof this.renderer.fontPicker.setValue === 'function') {
-                this.renderer.fontPicker.setValue(theme.fontFamily);
+                // Pass googleFontFamily explicitly (null when the theme uses none) so
+                // the picker clears any stale family from a previously applied theme,
+                // matching how populateForm() calls it.
+                this.renderer.fontPicker.setValue(theme.fontFamily, theme.googleFontFamily ?? null);
             }
         }
 

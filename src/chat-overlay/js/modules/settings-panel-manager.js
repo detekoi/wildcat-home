@@ -5,7 +5,10 @@
 
 import { UIHelpers } from './ui-helpers.js';
 import { CONFIG_VERSION } from './config-manager.js';
-import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
+import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex, getAvailableThemes } from '../theme-carousel.js';
+import { buildThemeFromConfig, isUserPreset, MAX_PRESET_NAME_LENGTH } from './theme-preset-builder.js';
+import { promptForThemeName } from './theme-name-modal.js';
+import { MAX_LIBRARY_THEMES } from './theme-library-client.js';
 
 export class SettingsPanelManager {
     /**
@@ -88,10 +91,19 @@ export class SettingsPanelManager {
     }
 
     /**
-     * Save the current configuration from all form values.
+     * Read a complete config object out of the panel's live DOM.
+     *
+     * Extracted from saveConfiguration() so it can also back "save as preset".
+     * This has to read the DOM rather than this._configManager.config: the colour
+     * inputs only write CSS custom properties as you edit them
+     * (chat-event-bindings.js syncHexInputAndSwatch) and do not reach the config
+     * until a save happens — so building anything from the stored config would
+     * silently capture the *previous* colours.
+     *
+     * Side-effect free; callers decide what to do with the result.
+     * @returns {Object} A full config object reflecting the panel's current state.
      */
-    saveConfiguration() {
-        try {
+    readPanelConfig() {
             const getValue = (element, defaultValue, isNumber = false, isBool = false, isOpacity = false) => {
                 if (!element) return defaultValue;
                 if (isBool) return element.checked;
@@ -213,7 +225,18 @@ export class SettingsPanelManager {
                 topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
                 chromaKey: this._configManager.config.chromaKey ?? false,
                 preChromaKeyOpacity: this._configManager.config.preChromaKeyOpacity,
+                preChromaKeyColor: this._configManager.config.preChromaKeyColor,
             };
+
+            return newConfig;
+    }
+
+    /**
+     * Save the current configuration from all form values.
+     */
+    saveConfiguration() {
+        try {
+            const newConfig = this.readPanelConfig();
 
             this._configManager.config = newConfig;
             this._configManager.applyConfiguration(this._configManager.config);
@@ -226,7 +249,10 @@ export class SettingsPanelManager {
 
             if (this._sceneSyncManager) {
                 if (!this._sceneSyncManager.syncToken) {
-                    const newToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sync-${Date.now()}`;
+                    // Must be UUID-shaped on every path: the proxy's validateToken
+                    // middleware 400s anything else, so the old `sync-${Date.now()}`
+                    // fallback minted a token that could never sync.
+                    const newToken = UIHelpers.generateUUID();
                     this._sceneSyncManager.setSyncToken(newToken);
                     const url = new URL(window.location.href);
                     url.searchParams.set('sync', newToken);
@@ -251,6 +277,70 @@ export class SettingsPanelManager {
             console.error("Error saving configuration:", error);
             this._chatRenderer.addSystemMessage("Error saving settings. Check console.");
         }
+    }
+
+    /**
+     * Snapshot the panel's current look as a named theme preset in the shared cloud
+     * library. The counterpart to the AI generator: same destination, but the user's
+     * own settings as the source.
+     */
+    async saveCurrentSettingsAsPreset() {
+        const config = this.readPanelConfig();
+        const existingThemes = getAvailableThemes() || [];
+        const presetCount = existingThemes.filter(isUserPreset).length;
+
+        const name = await promptForThemeName({
+            title: 'Save Theme Preset',
+            // This panel has no image upload of its own, so be explicit about where
+            // a preset's background image comes from rather than letting it surprise.
+            message: 'Save the current colors, font, radius and shadows as a reusable preset. '
+                + 'The background image comes from the theme you currently have selected.',
+            note: existingThemes.length >= MAX_LIBRARY_THEMES
+                ? `Your theme library is full (${MAX_LIBRARY_THEMES}). Saving will remove the oldest theme.`
+                : '',
+            defaultValue: `My Preset ${presetCount + 1}`,
+            maxLength: MAX_PRESET_NAME_LENGTH
+        });
+
+        if (!name) return;
+
+        const theme = buildThemeFromConfig(config, { name, existingThemes });
+
+        // addTheme() is optimistic — it inserts locally and pushes in the background —
+        // so without this an unreachable proxy would look like a successful save right
+        // up until the preset vanished on reload.
+        const onPushResult = (e) => {
+            if (e.detail?.theme?.value !== theme.value) return;
+            document.removeEventListener('theme-library-push-result', onPushResult);
+
+            if (!e.detail.ok) {
+                UIHelpers.showNotification(
+                    'Preset Not Synced',
+                    'Could not reach the theme library. This preset will be lost when you reload.',
+                    'warning'
+                );
+                return;
+            }
+
+            UIHelpers.showNotification(
+                'Preset Saved',
+                e.detail.imageDropped
+                    ? `"${theme.name}" was saved, but its background image was too large to store.`
+                    : `"${theme.name}" was added to your theme library.`,
+                e.detail.imageDropped ? 'warning' : 'success'
+            );
+        };
+        document.addEventListener('theme-library-push-result', onPushResult);
+
+        const added = addTheme(theme);
+
+        // Select the new preset without re-applying it: the panel already looks
+        // exactly like it, so applyTheme() would only redo font resolution and risk
+        // disturbing unsaved state.
+        this._themeManager.lastAppliedThemeValue = added.value;
+        this._configManager.updateConfig('theme', added.value);
+        updateThemeDetails(added);
+        highlightActiveCard(added.value);
     }
 
     /**

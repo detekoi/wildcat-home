@@ -15,7 +15,8 @@ export function bindSettingsEvents(domRefs, managers) {
         enlargeSingleEmotesToggle, thirdPartyEmotesToggle, thirdPartyChannelEmotesToggle, thirdPartyFilter7tvTwitchDisallowedToggle, thirdPartyFilter7tvSexualToggle, thirdPartyFilter7tvEpilepsyToggle, thirdPartyFilter7tvEdgyToggle, configPanel, twitchChannelForm, youtubeChannelForm, 
         twitchDisconnectBtn, youtubeDisconnectBtn, twitchChannelInput, youtubeChannelInput,
         initialConnectionPrompt, initialTwitchInput, initialYoutubeInput, initialConnectBtn, openSettingsFromPromptBtn,
-        twitchConnectBtn, youtubeConnectBtn, settingsBtn, popupSettingsBtn, saveConfigBtn, cancelConfigBtn, resetConfigBtn
+        twitchConnectBtn, youtubeConnectBtn, settingsBtn, popupSettingsBtn, saveConfigBtn, cancelConfigBtn, resetConfigBtn,
+        saveThemePresetBtn
     } = domRefs;
 
     const { configManager, themeManager, chatRenderer, chatConnection, thirdPartyEmoteManager, settingsPanel, switchChatMode, updateModeSpecificSettingsVisibility } = managers;
@@ -445,6 +446,11 @@ export function bindSettingsEvents(domRefs, managers) {
     if (popupSettingsBtn && !popupSettingsBtn.dataset.listenerAttached) {
         popupSettingsBtn.addEventListener('click', (e) => { e?.preventDefault(); e?.stopPropagation(); settingsPanel.openSettingsPanel(); });
         popupSettingsBtn.dataset.listenerAttached = 'true';
+    }
+
+    if (saveThemePresetBtn && !saveThemePresetBtn.dataset.listenerAttached) {
+        saveThemePresetBtn.addEventListener('click', (e) => { e?.preventDefault(); settingsPanel.saveCurrentSettingsAsPreset(); });
+        saveThemePresetBtn.dataset.listenerAttached = 'true';
     }
 
     if (saveConfigBtn && !saveConfigBtn.dataset.listenerAttached) {

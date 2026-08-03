@@ -10,9 +10,17 @@
  */
 
 import { getProxyBaseUrl } from './scene-sync-manager.js';
+import { UIHelpers } from './ui-helpers.js';
 
 const TOKEN_KEY = 'themeLibraryToken';
 const CACHE_KEY = 'generatedThemes';
+
+/**
+ * Mirrors MAX_LIBRARY_THEMES in the proxy's services/themeLibraryService.js.
+ * The server trims the oldest entries past this cap *silently*, so hosts warn
+ * before a save quietly evicts something the user cared about. Keep in sync.
+ */
+export const MAX_LIBRARY_THEMES = 50;
 
 let cachedToken = null;
 let migrationAttempted = false;
@@ -25,24 +33,12 @@ let migrationAttempted = false;
 export function getLibraryToken() {
     if (cachedToken) return cachedToken;
 
-    // The fallback must still be a well-formed UUID: the proxy validates every
-    // token against a strict UUID regex and 400s anything else, so a
+    // The token must be a well-formed UUID on every path: the proxy validates
+    // every token against a strict UUID regex and 400s anything else, so a
     // `themelib-<timestamp>` style id would make the whole library unreachable on
     // origins where crypto.randomUUID is missing (non-secure contexts, older
-    // webviews).
-    const makeToken = () => {
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-
-        const randomByte = (typeof crypto !== 'undefined' && crypto.getRandomValues)
-            ? () => crypto.getRandomValues(new Uint8Array(1))[0]
-            : () => Math.floor(Math.random() * 256);
-
-        const bytes = Array.from({ length: 16 }, randomByte);
-        bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-        bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
-        const hex = bytes.map(b => b.toString(16).padStart(2, '0'));
-        return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10, 16).join('')}`;
-    };
+    // webviews). UIHelpers.generateUUID() is the shared minter for exactly this.
+    const makeToken = () => UIHelpers.generateUUID();
 
     try {
         let token = localStorage.getItem(TOKEN_KEY);

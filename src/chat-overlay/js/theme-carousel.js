@@ -441,15 +441,42 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
      * object reference) pick it up automatically.
      */
     async function pushThemeToCloud(themeWithFlag) {
+        // Captured up front: the Object.assign below overwrites backgroundImage with
+        // the server's copy, so comparing after the fact would always look equal.
+        const sentImage = themeWithFlag.backgroundImage || null;
+        let stored = null;
         try {
             const client = await getLibraryClient();
-            const stored = await client.addTheme(themeWithFlag);
+            stored = await client.addTheme(themeWithFlag);
             if (stored && mountedRoot) {
                 Object.assign(themeWithFlag, stored, { isGenerated: true });
                 renderCarousel();
             }
         } catch (e) {
             console.warn('[ThemeCarousel] Failed to push generated theme to cloud library:', e);
+        }
+
+        // The AI generator treats this push as fire-and-forget, but an explicit
+        // "save my settings as a preset" needs to know whether it actually
+        // persisted — an unpushed theme survives only until the page reloads.
+        // Hosts listen for this keyed on detail.theme.value.
+        //
+        // Guarded because callers deliberately don't await this function: anything
+        // that throws after the await lands as an unhandled rejection rather than
+        // being caught by them.
+        try {
+            document.dispatchEvent(new CustomEvent('theme-library-push-result', {
+                detail: {
+                    theme: themeWithFlag,
+                    stored,
+                    ok: !!stored,
+                    // The proxy nulls an oversized background image rather than failing
+                    // the whole save, so a "success" can still have lost the image.
+                    imageDropped: !!(stored && sentImage && !stored.backgroundImage)
+                }
+            }));
+        } catch (e) {
+            // Document torn down (page unload, test teardown) — nothing to notify.
         }
     }
 
@@ -682,6 +709,17 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
         });
 
         card.appendChild(textDiv);
+
+        // Marks a theme the user saved from their own settings, as opposed to one
+        // the AI generated. pointer-events:none so it never swallows the card click.
+        if (theme.isUserPreset) {
+            const badge = document.createElement('span');
+            badge.className = 'theme-card-badge';
+            badge.title = 'Saved from your settings';
+            badge.setAttribute('aria-label', 'Saved preset');
+            badge.innerHTML = '<i data-lucide="bookmark"></i>';
+            card.appendChild(badge);
+        }
 
         if (theme.isGenerated && showDeleteCards) {
             const deleteBtn = document.createElement('button');

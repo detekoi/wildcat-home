@@ -13,6 +13,11 @@ vi.mock('../../theme-carousel.js', () => ({
     getAvailableFonts: () => [
         { name: 'Arial', value: 'Arial' }
     ],
+    // Imported by creator-theme-controller for the "save settings as preset" path.
+    // Vitest throws on access to any export the factory omits, so these must be
+    // declared even when a given test never exercises that path.
+    addThemeToCarousel: vi.fn((theme) => theme),
+    updateThemeDetails: vi.fn(),
     availableFonts: [],
     availableThemes: [],
     currentThemeIndex: 0
@@ -391,5 +396,78 @@ describe('CreatorFormRenderer - Background Image Upload', () => {
         expect('bgImage' in config).toBe(true);
         expect(config.bgImage).toBeNull();
         expect(document.getElementById('creatorBgPreview').textContent).toBe('No background image set');
+    });
+
+    it('carries the uploaded background image into a saved preset', async () => {
+        // The whole point of saving a preset from the creator: a look built around a
+        // specific uploaded image has to survive as one unit.
+        const { buildThemeFromConfig } = await import('../theme-preset-builder.js');
+
+        formRenderer.renderSchemaForm(container);
+        formRenderer.bgImageHandler.currentBgImage = 'data:image/jpeg;base64,AAAA';
+
+        const theme = buildThemeFromConfig(formRenderer.readFormConfig(), { name: 'With Image' });
+
+        expect(theme.backgroundImage).toBe('data:image/jpeg;base64,AAAA');
+        expect(theme.isUserPreset).toBe(true);
+    });
+});
+
+describe('CreatorFormRenderer - Save Preset control', () => {
+    let formRenderer;
+    let container;
+
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <div id="formContainer"></div>
+            <iframe id="previewIframe"></iframe>
+            <div id="fontPickerMount"></div>
+        `;
+        container = document.getElementById('formContainer');
+
+        const previewIframe = document.getElementById('previewIframe');
+        Object.defineProperty(previewIframe, 'contentWindow', {
+            value: { postMessage: vi.fn() }, writable: true, configurable: true
+        });
+
+        formRenderer = new CreatorFormRenderer({
+            configManager: new ConfigManager(),
+            previewIframe
+        });
+    });
+
+    it('renders the save-preset button beside the theme carousel', () => {
+        formRenderer.renderSchemaForm(container);
+
+        expect(document.getElementById('creatorSavePresetBtn')).not.toBeNull();
+        expect(document.getElementById('creatorPresetStatus')).not.toBeNull();
+    });
+
+    it('does not save when the name prompt is cancelled', async () => {
+        const modal = await import('../theme-name-modal.js');
+        const carousel = await import('../../theme-carousel.js');
+        vi.spyOn(modal, 'promptForThemeName').mockResolvedValue(null);
+        carousel.addThemeToCarousel.mockClear();
+
+        formRenderer.renderSchemaForm(container);
+        await formRenderer.themeController.saveCurrentSettingsAsPreset();
+
+        expect(carousel.addThemeToCarousel).not.toHaveBeenCalled();
+    });
+
+    it('adds a badged preset to the carousel when a name is given', async () => {
+        const modal = await import('../theme-name-modal.js');
+        const carousel = await import('../../theme-carousel.js');
+        vi.spyOn(modal, 'promptForThemeName').mockResolvedValue('Cozy Night');
+        carousel.addThemeToCarousel.mockClear();
+
+        formRenderer.renderSchemaForm(container);
+        await formRenderer.themeController.saveCurrentSettingsAsPreset();
+
+        expect(carousel.addThemeToCarousel).toHaveBeenCalledTimes(1);
+        const theme = carousel.addThemeToCarousel.mock.calls[0][0];
+        expect(theme.name).toBe('Cozy Night');
+        expect(theme.isUserPreset).toBe(true);
+        expect(document.getElementById('schema-input-theme').value).toBe(theme.value);
     });
 });

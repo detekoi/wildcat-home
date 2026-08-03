@@ -687,6 +687,26 @@ input[type="range"]::-moz-range-thumb {
     opacity: 0.6;
 }
 
+/* The theme carousel's dialogs (save preset / delete theme) ship with the chat
+   overlay's own palette, since css/theme-carousel.css is shared with chat.html.
+   On pages that load this stylesheet, remap them onto the site tokens so the
+   dialogs pick up the post-industrial treatment and follow light/dark with
+   everything else. */
+/* `html` prefix is load-bearing: chat-scene-creator.html links theme-carousel.css
+   AFTER this file, so an equal-specificity selector would lose to the defaults it
+   is meant to override. */
+html .theme-carousel-modal-overlay {
+    --tc-modal-bg: var(--panel-color);
+    --tc-modal-fg: var(--text-color);
+    --tc-modal-border: var(--border-color);
+    --tc-modal-shadow: var(--shadow-lg);
+    --tc-modal-accent: var(--text-color);
+    --tc-modal-accent-fg: var(--panel-color);
+    --tc-modal-accent-hover: var(--primary-color);
+    --tc-modal-input-bg: var(--background-color);
+    --tc-modal-warning: var(--warning-color);
+}
+
 /* =====================================================
    NOTIFICATIONS
    ===================================================== */

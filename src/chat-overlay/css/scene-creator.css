@@ -509,6 +509,20 @@ input[type="color"]:disabled::-webkit-color-swatch,
     opacity: 0.9;
 }
 
+/* "Save Current Settings as Preset", directly beneath the theme carousel */
+.theme-preset-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 12px 0;
+}
+
+.theme-preset-actions #creatorPresetStatus {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
 .creator-subcard,
 .creator-bg-image-box {
     margin-top: 12px;

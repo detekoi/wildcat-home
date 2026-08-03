@@ -52,6 +52,8 @@ export class CreatorInstanceManager {
         } else {
             this.instanceOrder = Object.keys(this.instances);
         }
+
+        this.migrateSyncTokens();
     }
 
     saveInstances() {
@@ -66,10 +68,46 @@ export class CreatorInstanceManager {
     /**
      * Mints a new sync token used as the Firestore document key (sceneConfigs/<syncToken>)
      * for live-syncing a scene's config to an OBS browser source.
+     *
+     * Must be a BARE UUID: the token goes straight into `PUT /api/scene-config/<token>`,
+     * and the proxy's validateToken middleware 400s anything that isn't UUID-shaped.
+     * A prefixed id (`sync-<uuid>`) silently broke all scene cloud sync — and with it
+     * every background-image upload to GCS, which only happens inside that handler.
+     *
      * @returns {string} A new bare UUID token
      */
     mintSyncToken() {
-        return UIHelpers.generateSecureId('sync');
+        return UIHelpers.generateUUID();
+    }
+
+    /**
+     * Repairs sync tokens minted while mintSyncToken() prefixed them with `sync-`.
+     * Those tokens made every scene-config write 400, so no cloud data exists under
+     * them: stripping the prefix back to the original UUID is lossless and keeps the
+     * scene's identity stable. A token that isn't a UUID even after stripping gets
+     * re-minted.
+     * @returns {number} How many instances were repaired.
+     */
+    migrateSyncTokens() {
+        let repaired = 0;
+
+        Object.values(this.instances).forEach(instance => {
+            if (!instance || typeof instance !== 'object') return;
+
+            const token = instance.syncToken;
+            if (typeof token !== 'string' || UIHelpers.isUUID(token)) return;
+
+            const stripped = token.startsWith('sync-') ? token.slice('sync-'.length) : '';
+            instance.syncToken = UIHelpers.isUUID(stripped) ? stripped : this.mintSyncToken();
+            repaired++;
+        });
+
+        if (repaired > 0) {
+            this.saveInstances();
+            console.log(`[CreatorInstanceManager] Repaired ${repaired} malformed sync token(s).`);
+        }
+
+        return repaired;
     }
 
     createInstance(nameInput) {

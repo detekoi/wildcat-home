@@ -57,8 +57,13 @@ export class SceneSyncManager {
      * still null because `start()` no-op'd due to no `?sync=` URL param).
      */
     setSyncToken(newToken) {
-        if (this._token === newToken) return;
-        this._token = newToken;
+        // Normalize here rather than trusting the caller: this value becomes both
+        // the REST path segment (which the proxy validates as a bare UUID) and the
+        // Firestore doc id, so a legacy `sync-<uuid>` must resolve to the same
+        // document the migrated scene creator writes to.
+        const normalized = UIHelpers.normalizeSyncToken(newToken);
+        if (this._token === normalized) return;
+        this._token = normalized;
         if (this._unsubscribe) {
             this._unsubscribe();
             this._unsubscribe = null;
@@ -148,7 +153,14 @@ export class SceneSyncManager {
             return false;
         }
 
-        this._token = tokenFromUrl;
+        // An OBS browser source created before the token fix still carries
+        // `?sync=sync-<uuid>` in its URL; normalizing keeps those sources working
+        // instead of silently 400ing on every write.
+        this._token = UIHelpers.normalizeSyncToken(tokenFromUrl);
+        if (!this._token) {
+            console.warn('[SceneSyncManager] Ignoring malformed ?sync= token:', tokenFromUrl);
+            return false;
+        }
         return this._ensureSubscribed();
     }
 

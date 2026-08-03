@@ -405,11 +405,15 @@ import { addTheme, getThemes, availableThemes, currentThemeIndex, setCurrentThem
             // also match on the visible name (base or "(Variant N)" forms) — otherwise
             // a re-generated prompt reusing the same theme_name gets no suffix and
             // collides with the stored copy.
+            // User-saved presets are excluded: they share this library but not the
+            // AI's naming scheme, so a preset the user happened to call "Cyberpunk"
+            // must not push a genuinely first-generation "Cyberpunk" to "(Variant 2)".
             const baseName = themeData.theme_name;
             const existingThemesWithSameName = existingThemes.filter(t =>
-                t.originalThemeName === baseName ||
-                t.name === baseName ||
-                (typeof t.name === 'string' && t.name.startsWith(`${baseName} (Variant `)));
+                !t.isUserPreset && (
+                    t.originalThemeName === baseName ||
+                    t.name === baseName ||
+                    (typeof t.name === 'string' && t.name.startsWith(`${baseName} (Variant `))));
 
             const variantNum = existingThemesWithSameName.length;
             const nameSuffix = variantNum > 0 ? ` (Variant ${variantNum + 1})` : '';

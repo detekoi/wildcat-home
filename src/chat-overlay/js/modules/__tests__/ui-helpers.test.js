@@ -120,5 +120,61 @@ describe('UIHelpers', () => {
             expect(toast.classList.contains('toast-hiding')).toBe(true);
         });
     });
+
+    describe('generateUUID', () => {
+        // Sync and theme-library tokens go straight into proxy URLs, and the
+        // validateToken middleware 400s anything that isn't UUID-shaped — so the
+        // shape has to hold on every fallback path, not just under crypto.randomUUID.
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        it('returns a UUID when crypto.randomUUID is available', () => {
+            expect(UIHelpers.generateUUID()).toMatch(UUID_RE);
+        });
+
+        it('still returns a well-formed v4 UUID on the getRandomValues fallback', () => {
+            const original = globalThis.crypto.randomUUID;
+            Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true });
+
+            try {
+                const uuid = UIHelpers.generateUUID();
+                expect(uuid).toMatch(UUID_RE);
+                expect(uuid[14]).toBe('4');                       // version nibble
+                expect(['8', '9', 'a', 'b']).toContain(uuid[19]); // variant nibble
+            } finally {
+                Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true });
+            }
+        });
+
+        it('does not collide across many calls', () => {
+            const ids = new Set(Array.from({ length: 500 }, () => UIHelpers.generateUUID()));
+            expect(ids.size).toBe(500);
+        });
+    });
+
+    describe('normalizeSyncToken', () => {
+        const uuid = '3f2a1b4c-5d6e-4f70-8091-a2b3c4d5e6f7';
+
+        it('passes a bare UUID through, lowercased', () => {
+            expect(UIHelpers.normalizeSyncToken(uuid)).toBe(uuid);
+            expect(UIHelpers.normalizeSyncToken(uuid.toUpperCase())).toBe(uuid);
+        });
+
+        it('strips a legacy sync- prefix', () => {
+            expect(UIHelpers.normalizeSyncToken(`sync-${uuid}`)).toBe(uuid);
+        });
+
+        it('trims surrounding whitespace from a pasted token', () => {
+            expect(UIHelpers.normalizeSyncToken(`  ${uuid}  `)).toBe(uuid);
+        });
+
+        it('rejects anything that is not UUID-shaped rather than returning a doomed token', () => {
+            expect(UIHelpers.normalizeSyncToken('sync-1712345678_ab12cd')).toBeNull();
+            expect(UIHelpers.normalizeSyncToken('brand-new-token')).toBeNull();
+            expect(UIHelpers.normalizeSyncToken('')).toBeNull();
+            expect(UIHelpers.normalizeSyncToken(null)).toBeNull();
+            expect(UIHelpers.normalizeSyncToken(undefined)).toBeNull();
+            expect(UIHelpers.normalizeSyncToken(12345)).toBeNull();
+        });
+    });
 });
 
