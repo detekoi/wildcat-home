@@ -127,7 +127,8 @@ export class FontManager {
     /**
      * Update font display in settings panel and apply to CSS.
      */
-    updateFontDisplay() {
+    updateFontDisplay(options = {}) {
+        const silent = options?.silent ?? false;
         if (!availableFonts?.length) {
             console.error('Available fonts not initialized yet.');
             if (this._fontSearchInput) this._fontSearchInput.value = 'Error';
@@ -158,7 +159,7 @@ export class FontManager {
 
         // Close dropdown when cycling
         this.closeFontDropdown();
-        this._onFontChange();
+        if (!silent) this._onFontChange();
     }
 
     /**
@@ -546,13 +547,15 @@ export class FontManager {
             });
         }
 
-        // React to font list updates from proxy
         document.addEventListener('fonts-updated', () => {
             console.log('Fonts updated event received in FontManager');
             // Re-sync: the proxy may have replaced the list, dropping dynamically
             // added Google Fonts. syncToConfig will re-add them from saved themes.
             this.syncToConfig();
-            this.updateFontDisplay();
+            // silent: true — this is a reconciliation after the font list was
+            // refreshed from the proxy, not a user font selection. Firing
+            // onFontChange here would falsely mark the creator form dirty.
+            this.updateFontDisplay({ silent: true });
         });
     }
 }

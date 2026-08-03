@@ -206,6 +206,39 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         // Restore
         themeCarousel.loadGoogleFont = undefined;
     });
+
+    it('updateFontDisplay suppresses _onFontChange when silent is true', () => {
+        themeCarousel.availableFonts.push({ name: 'Inter', value: "'Inter', sans-serif" });
+        const onFontChangeSpy = vi.spyOn(fontManager, '_onFontChange');
+
+        fontManager.updateFontDisplay({ silent: true });
+        expect(onFontChangeSpy).not.toHaveBeenCalled();
+
+        fontManager.updateFontDisplay({ silent: false });
+        expect(onFontChangeSpy).toHaveBeenCalledTimes(1);
+
+        fontManager.updateFontDisplay();
+        expect(onFontChangeSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('updateFontDisplay handles null options parameter gracefully', () => {
+        themeCarousel.availableFonts.push({ name: 'Inter', value: "'Inter', sans-serif" });
+        const onFontChangeSpy = vi.spyOn(fontManager, '_onFontChange');
+
+        expect(() => fontManager.updateFontDisplay(null)).not.toThrow();
+        expect(onFontChangeSpy).toHaveBeenCalled();
+    });
+
+    it('fonts-updated event triggers updateFontDisplay with silent: true', () => {
+        themeCarousel.availableFonts.push({ name: 'Inter', value: "'Inter', sans-serif" });
+        const onFontChangeSpy = vi.spyOn(fontManager, '_onFontChange');
+        const syncToConfigSpy = vi.spyOn(fontManager, 'syncToConfig');
+
+        document.dispatchEvent(new Event('fonts-updated'));
+
+        expect(syncToConfigSpy).toHaveBeenCalled();
+        expect(onFontChangeSpy).not.toHaveBeenCalled();
+    });
 });
 
 describe('createFontPicker - end-to-end remote font selection (chat-scene-creator.html usage)', () => {
@@ -371,4 +404,5 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(labels.some(t => t.includes('Nameless'))).toBe(false);
     });
 });
+
 
