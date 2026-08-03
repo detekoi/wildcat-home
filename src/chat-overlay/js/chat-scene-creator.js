@@ -164,27 +164,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            instance.name = this.dom.instanceName.value.trim() || instance.name;
-            instance.lastModified = new Date().toISOString();
+            const saveBtn = this.dom.saveSettingsBtn;
+            let originalContent = '';
+            if (saveBtn) {
+                originalContent = saveBtn.innerHTML;
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i data-lucide="loader" class="lucide-inline spin"></i> Saving & Syncing...';
+                if (window.lucide) window.lucide.createIcons();
+            }
 
-            const updatedConfig = this.formRenderer.readFormConfig(instance.config, this.dom, { includeChannel });
-            instance.config = updatedConfig;
+            try {
+                instance.name = this.dom.instanceName.value.trim() || instance.name;
+                instance.lastModified = new Date().toISOString();
 
-            this.instanceManager.saveInstances();
-            localStorage.setItem(`chatConfig-${currentId}`, JSON.stringify(updatedConfig));
+                const updatedConfig = this.formRenderer.readFormConfig(instance.config, this.dom, { includeChannel });
+                instance.config = updatedConfig;
 
-            if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
-            this.renderInstanceList();
+                this.instanceManager.saveInstances();
+                localStorage.setItem(`chatConfig-${currentId}`, JSON.stringify(updatedConfig));
 
-            if (instance.syncToken) {
-                const pushResult = await this.syncManager.pushToCloud(instance.syncToken, updatedConfig, instance.name);
-                if (pushResult.success) {
-                    UIHelpers.showNotification('Success', 'Chat scene saved and synced live to OBS.', 'success');
+                if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
+                this.renderInstanceList();
+
+                if (instance.syncToken) {
+                    const pushResult = await this.syncManager.pushToCloud(instance.syncToken, updatedConfig, instance.name);
+                    if (pushResult.success) {
+                        UIHelpers.showNotification('Saved & Synced', `"${instance.name}" saved and live-synced to OBS.`, 'success');
+                    } else {
+                        UIHelpers.showNotification('Saved Locally', 'Saved locally, but cloud sync push failed.', 'warning');
+                    }
                 } else {
-                    UIHelpers.showNotification('Saved Locally', 'Saved locally, but cloud push failed.', 'warning');
+                    UIHelpers.showNotification('Saved Locally', `"${instance.name}" saved locally.`, 'success');
                 }
-            } else {
-                UIHelpers.showNotification('Success', 'Chat scene saved locally.', 'success');
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalContent;
+                    if (window.lucide) window.lucide.createIcons();
+                }
             }
         }
 

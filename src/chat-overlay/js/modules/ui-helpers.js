@@ -276,10 +276,68 @@ export class UIHelpers {
     }
 
     /**
-     * Notification helper stub
+     * Notification helper function that renders a floating toast notification.
+     * @param {string} title - Notification title
+     * @param {string} message - Notification subtext / description
+     * @param {string} type - 'success' | 'warning' | 'error' | 'info'
+     * @param {number} [duration=4000] - Duration in ms before auto-dismiss (0 to disable)
      */
-    static showNotification(title, message, type = 'info') {
+    static showNotification(title, message, type = 'info', duration = 4000) {
         console.log(`[Notification ${type.toUpperCase()}] ${title}: ${message}`);
+
+        if (typeof document === 'undefined') return null;
+
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+
+        const icons = {
+            success: `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            error: `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+            warning: `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+            info: `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
+        };
+
+        const iconHtml = icons[type] || icons.info;
+
+        toast.innerHTML = `
+            <div class="toast-icon-wrapper">${iconHtml}</div>
+            <div class="toast-content">
+                <div class="toast-title">${UIHelpers.escapeHtml(title)}</div>
+                <div class="toast-message">${UIHelpers.escapeHtml(message)}</div>
+            </div>
+            <button class="toast-close" aria-label="Close notification">&times;</button>
+        `;
+
+        const dismiss = () => {
+            if (toast.classList.contains('toast-hiding')) return;
+            toast.classList.add('toast-hiding');
+            toast.addEventListener('animationend', () => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, { once: true });
+        };
+
+        const closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', dismiss);
+        }
+
+        container.appendChild(toast);
+
+        if (duration > 0) {
+            setTimeout(dismiss, duration);
+        }
+
+        return toast;
     }
 }
 

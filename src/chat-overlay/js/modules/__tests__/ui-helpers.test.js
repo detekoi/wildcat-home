@@ -97,4 +97,28 @@ describe('UIHelpers', () => {
             expect(UIHelpers.getBorderRadiusValue('42px')).toBe('42px');
         });
     });
+
+    describe('showNotification', () => {
+        it('should create a toast notification element with correct structure and class', () => {
+            const toast = UIHelpers.showNotification('Saved & Synced', 'Settings updated live', 'success', 0);
+            expect(toast).not.toBeNull();
+            expect(toast.className).toContain('toast-notification');
+            expect(toast.className).toContain('toast-success');
+            expect(toast.querySelector('.toast-title').textContent).toBe('Saved & Synced');
+            expect(toast.querySelector('.toast-message').textContent).toBe('Settings updated live');
+
+            const container = document.getElementById('toast-container');
+            expect(container).not.toBeNull();
+            expect(container.contains(toast)).toBe(true);
+        });
+
+        it('should handle dismissal via close button', () => {
+            const toast = UIHelpers.showNotification('Test Error', 'Something failed', 'error', 0);
+            const closeBtn = toast.querySelector('.toast-close');
+            expect(closeBtn).not.toBeNull();
+            closeBtn.click();
+            expect(toast.classList.contains('toast-hiding')).toBe(true);
+        });
+    });
 });
+
