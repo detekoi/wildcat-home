@@ -279,7 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
                 if (this.dom.previewIframe) {
-                    this.dom.previewIframe.src = `chat.html?demo=1&scene=${encodeURIComponent(instanceId)}`;
+                    const syncParam = instance.syncToken ? `&sync=${encodeURIComponent(instance.syncToken)}` : '';
+                    this.dom.previewIframe.src = `chat.html?demo=1&scene=${encodeURIComponent(instanceId)}${syncParam}`;
                     this.dom.previewIframe.addEventListener('load', () => this.formRenderer.sendPreviewUpdate(), { once: true });
                 }
                 this.formRenderer.sendPreviewUpdate();

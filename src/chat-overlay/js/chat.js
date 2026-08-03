@@ -306,6 +306,18 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
         settingsPanel.updateConfigPanelFromConfig();
 
         if (isDemoMode) {
+            // Start scene sync even in demo mode so saves from the iframe's config
+            // panel push to Firestore (picked up by the scene creator's subscription).
+            sceneSyncManager.start({
+                sceneName,
+                configManager,
+                badgeManager,
+                chatRenderer,
+                thirdPartyEmoteManager,
+                settingsPanel,
+                chatConnection
+            });
+
             // Demo Mode: suppress connection prompts, disable auto-connect, listen for postMessage
             if (initialConnectionPrompt) {
                 initialConnectionPrompt.style.display = 'none';
@@ -339,6 +351,8 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
                     chatRenderer.config = configManager.config;
                     if (thirdPartyEmoteManager) thirdPartyEmoteManager.config = configManager.config;
                     UIHelpers.fixCssVariables();
+                    settingsPanel.updateConfigPanelFromConfig();
+                    themeManager.lastAppliedThemeValue = configManager.config.theme || 'default';
 
                     if (configManager.config.chatMode === 'popup') {
                         const popupMessages = document.getElementById('popup-messages');

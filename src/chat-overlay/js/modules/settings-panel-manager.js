@@ -249,17 +249,23 @@ export class SettingsPanelManager {
 
             if (this._sceneSyncManager) {
                 if (!this._sceneSyncManager.syncToken) {
-                    // Must be UUID-shaped on every path: the proxy's validateToken
-                    // middleware 400s anything else, so the old `sync-${Date.now()}`
-                    // fallback minted a token that could never sync.
-                    const newToken = UIHelpers.generateUUID();
-                    this._sceneSyncManager.setSyncToken(newToken);
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('sync', newToken);
-                    if (!url.searchParams.has('scene')) url.searchParams.set('scene', scene);
-                    window.history.replaceState(null, '', url.toString());
+                    if (window.parent !== window) {
+                        console.warn('[SettingsPanelManager] No sync token present in iframe; skipping cloud push.');
+                    } else {
+                        // Must be UUID-shaped on every path: the proxy's validateToken
+                        // middleware 400s anything else, so the old `sync-${Date.now()}`
+                        // fallback minted a token that could never sync.
+                        const newToken = UIHelpers.generateUUID();
+                        this._sceneSyncManager.setSyncToken(newToken);
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('sync', newToken);
+                        if (!url.searchParams.has('scene')) url.searchParams.set('scene', scene);
+                        window.history.replaceState(null, '', url.toString());
+                    }
                 }
-                this._sceneSyncManager.pushConfig(newConfig);
+                if (this._sceneSyncManager.syncToken) {
+                    this._sceneSyncManager.pushConfig(newConfig);
+                }
             }
             this.closeConfigPanel(false);
 
