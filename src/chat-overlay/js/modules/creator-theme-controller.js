@@ -258,7 +258,7 @@ export class CreatorThemeController {
                     description: `${theme.googleFontFamily} from Google Fonts`,
                     isGoogleFont: true,
                     googleFontFamily: theme.googleFontFamily
-                });
+                }, { silent: suppressDirty });
             } else if (typeof this.renderer.fontPicker.setValue === 'function') {
                 // Pass googleFontFamily explicitly (null when the theme uses none) so
                 // the picker clears any stale family from a previously applied theme,

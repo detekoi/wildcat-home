@@ -183,8 +183,8 @@ export class FontManager {
      * Public wrapper for use by ThemeManager when applying generated themes.
      * @param {Object|string} fontOrName - A font object or font name string
      */
-    addAndSelectGoogleFont(fontOrName) {
-        this._addAndSelectGoogleFont(fontOrName);
+    addAndSelectGoogleFont(fontOrName, { silent = false } = {}) {
+        this._addAndSelectGoogleFont(fontOrName, { silent });
     }
 
     // --- Private Methods ---
@@ -406,7 +406,7 @@ export class FontManager {
     /**
      * Dynamically add a Google Font and select it.
      */
-    _addAndSelectGoogleFont(fontOrName) {
+    _addAndSelectGoogleFont(fontOrName, { silent = false } = {}) {
         let fontName, fontValue, fontObj;
 
         if (typeof fontOrName === 'object' && fontOrName.name) {
@@ -436,7 +436,7 @@ export class FontManager {
             this._currentFontIndex = existingIdx;
         }
 
-        this.updateFontDisplay();
+        this.updateFontDisplay({ silent });
         this.closeFontDropdown();
         this._fontSearchInput?.blur();
     }
@@ -660,9 +660,9 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
          * to the available list, loading its stylesheet, and updating the picker
          * config — the same path a dropdown selection takes.
          */
-        setFont(fontObj) {
+        setFont(fontObj, { silent = false } = {}) {
             if (!fontObj || !fontObj.name) return;
-            fontManager.addAndSelectGoogleFont(fontObj);
+            fontManager.addAndSelectGoogleFont(fontObj, { silent });
         },
         getValue() {
             return dummyConfigManager.config.fontFamily || input.value;
