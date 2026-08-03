@@ -309,8 +309,10 @@ export class SettingsPanelManager {
         // addTheme() is optimistic — it inserts locally and pushes in the background —
         // so without this an unreachable proxy would look like a successful save right
         // up until the preset vanished on reload.
+        let pushTimeoutId = null;
         const onPushResult = (e) => {
             if (e.detail?.theme?.value !== theme.value) return;
+            if (pushTimeoutId) clearTimeout(pushTimeoutId);
             document.removeEventListener('theme-library-push-result', onPushResult);
 
             if (!e.detail.ok) {
@@ -330,6 +332,9 @@ export class SettingsPanelManager {
                 e.detail.imageDropped ? 'warning' : 'success'
             );
         };
+        pushTimeoutId = setTimeout(() => {
+            document.removeEventListener('theme-library-push-result', onPushResult);
+        }, 15000);
         document.addEventListener('theme-library-push-result', onPushResult);
 
         const added = addTheme(theme);

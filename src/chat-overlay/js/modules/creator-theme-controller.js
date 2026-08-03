@@ -156,8 +156,10 @@ export class CreatorThemeController {
         // Report what actually persisted. addThemeToCarousel() is optimistic — it
         // inserts locally and pushes in the background — so without this an
         // unreachable proxy would look like a successful save until the next reload.
+        let pushTimeoutId = null;
         const onPushResult = (e) => {
             if (e.detail?.theme?.value !== theme.value) return;
+            if (pushTimeoutId) clearTimeout(pushTimeoutId);
             document.removeEventListener('theme-library-push-result', onPushResult);
 
             if (!e.detail.ok) {
@@ -179,6 +181,9 @@ export class CreatorThemeController {
                 e.detail.imageDropped ? 'warning' : 'success'
             );
         };
+        pushTimeoutId = setTimeout(() => {
+            document.removeEventListener('theme-library-push-result', onPushResult);
+        }, 15000);
         document.addEventListener('theme-library-push-result', onPushResult);
 
         if (statusEl) statusEl.textContent = 'Saving...';
