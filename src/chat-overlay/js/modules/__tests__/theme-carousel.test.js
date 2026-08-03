@@ -234,39 +234,22 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
     describe('User preset badge', () => {
         const cardFor = (value) => container.querySelector(`.theme-card[data-theme-value="${value}"]`);
 
-        it('badges a user-saved preset', () => {
+        it('marks a user-saved preset', () => {
             themeCarousel.mount(container);
-            themeCarousel.addTheme({ name: 'My Preset', value: 'preset-1', bgColor: '#101014', isUserPreset: true });
+            const added = themeCarousel.addTheme({ name: 'My Preset', value: 'preset-1', bgColor: '#101014', isUserPreset: true });
 
-            expect(cardFor('preset-1').querySelector('.theme-card-badge')).not.toBeNull();
+            expect(added.isUserPreset).toBe(true);
         });
 
-        it('does not badge an AI-generated theme', () => {
-            themeCarousel.mount(container);
-            themeCarousel.addTheme({ name: 'Neon', value: 'generated-99', bgColor: '#101014' });
-
-            expect(cardFor('generated-99').querySelector('.theme-card-badge')).toBeNull();
-        });
-
-        it('does not badge a built-in theme', () => {
-            themeCarousel.mount(container);
-            expect(cardFor('default').querySelector('.theme-card-badge')).toBeNull();
-        });
-
-        it('still offers delete on a badged preset', () => {
-            // The badge is positioned top-left precisely so it cannot displace the
-            // top-right delete button; both must coexist.
+        it('offers delete on a user preset', () => {
             themeCarousel.mount(container);
             themeCarousel.addTheme({ name: 'My Preset', value: 'preset-2', bgColor: '#101014', isUserPreset: true });
 
             const card = cardFor('preset-2');
-            expect(card.querySelector('.theme-card-badge')).not.toBeNull();
             expect(card.querySelector('.theme-card-delete')).not.toBeNull();
         });
 
         it('keeps the preset marker through the cloud round-trip', async () => {
-            // pushThemeToCloud Object.assign()s the server copy over the local theme.
-            // If the marker were lost there the badge would vanish moments after saving.
             themeCarousel.mount(container);
             const added = themeCarousel.addTheme({
                 name: 'My Preset', value: 'preset-3', bgColor: '#101014', isUserPreset: true

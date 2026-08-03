@@ -710,17 +710,6 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
 
         card.appendChild(textDiv);
 
-        // Marks a theme the user saved from their own settings, as opposed to one
-        // the AI generated. pointer-events:none so it never swallows the card click.
-        if (theme.isUserPreset) {
-            const badge = document.createElement('span');
-            badge.className = 'theme-card-badge';
-            badge.title = 'Saved from your settings';
-            badge.setAttribute('aria-label', 'Saved preset');
-            badge.innerHTML = '<i data-lucide="bookmark"></i>';
-            card.appendChild(badge);
-        }
-
         if (theme.isGenerated && showDeleteCards) {
             const deleteBtn = document.createElement('button');
             deleteBtn.type = 'button';

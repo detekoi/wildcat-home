@@ -143,31 +143,7 @@
     background: rgba(200, 40, 40, 0.85);
 }
 
-/* Origin marker for themes the user saved from their own settings.
-   Sits top-left so it can never overlap the top-right delete button, and is
-   click-through so it doesn't block the card's own select handler. */
-.theme-card-badge {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    z-index: 3;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-    color: #a970ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
 
-.theme-card-badge svg,
-.theme-card-badge .lucide {
-    width: 11px;
-    height: 11px;
-    stroke-width: 2.2px;
-}
 
 .theme-card:hover {
     transform: none; /* Removed hover effect */
