@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom = {};
             this.isDirty = false;
             this.isPopulating = false;
+            this._userInteracted = false;
+            this._postPopulateDirtyTimer = null;
 
             this.initializeDOM();
 
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 configManager: this.configManagerHelper,
                 previewIframe: this.dom.previewIframe,
                 onFormChange: () => {
-                    if (!this.isPopulating) this.setDirty(true);
+                    if (!this.isPopulating) this.setDirty(true, { isUserInteraction: true });
                 }
             });
 
@@ -123,8 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        setDirty(isDirty) {
+        setDirty(isDirty, { isUserInteraction = false } = {}) {
             this.isDirty = !!isDirty;
+            if (this.isDirty && isUserInteraction) {
+                this._userInteracted = true;
+            }
+            if (!this.isDirty) {
+                this._userInteracted = false;
+            }
             this.updateDirtyUI();
         }
 
@@ -235,8 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         async selectInstance(instanceId) {
-            if (this.instanceManager.currentInstanceId && this.instanceManager.currentInstanceId !== instanceId) {
-                const confirmed = await this.confirmSaveIfDirty('switching scenes');
+            if (this.instanceManager.currentInstanceId) {
+                const actionDesc = (this.instanceManager.currentInstanceId === instanceId)
+                    ? 'reloading this scene'
+                    : 'switching scenes';
+                const confirmed = await this.confirmSaveIfDirty(actionDesc);
                 if (!confirmed) return false;
             }
 
@@ -247,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.isPopulating = true;
+            this._userInteracted = false;
 
             try {
                 this.instanceManager.currentInstanceId = instanceId;
@@ -283,6 +295,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 this.isPopulating = false;
                 this.setDirty(false);
+
+                if (this._postPopulateDirtyTimer) {
+                    clearTimeout(this._postPopulateDirtyTimer);
+                }
+                this._postPopulateDirtyTimer = setTimeout(() => {
+                    if (!this._userInteracted) {
+                        this.setDirty(false);
+                    }
+                }, 600);
             }
             return true;
         }
@@ -417,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setupEventListeners() {
-            const handleFieldChange = () => this.setDirty(true);
+            const handleFieldChange = () => this.setDirty(true, { isUserInteraction: true });
 
             if (this.dom.instanceName) {
                 this.dom.instanceName.addEventListener('input', handleFieldChange);
