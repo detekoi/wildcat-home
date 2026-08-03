@@ -308,9 +308,9 @@
                     <p class="modal-description">A friendly name to identify this chat overlay in your scenes list</p>
                 </div>
             </div>
-            <div style="text-align: right;">
-                <a href="chat.html" class="btn btn-secondary" style="margin-right: 10px;">Skip</a>
-                <button id="modalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
+            <div class="modal-actions">
+                <a href="chat.html" class="btn btn-secondary">Skip</a>
+                <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
                 <button id="modalCreateBtn" class="btn btn-primary"><i data-lucide="plus" class="lucide-inline"></i> Create</button>
             </div>
         </div>
@@ -327,8 +327,8 @@
                     <p class="modal-description">Paste the sync token from the scene's OBS URL (the <code>&amp;sync=</code> value) to edit that scene from this browser. Scenes are stored per-browser, so this is how you reach one created elsewhere.</p>
                 </div>
             </div>
-            <div style="text-align: right;">
-                <button id="importModalCancelBtn" class="btn btn-secondary" style="margin-right: 10px;">Cancel</button>
+            <div class="modal-actions">
+                <button id="importModalCancelBtn" class="btn btn-secondary">Cancel</button>
                 <button id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
             </div>
         </div>
@@ -341,7 +341,7 @@
             <div style="margin: 20px 0;">
                 <p id="unsavedModalMessage" class="modal-description">You have unsaved changes in this scene. What would you like to do before proceeding?</p>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <div class="modal-actions">
                 <button id="unsavedCancelBtn" class="btn btn-secondary">Cancel</button>
                 <button id="unsavedDiscardBtn" class="btn btn-danger">Discard Changes</button>
                 <button id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>
