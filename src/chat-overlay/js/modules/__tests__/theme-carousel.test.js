@@ -126,6 +126,22 @@ describe('ThemeCarousel Module (theme-carousel.js)', () => {
             expect(themeCarousel.getAvailableThemes()[themeCarousel.getCurrentThemeIndex()].value).toBe('pink-theme');
             expect(onApplySpy).toHaveBeenCalledWith(targetTheme, { userInitiated: false });
         });
+
+        it('should visually highlight theme by value using highlightByValue() without invoking onApply', () => {
+            const onApplySpy = vi.fn();
+            const controller = themeCarousel.mount(container, { onApply: onApplySpy });
+
+            const targetTheme = themeCarousel.getAvailableThemes().find(t => t.value === 'pink-theme');
+            expect(targetTheme).toBeDefined();
+
+            controller.highlightByValue('pink-theme');
+
+            expect(themeCarousel.getAvailableThemes()[themeCarousel.getCurrentThemeIndex()].value).toBe('pink-theme');
+            expect(onApplySpy).not.toHaveBeenCalled();
+            const activeCard = container.querySelector('.theme-card.active');
+            expect(activeCard).not.toBeNull();
+            expect(activeCard.dataset.themeValue).toBe('pink-theme');
+        });
     });
 
     describe('Adding & Deleting Themes', () => {

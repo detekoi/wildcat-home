@@ -4,7 +4,8 @@ vi.mock('../../theme-carousel.js', () => ({
     mount: vi.fn().mockReturnValue({
         destroy: vi.fn(),
         refresh: vi.fn(),
-        selectByValue: vi.fn()
+        selectByValue: vi.fn(),
+        highlightByValue: vi.fn()
     }),
     getAvailableThemes: () => [
         { name: 'Dark', value: 'dark' },
@@ -169,7 +170,8 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         carouselController = {
             destroy: vi.fn(),
             refresh: vi.fn(),
-            selectByValue: vi.fn()
+            selectByValue: vi.fn(),
+            highlightByValue: vi.fn()
         };
         themeCarousel.mount.mockImplementation((mountEl, opts) => {
             capturedOnApply = opts.onApply;
@@ -253,7 +255,7 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
         );
     });
 
-    it('populateForm() syncs the carousel selection via selectByValue()', () => {
+    it('populateForm() syncs the carousel selection via highlightByValue()', () => {
         formRenderer.renderSchemaForm(container);
 
         formRenderer.populateForm({
@@ -262,7 +264,7 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
             config: { theme: 'cyberpunk-theme' }
         }, {});
 
-        expect(carouselController.selectByValue).toHaveBeenCalledWith('cyberpunk-theme');
+        expect(carouselController.highlightByValue).toHaveBeenCalledWith('cyberpunk-theme');
         expect(document.getElementById('schema-input-theme').value).toBe('cyberpunk-theme');
     });
 

@@ -26,6 +26,7 @@ export class SceneSyncManager {
         this._db = null;
         this._isSyncing = false;
         this._restFallbackToken = null;
+        this._suppressRemoteUpdates = false;
         
         this._configManager = null;
         this._badgeManager = null;
@@ -146,6 +147,7 @@ export class SceneSyncManager {
         this._thirdPartyEmoteManager = options.thirdPartyEmoteManager;
         this._settingsPanel = options.settingsPanel;
         this._chatConnection = options.chatConnection;
+        this._suppressRemoteUpdates = !!options.suppressRemoteUpdates;
 
         const tokenFromUrl = UIHelpers.getUrlParameter('sync');
         if (!tokenFromUrl) {
@@ -168,7 +170,7 @@ export class SceneSyncManager {
      * Fetch scene configuration via REST GET endpoint from proxy service (fallback on SDK / network error)
      */
     async fetchConfigFromProxy(token = this._token) {
-        if (!token) return null;
+        if (!token || this._suppressRemoteUpdates) return null;
         try {
             const baseUrl = getProxyBaseUrl();
             const response = await fetch(`${baseUrl}/scene-config/${token}`);
@@ -206,6 +208,8 @@ export class SceneSyncManager {
             }
             return;
         }
+
+        if (this._suppressRemoteUpdates) return;
 
         const data = docSnap.data();
         if (!data || !data.config) return;

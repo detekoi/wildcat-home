@@ -641,8 +641,12 @@ export class CreatorFormRenderer {
                 const themeVal = config[item.key] ?? item.default;
                 const themeInput = document.getElementById(`schema-input-${item.key}`);
                 if (themeInput) themeInput.value = themeVal;
-                if (this.themeCarouselController && typeof this.themeCarouselController.selectByValue === 'function') {
-                    this.themeCarouselController.selectByValue(themeVal);
+                if (this.themeCarouselController) {
+                    if (typeof this.themeCarouselController.highlightByValue === 'function') {
+                        this.themeCarouselController.highlightByValue(themeVal);
+                    } else if (typeof this.themeCarouselController.selectByValue === 'function') {
+                        this.themeCarouselController.selectByValue(themeVal);
+                    }
                 }
                 return;
             }

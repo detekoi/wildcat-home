@@ -315,7 +315,8 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
                 chatRenderer,
                 thirdPartyEmoteManager,
                 settingsPanel,
-                chatConnection
+                chatConnection,
+                suppressRemoteUpdates: true
             });
 
             // Demo Mode: suppress connection prompts, disable auto-connect, listen for postMessage

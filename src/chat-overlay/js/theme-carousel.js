@@ -191,12 +191,12 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
      *   theme is selected (card click, prev, next). Falls back to `window.applyTheme(theme.value)`
      *   when omitted, so chat.html's existing behavior is unaffected.
      * @param {boolean} [options.showDelete=true] - Whether generated theme cards get a delete control.
-     * @returns {{destroy: Function, refresh: Function, selectByValue: Function}}
+     * @returns {{destroy: Function, refresh: Function, selectByValue: Function, highlightByValue: Function}}
      */
     function mount(container, options = {}) {
         if (!container) {
             console.error('[ThemeCarousel] mount() called without a container element.');
-            return { destroy: () => {}, refresh: () => {}, selectByValue: () => {} };
+            return { destroy: () => {}, refresh: () => {}, selectByValue: () => {}, highlightByValue: () => {} };
         }
 
         // Tear down a previous mount's listeners (if any) before taking over.
@@ -247,7 +247,8 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
         return {
             destroy: () => destroy(container),
             refresh,
-            selectByValue
+            selectByValue,
+            highlightByValue
         };
     }
 
@@ -317,6 +318,24 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
         if (!availableThemes || !value) return;
         const idx = availableThemes.findIndex(t => t.value === value);
         if (idx !== -1) applyAndScrollToTheme(idx, { userInitiated: false });
+    }
+
+    /**
+     * Visually select/highlight a theme in the carousel without invoking
+     * onApplyCallback or applying theme field overrides to form controls.
+     */
+    function highlightByValue(value) {
+        if (!availableThemes || !value) return;
+        const idx = availableThemes.findIndex(t => t.value === value);
+        if (idx !== -1) {
+            currentThemeIndex = idx;
+            const theme = availableThemes[idx];
+            updateThemeDetails(theme);
+            if (mountedRoot) {
+                highlightActiveCard(value);
+            }
+            scrollToThemeCard(idx);
+        }
     }
 
     /**

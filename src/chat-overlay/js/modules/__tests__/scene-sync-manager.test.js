@@ -261,4 +261,21 @@ describe('SceneSyncManager', () => {
         expect(JSON.parse(cached[1]).bgImage).toBeNull();
         expect(JSON.parse(cached[1]).theme).toBe('dracula');
     });
+
+    it('should suppress remote updates when suppressRemoteUpdates option is true', () => {
+        syncManager._configManager = mockConfigManager;
+        syncManager._suppressRemoteUpdates = true;
+        const applyConfigSpy = vi.spyOn(mockConfigManager, 'applyConfiguration');
+
+        const mockSnap = {
+            exists: () => true,
+            data: () => ({
+                config: { theme: 'cyberpunk', fontSize: 22 },
+                updatedBy: 'remote-session'
+            })
+        };
+
+        syncManager.handleSnapshot(mockSnap);
+        expect(applyConfigSpy).not.toHaveBeenCalled();
+    });
 });
