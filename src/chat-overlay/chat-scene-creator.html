@@ -272,7 +272,7 @@ extraScripts:
     </div>
 
     <!-- Modal for creating/editing chat scenes -->
-    <div id="instanceModal" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div id="instanceModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
             <h2 id="modalTitle">Create New Chat Scene</h2>
             <div style="margin: 20px 0;">
@@ -291,7 +291,7 @@ extraScripts:
     </div>
 
     <!-- Modal for linking an existing chat scene by sync token -->
-    <div id="importSceneModal" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="importSceneModalTitle">
+    <div id="importSceneModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="importSceneModalTitle">
         <div class="modal-content">
             <h2 id="importSceneModalTitle">Link Existing Scene</h2>
             <div style="margin: 20px 0;">
@@ -309,7 +309,7 @@ extraScripts:
     </div>
 
     <!-- Modal for unsaved changes confirmation -->
-    <div id="unsavedChangesModal" class="modal-container" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="unsavedModalTitle" aria-describedby="unsavedModalMessage">
+    <div id="unsavedChangesModal" class="modal-container" tabindex="-1" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="unsavedModalTitle" aria-describedby="unsavedModalMessage">
         <div class="modal-content">
             <h2 id="unsavedModalTitle">Unsaved Changes</h2>
             <div style="margin: 20px 0;">
@@ -323,5 +323,3 @@ extraScripts:
         </div>
     </div>
 
-    <!-- Notification container -->
-    <div id="notification-container" aria-live="polite" aria-atomic="true"></div>

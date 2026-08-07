@@ -4,6 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
+import { ModalA11y } from './modal-a11y.js';
 
 export class CreatorInstanceManager {
     /**
@@ -18,7 +19,6 @@ export class CreatorInstanceManager {
         this.instances = {};
         this.instanceOrder = [];
         this.currentInstanceId = null;
-        this.previousActiveElement = null;
     }
 
     loadInstances() {
@@ -240,25 +240,20 @@ export class CreatorInstanceManager {
     }
 
     openInstanceModal(modalEl, inputEl) {
-        if (modalEl) {
-            if (inputEl) inputEl.value = '';
-            modalEl.style.display = 'flex';
-            this.previousActiveElement = document.activeElement;
-            if (inputEl) {
-                inputEl.focus();
-            } else {
-                modalEl.focus();
-            }
-        }
+        if (!modalEl) return;
+        if (inputEl) inputEl.value = '';
+        modalEl.style.display = 'flex';
+        ModalA11y.open(modalEl, { onRequestClose: () => this.closeInstanceModal(modalEl) });
+        // modalEl carries tabindex="-1", so the fallback is now a real focus target
+        (inputEl || modalEl).focus();
     }
 
     closeInstanceModal(modalEl) {
-        if (modalEl) {
-            modalEl.style.display = 'none';
-            if (this.previousActiveElement) {
-                this.previousActiveElement.focus();
-                this.previousActiveElement = null;
-            }
-        }
+        if (!modalEl) return;
+        // Release inertness BEFORE focusing: focus() on a still-inert element is a
+        // silent no-op and focus would drop to <body>.
+        const trigger = ModalA11y.close(modalEl);
+        modalEl.style.display = 'none';
+        if (trigger?.isConnected) trigger.focus();
     }
 }

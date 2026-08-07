@@ -10,6 +10,7 @@ import { CreatorInstanceManager } from './modules/creator-instance-manager.js';
 import { CreatorSyncManager } from './modules/creator-sync-manager.js';
 import { CreatorIOManager } from './modules/creator-io-manager.js';
 import { CreatorDragHandler } from './modules/creator-drag-handler.js';
+import { ModalA11y } from './modules/modal-a11y.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     class ChatSceneCreatorApp {
@@ -18,9 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom = {};
             this.isDirty = false;
             this.isPopulating = false;
-            this.previousActiveElement = null;
 
             this.initializeDOM();
+
+            // Create the toast live region up front rather than on the first toast:
+            // a live region must exist before content is inserted to announce
+            // reliably, and modal-a11y snapshots the DOM when a dialog opens, so a
+            // container that appears later escapes being inerted.
+            UIHelpers.ensureToastContainer();
 
             // Instantiate modules
             this.formRenderer = new CreatorFormRenderer({
@@ -207,36 +213,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.dom.unsavedModalMessage.textContent = `You have unsaved changes in "${currentName}". What would you like to do before ${actionDescription}?`;
             }
 
-            modal.style.display = 'flex';
-            previousActiveElement = document.activeElement;
-
             return new Promise((resolve) => {
-                const cleanup = () => {
+                let settled = false;
+
+                /**
+                 * Tears the dialog down and returns the element to refocus.
+                 * Idempotent — Escape, backdrop and the three buttons can all race,
+                 * and an external Escape listener means cleanup is no longer the
+                 * single teardown path it used to be.
+                 */
+                const settle = () => {
+                    if (settled) return null;
+                    settled = true;
+                    const trigger = ModalA11y.close(modal);
                     modal.style.display = 'none';
-                    if (previousActiveElement) {
-                        previousActiveElement.focus();
-                        previousActiveElement = null;
-                    }
-                    if (this.dom.unsavedSaveBtn) this.dom.unsavedSaveBtn.removeEventListener('click', handleSave);
-                    if (this.dom.unsavedDiscardBtn) this.dom.unsavedDiscardBtn.removeEventListener('click', handleDiscard);
-                    if (this.dom.unsavedCancelBtn) this.dom.unsavedCancelBtn.removeEventListener('click', handleCancel);
+                    this.dom.unsavedSaveBtn?.removeEventListener('click', handleSave);
+                    this.dom.unsavedDiscardBtn?.removeEventListener('click', handleDiscard);
+                    this.dom.unsavedCancelBtn?.removeEventListener('click', handleCancel);
                     modal.removeEventListener('click', handleBackdrop);
+                    return trigger;
                 };
 
                 const handleSave = async () => {
-                    cleanup();
+                    const trigger = settle();
                     await this.saveCurrentInstance({ includeChannel: false });
+                    // Refocus AFTER the save: it re-renders the instance list, which
+                    // destroys the item that had focus. Restoring first would leave
+                    // focus on a detached node, i.e. on <body>.
+                    this.restoreFocusTo(trigger);
                     resolve(true);
                 };
 
                 const handleDiscard = () => {
-                    cleanup();
+                    const trigger = settle();
                     this.setDirty(false);
+                    this.restoreFocusTo(trigger);
                     resolve(true);
                 };
 
                 const handleCancel = () => {
-                    cleanup();
+                    this.restoreFocusTo(settle());
                     resolve(false);
                 };
 
@@ -244,10 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (e.target === modal) handleCancel();
                 };
 
-                if (this.dom.unsavedSaveBtn) this.dom.unsavedSaveBtn.addEventListener('click', handleSave);
-                if (this.dom.unsavedDiscardBtn) this.dom.unsavedDiscardBtn.addEventListener('click', handleDiscard);
-                if (this.dom.unsavedCancelBtn) this.dom.unsavedCancelBtn.addEventListener('click', handleCancel);
+                this.dom.unsavedSaveBtn?.addEventListener('click', handleSave);
+                this.dom.unsavedDiscardBtn?.addEventListener('click', handleDiscard);
+                this.dom.unsavedCancelBtn?.addEventListener('click', handleCancel);
                 modal.addEventListener('click', handleBackdrop);
+
+                modal.style.display = 'flex';
+                // Escape maps to Cancel, matching the backdrop: nothing saved,
+                // nothing discarded, dirty state preserved.
+                ModalA11y.open(modal, { onRequestClose: handleCancel });
+                // aria-modal hides the trigger from assistive technology the moment
+                // this opens, so focus has to move inside. Cancel is least destructive.
+                this.dom.unsavedCancelBtn?.focus();
             });
         }
 
@@ -400,23 +424,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         importScene() {
-            if (this.dom.importSceneToken) {
-                this.dom.importSceneToken.value = '';
-                this.previousActiveElement = document.activeElement;
-            }
-            if (this.dom.importSceneModal) {
-                this.dom.importSceneModal.style.display = 'flex';
-                this.dom.importSceneToken?.focus();
-            }
+            const modal = this.dom.importSceneModal;
+            if (!modal) return;
+            if (this.dom.importSceneToken) this.dom.importSceneToken.value = '';
+            modal.style.display = 'flex';
+            ModalA11y.open(modal, { onRequestClose: () => this.closeImportSceneModal() });
+            (this.dom.importSceneToken || modal).focus();
         }
 
         closeImportSceneModal() {
-            if (this.dom.importSceneModal) {
-                this.dom.importSceneModal.style.display = 'none';
-                if (this.previousActiveElement) {
-                    this.previousActiveElement.focus();
-                    this.previousActiveElement = null;
-                }
+            const modal = this.dom.importSceneModal;
+            if (!modal) return;
+            // Release inertness before focusing — focus() on an inert element is a
+            // silent no-op.
+            const trigger = ModalA11y.close(modal);
+            modal.style.display = 'none';
+            this.restoreFocusTo(trigger);
+        }
+
+        /**
+         * Refocuses a dialog's trigger, re-querying it when the instance list has
+         * re-rendered underneath and destroyed the original node.
+         */
+        restoreFocusTo(el) {
+            if (!el) return;
+            if (el.isConnected) {
+                el.focus();
+                return;
+            }
+            const id = el.dataset?.id;
+            if (id) {
+                this.dom.instanceList?.querySelector(`.instance-item[data-id="${id}"]`)?.focus();
             }
         }
 

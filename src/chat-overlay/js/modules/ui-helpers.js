@@ -338,9 +338,26 @@ export class UIHelpers {
      * @param {string} type - 'success' | 'warning' | 'error' | 'info'
      * @param {number} [duration=4000] - Duration in ms before auto-dismiss (0 to disable)
      */
-    static showNotification(title, message, type = 'info', duration = 4000) {
-        console.log(`[Notification ${type.toUpperCase()}] ${title}: ${message}`);
-
+    /**
+     * Creates the toast container if it does not exist yet, and returns it.
+     *
+     * Worth calling once at startup. Two reasons it should exist before the first
+     * toast rather than being conjured by it:
+     *
+     * 1. A live region has to be in the DOM *before* content is inserted into it,
+     *    or the insertion is unreliably announced — a container created in the
+     *    same task as its first message routinely drops that message.
+     * 2. modal-a11y inerts background siblings by snapshotting the DOM at open
+     *    time. A container that appears later escapes the snapshot, leaving a
+     *    focusable close button reachable outside an open dialog. Whether that
+     *    happened used to depend on whether any toast had fired earlier in the
+     *    session, which made the leak nondeterministic.
+     *
+     * `data-a11y-live-region` exempts it from being inerted: inert strips a
+     * subtree from the accessibility tree, which would silence announcements
+     * exactly when a dialog is open.
+     */
+    static ensureToastContainer() {
         if (typeof document === 'undefined') return null;
 
         let container = document.getElementById('toast-container');
@@ -348,8 +365,22 @@ export class UIHelpers {
             container = document.createElement('div');
             container.id = 'toast-container';
             container.className = 'toast-container';
+            container.setAttribute('role', 'status');
+            container.setAttribute('aria-live', 'polite');
+            // Not aria-atomic: this container stacks toasts, and atomic would
+            // re-announce every visible one on each new arrival.
+            container.setAttribute('data-a11y-live-region', '');
             document.body.appendChild(container);
         }
+        return container;
+    }
+
+    static showNotification(title, message, type = 'info', duration = 4000) {
+        console.log(`[Notification ${type.toUpperCase()}] ${title}: ${message}`);
+
+        if (typeof document === 'undefined') return null;
+
+        const container = UIHelpers.ensureToastContainer();
 
         const toast = document.createElement('div');
         toast.className = `toast-notification toast-${type}`;
