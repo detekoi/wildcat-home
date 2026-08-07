@@ -610,7 +610,7 @@ export class CreatorFormRenderer {
         this.bgImageHandler.currentBgImage = config.bgImage || null;
 
         if (domRefs.instanceName) domRefs.instanceName.value = instance.name || '';
-        if (domRefs.instanceId) domRefs.instanceId.value = instance.id || '';
+        if (domRefs.syncTokenDisplay) domRefs.syncTokenDisplay.value = instance.syncToken || '';
 
         if (domRefs.creatorTwitchChannel) domRefs.creatorTwitchChannel.value = config.lastTwitchChannel || config.lastChannel || '';
         if (domRefs.creatorYoutubeTarget) domRefs.creatorYoutubeTarget.value = config.lastYouTubeTarget || '';

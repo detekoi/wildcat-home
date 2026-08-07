@@ -103,9 +103,10 @@
                                     </div>
                                 </div>
                                 <div class="settings-row">
-                                    <label for="instanceId">Scene ID</label>
-                                    <div class="input-group">
-                                        <input type="text" id="instanceId" class="form-control" disabled>
+                                    <label for="syncTokenDisplay">Sync Token</label>
+                                    <div class="input-group" style="display: flex; gap: 6px;">
+                                        <input type="text" id="syncTokenDisplay" class="form-control" readonly style="font-family: monospace; font-size: 13px;">
+                                        <button type="button" class="btn btn-secondary" id="copySyncTokenBtn" title="Copy Sync Token"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
                                     </div>
                                 </div>
                             </div>
@@ -322,9 +323,9 @@
             <h2>Link Existing Scene</h2>
             <div style="margin: 20px 0;">
                 <div>
-                    <label for="importSceneToken" class="modal-label">Sync Token:</label>
-                    <input type="text" id="importSceneToken" style="width: 100%;" placeholder="e.g., 3f2a9c81-...">
-                    <p class="modal-description">Paste the sync token from the scene's OBS URL (the <code>&amp;sync=</code> value) to edit that scene from this browser. Scenes are stored per-browser, so this is how you reach one created elsewhere.</p>
+                    <label for="importSceneToken" class="modal-label">Sync Token or OBS URL:</label>
+                    <input type="text" id="importSceneToken" style="width: 100%;" placeholder="e.g., 3f2a9c81-... or paste full OBS URL">
+                    <p class="modal-description">Paste the Sync Token or the full OBS URL from another scene to link and edit that scene from this browser.</p>
                 </div>
             </div>
             <div class="modal-actions">

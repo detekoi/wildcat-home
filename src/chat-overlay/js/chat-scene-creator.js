@@ -90,7 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtn: document.getElementById('deleteBtn'),
                 exportBtn: document.getElementById('exportBtn'),
                 instanceName: document.getElementById('instanceName'),
-                instanceId: document.getElementById('instanceId'),
+                syncTokenDisplay: document.getElementById('syncTokenDisplay'),
+                copySyncTokenBtn: document.getElementById('copySyncTokenBtn'),
                 creatorTwitchChannel: document.getElementById('creatorTwitchChannel'),
                 creatorYoutubeTarget: document.getElementById('creatorYoutubeTarget'),
                 applyChannelBtn: document.getElementById('applyChannelBtn'),
@@ -270,6 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // before subscribing so the subscription always has a token to attach to.
                 await this.ensureSyncTokenAndPush(instanceId);
 
+                // If ensureSyncTokenAndPush minted a new token, the form was already
+                // populated with '' — update the Sync Token field to reflect it.
+                if (this.dom.syncTokenDisplay && instance.syncToken) {
+                    this.dom.syncTokenDisplay.value = instance.syncToken;
+                }
+
                 this.syncManager.subscribeToRemoteChanges(
                     instance.syncToken,
                     instanceId,
@@ -378,9 +385,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         confirmImportScene() {
-            const token = this.dom.importSceneToken?.value?.trim();
+            const rawInput = this.dom.importSceneToken?.value?.trim();
+            if (!rawInput) {
+                UIHelpers.showNotification('Error', 'Enter a Sync Token or OBS URL to link.', 'error');
+                return;
+            }
+
+            let extractedToken = rawInput;
+            if (rawInput.includes('sync=')) {
+                try {
+                    let urlString = rawInput;
+                    if (!/^https?:\/\//i.test(rawInput) && !/^file:\/\//i.test(rawInput)) {
+                        // Extract only the query string so URL() parses the params correctly.
+                        // e.g. "chat.html?scene=x&sync=UUID" → "?scene=x&sync=UUID"
+                        const qIdx = rawInput.indexOf('?');
+                        const queryPart = qIdx !== -1 ? rawInput.substring(qIdx) : `?${rawInput}`;
+                        urlString = `https://dummy.host/${queryPart}`;
+                    }
+                    const urlParams = new URL(urlString).searchParams;
+                    const syncParam = urlParams.get('sync');
+                    if (syncParam) extractedToken = syncParam;
+                } catch (e) {
+                    const match = rawInput.match(/[?&]sync=([^&#]+)/);
+                    if (match && match[1]) extractedToken = decodeURIComponent(match[1]);
+                }
+            }
+
+            const token = UIHelpers.normalizeSyncToken(extractedToken);
             if (!token) {
-                UIHelpers.showNotification('Error', 'Enter a sync token to link.', 'error');
+                UIHelpers.showNotification('Invalid Token', 'The input does not contain a valid sync token UUID.', 'error');
                 return;
             }
 
@@ -584,6 +617,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            if (this.dom.copySyncTokenBtn) {
+                this.dom.copySyncTokenBtn.addEventListener('click', () => {
+                    const token = this.dom.syncTokenDisplay?.value || '';
+                    if (token) CreatorIOManager.copyUrl(token);
+                });
+            }
             if (this.dom.copyUrlBtnConfig) {
                 this.dom.copyUrlBtnConfig.addEventListener('click', () => CreatorIOManager.copyUrl(this.dom.instanceUrlConfig.textContent));
             }
