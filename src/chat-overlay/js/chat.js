@@ -33,8 +33,14 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
         let themeManager;
         const themeCarouselMountEl = document.getElementById('theme-carousel-mount');
         if (themeCarouselMountEl && typeof mount === 'function') {
+            // In demo mode (preview iframe inside the scene creator), the
+            // creator drives all styling via postMessage. Suppress the theme
+            // library's remote activeTheme sync so it doesn't overwrite the
+            // CSS variables the creator just pushed (e.g. bgColor/opacity).
+            const isDemoAtMount = UIHelpers.getUrlParameter('demo') === '1';
             mount(themeCarouselMountEl, {
-                onApply: (theme) => themeManager && themeManager.applyTheme(theme.value)
+                onApply: (theme) => themeManager && themeManager.applyTheme(theme.value),
+                suppressRemoteApply: isDemoAtMount
             });
         } else {
             console.warn('[chat.js] mount not found; theme carousel will not render.');
