@@ -113,6 +113,41 @@ h6 {
 }
 
 /* =====================================================
+   ACCESSIBILITY
+   ===================================================== */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: 10000;
+  background-color: white;
+  color: var(--color-text);
+  border: 2px solid var(--color-text);
+  box-shadow: 4px 4px 0 var(--color-text);
+  padding: 12px 24px;
+  font-size: var(--font-size-regular);
+  font-weight: 700;
+  text-decoration: none !important;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+.skip-link:focus:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 1px rgba(0, 0, 0, 0.6);
+}
+
+.skip-link:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0 var(--color-text) !important;
+  background-color: #eaeaea;
+}
+
+/* =====================================================
    NAVIGATION BAR (Top)
    ===================================================== */
 .site-navbar {
@@ -564,6 +599,23 @@ footer a:active {
   .navbar-toggle:active {
     background-color: var(--color-accent-grey);
     color: var(--color-text);
+  }
+
+  /* Accessibility */
+  .skip-link {
+    background-color: #ffffff;
+    color: #000000 !important;
+    border-color: #555555;
+    box-shadow: 4px 4px 0 var(--shadow-color);
+  }
+
+  .skip-link:focus:hover {
+    box-shadow: 6px 6px 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .skip-link:active {
+    box-shadow: 1px 1px 0 var(--shadow-color) !important;
+    background-color: #eaeaea;
   }
 
   /* Sidebar */

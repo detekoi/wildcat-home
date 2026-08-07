@@ -11,6 +11,8 @@ import { CreatorSyncManager } from './modules/creator-sync-manager.js';
 import { CreatorIOManager } from './modules/creator-io-manager.js';
 import { CreatorDragHandler } from './modules/creator-drag-handler.js';
 
+let previousActiveElement = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     class ChatSceneCreatorApp {
         constructor() {
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.setupPreviewBgSelector();
             this.formRenderer.setupFormLivePreview();
             this.dragHandler.attach();
+            this.setupAccordion();
 
             // Select initial instance
             if (this.instanceManager.instanceOrder.length > 0) {
@@ -72,6 +75,23 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 this.instanceManager.showEmptyState(this.dom);
             }
+        }
+
+        setupAccordion() {
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const accordion = header.closest('.accordion');
+                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                    accordion.classList.toggle('active');
+                    header.setAttribute('aria-expanded', !isExpanded);
+                    document.querySelectorAll('.accordion.active').forEach(other => {
+                        if (other !== accordion) {
+                            other.classList.remove('active');
+                            other.querySelector('.accordion-header')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                });
+            });
         }
 
         initializeDOM() {
@@ -189,10 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             modal.style.display = 'flex';
+            previousActiveElement = document.activeElement;
 
             return new Promise((resolve) => {
                 const cleanup = () => {
                     modal.style.display = 'none';
+                    if (previousActiveElement) {
+                        previousActiveElement.focus();
+                        previousActiveElement = null;
+                    }
                     if (this.dom.unsavedSaveBtn) this.dom.unsavedSaveBtn.removeEventListener('click', handleSave);
                     if (this.dom.unsavedDiscardBtn) this.dom.unsavedDiscardBtn.removeEventListener('click', handleDiscard);
                     if (this.dom.unsavedCancelBtn) this.dom.unsavedCancelBtn.removeEventListener('click', handleCancel);
@@ -376,12 +401,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         importScene() {
-            if (this.dom.importSceneToken) this.dom.importSceneToken.value = '';
-            if (this.dom.importSceneModal) this.dom.importSceneModal.style.display = 'flex';
+            if (this.dom.importSceneToken) {
+                this.dom.importSceneToken.value = '';
+                previousActiveElement = document.activeElement;
+            }
+            if (this.dom.importSceneModal) {
+                this.dom.importSceneModal.style.display = 'flex';
+                this.dom.importSceneToken.focus();
+            }
         }
 
         closeImportSceneModal() {
-            if (this.dom.importSceneModal) this.dom.importSceneModal.style.display = 'none';
+            if (this.dom.importSceneModal) {
+                this.dom.importSceneModal.style.display = 'none';
+                if (previousActiveElement) {
+                    previousActiveElement.focus();
+                    previousActiveElement = null;
+                }
+            }
         }
 
         confirmImportScene() {

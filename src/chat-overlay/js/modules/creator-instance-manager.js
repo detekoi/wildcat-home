@@ -18,6 +18,7 @@ export class CreatorInstanceManager {
         this.instances = {};
         this.instanceOrder = [];
         this.currentInstanceId = null;
+        this.previousActiveElement = null;
     }
 
     loadInstances() {
@@ -199,6 +200,8 @@ export class CreatorInstanceManager {
             item.className = 'instance-item';
             item.dataset.id = id;
             item.draggable = true;
+            item.tabIndex = 0;
+            item.setAttribute('role', 'button');
             if (id === this.currentInstanceId) item.classList.add('active');
 
             const statusText = instance.syncToken ? 'Sync Active' : 'Local Scene';
@@ -211,11 +214,17 @@ export class CreatorInstanceManager {
                         <div class="instance-name" style="font-weight: 600;">${UIHelpers.escapeHtml(instance.name)}${unsavedTag}</div>
                         <div style="font-size: 11px; opacity: 0.6;">${statusText}</div>
                     </div>
-                    <i data-lucide="grip-vertical" style="opacity: 0.4; cursor: grab;"></i>
+                    <i data-lucide="grip-vertical" style="opacity: 0.4; cursor: grab;" aria-hidden="true"></i>
                 </div>
             `;
 
             item.addEventListener('click', () => onSelectCallback(id));
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectCallback(id);
+                }
+            });
             container.appendChild(item);
         });
 
@@ -234,13 +243,22 @@ export class CreatorInstanceManager {
         if (modalEl) {
             if (inputEl) inputEl.value = '';
             modalEl.style.display = 'flex';
-            if (inputEl) inputEl.focus();
+            this.previousActiveElement = document.activeElement;
+            if (inputEl) {
+                inputEl.focus();
+            } else {
+                modalEl.focus();
+            }
         }
     }
 
     closeInstanceModal(modalEl) {
         if (modalEl) {
             modalEl.style.display = 'none';
+            if (this.previousActiveElement) {
+                this.previousActiveElement.focus();
+                this.previousActiveElement = null;
+            }
         }
     }
 }
