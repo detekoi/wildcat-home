@@ -424,8 +424,16 @@ header p {
 
 .settings-row .input-group {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
     display: flex;
     align-items: center;
+}
+
+.settings-row .input-group .form-control {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Color Control Wrapper & Swatches */
@@ -573,6 +581,7 @@ input[type="color"]:disabled::-webkit-color-swatch,
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+    box-sizing: border-box;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -583,6 +592,10 @@ input[type="color"]:disabled::-webkit-color-swatch,
 }
 
 .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--border-color);
     border-left: none;
@@ -590,6 +603,8 @@ input[type="color"]:disabled::-webkit-color-swatch,
     background-color: var(--primary-color);
     color: white;
     cursor: pointer;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .copy-btn:hover {
