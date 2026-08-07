@@ -1,52 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Wildcat Chat Scene Creator – create and manage named chat overlay scenes for use in OBS browser sources.">
-    <title>Chat Scene Creator – Wildcat Chat Overlay</title>
-
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/logo192.png">
-
-    <!-- Fonts (matches base.njk) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/wildcat-theme.css">
-    <link rel="stylesheet" href="css/scene-creator.css">
-    <link rel="stylesheet" href="css/theme-carousel.css">
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Analytics -->
-    <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
-</head>
-<body class="has-navbar">
-
-    <!-- Site Navbar -->
-    <nav class="wildcat-navbar">
-        <a href="/" class="wildcat-navbar-brand">
-            <span class="wildcat-navbar-kaomoji">- ˕ •マ</span>
-        </a>
-        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation" onclick="this.nextElementSibling.classList.toggle('active')"><i data-lucide="menu"></i></button>
-        <ul class="wildcat-navbar-menu">
-            <li><a href="/">Home</a></li>
-            <li><a href="/blog/">Blog</a></li>
-            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
-            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
-            <li><a href="/chat-overlay/" class="active">Chat Overlay</a></li>
-            <li><a href="https://docs.wildcat.chat">Docs</a></li>
-            <li><a href="https://parfaitfair.com/#contact">Contact</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
+---
+layout: base.njk
+permalink: /chat-overlay/chat-scene-creator.html
+title: Chat Scene Creator – Wildcat Chat Overlay
+description: Wildcat Chat Scene Creator – create and manage named chat overlay scenes for use in OBS browser sources.
+extraStyles:
+  - /chat-overlay/css/styles.css
+  - /chat-overlay/css/scene-creator.css
+  - /chat-overlay/css/theme-carousel.css
+  - /chat-overlay/css/wildcat-theme.css
+extraScripts:
+  - /chat-overlay/js/theme-generator.js
+  - /chat-overlay/js/theme-carousel.js
+  - /chat-overlay/js/chat-scene-creator.js
+---
+    <div class="container" id="page-content">
         <header>
             <h1>Chat Scene Creator</h1>
             <p>Create and manage chat scenes for different parts of your stream</p>
@@ -59,7 +26,7 @@
             </p>
         </header>
         
-        <main class="app-layout">
+        <div class="app-layout">
             <!-- Chat Scene List Panel -->
             <div class="instances-panel">
                 <div class="instances-header">
@@ -249,11 +216,13 @@
                     </div>
                     
                     <div class="accordion">
-                        <div class="accordion-header">
-                            <h3>Troubleshooting Tips</h3>
-                            <span class="accordion-icon"><i data-lucide="chevron-down"></i></span>
-                        </div>
-                        <div class="accordion-content">
+                        <h3>
+                            <button class="accordion-header" aria-expanded="false" aria-controls="troubleshooting-content">
+                                Troubleshooting Tips
+                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
+                            </button>
+                        </h3>
+                        <div id="troubleshooting-content" class="accordion-content">
                             <ul>
                                 <li><strong>Chat not connecting:</strong> In the OBS "Interact" window, double-check the channel name and ensure you have an internet connection.</li>
                                 <li><strong>Settings not saving:</strong> Settings are saved in OBS's browser cache. Ensure OBS has permissions to write cache files. Clearing OBS cache might reset settings.</li>
@@ -265,11 +234,13 @@
                     </div>
                     
                     <div class="accordion">
-                        <div class="accordion-header">
-                            <h3>Advanced OBS Settings</h3>
-                            <span class="accordion-icon">▼</span>
-                        </div>
-                        <div class="accordion-content">
+                        <h3>
+                            <button class="accordion-header" aria-expanded="false" aria-controls="advanced-obs-content">
+                                Advanced OBS Settings
+                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
+                            </button>
+                        </h3>
+                        <div id="advanced-obs-content" class="accordion-content">
                             <p>For optimal performance, configure these additional settings in your OBS Browser Source:</p>
                             <ul>
                                 <li>Check "Shutdown source when not visible" to save resources.</li>
@@ -281,11 +252,13 @@
                     </div>
                     
                     <div class="accordion">
-                        <div class="accordion-header">
-                            <h3>Customization Tips</h3>
-                            <span class="accordion-icon">▼</span>
-                        </div>
-                        <div class="accordion-content">
+                        <h3>
+                            <button class="accordion-header" aria-expanded="false" aria-controls="customization-tips-content">
+                                Customization Tips
+                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
+                            </button>
+                        </h3>
+                        <div id="customization-tips-content" class="accordion-content">
                             <ul>
                                 <li><strong>Overlaying on content:</strong> Use the Tranparent theme, or adjust the opacity slider features while setting the "none" border option for seamless integration with your gameplay.</li>
                                 <li><strong>Font size:</strong> Keep at least 12px for best readability.</li>
@@ -295,11 +268,11 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <!-- Modal for creating/editing chat scenes -->
-    <div id="instanceModal" class="modal-container">
+    <div id="instanceModal" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
             <h2 id="modalTitle">Create New Chat Scene</h2>
             <div style="margin: 20px 0;">
@@ -318,9 +291,9 @@
     </div>
 
     <!-- Modal for linking an existing chat scene by sync token -->
-    <div id="importSceneModal" class="modal-container">
+    <div id="importSceneModal" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="importSceneModalTitle">
         <div class="modal-content">
-            <h2>Link Existing Scene</h2>
+            <h2 id="importSceneModalTitle">Link Existing Scene</h2>
             <div style="margin: 20px 0;">
                 <div>
                     <label for="importSceneToken" class="modal-label">Sync Token or OBS URL:</label>
@@ -336,7 +309,7 @@
     </div>
 
     <!-- Modal for unsaved changes confirmation -->
-    <div id="unsavedChangesModal" class="modal-container" style="display: none;">
+    <div id="unsavedChangesModal" class="modal-container" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="unsavedModalTitle" aria-describedby="unsavedModalMessage">
         <div class="modal-content">
             <h2 id="unsavedModalTitle">Unsaved Changes</h2>
             <div style="margin: 20px 0;">
@@ -350,17 +323,5 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="wildcat-footer" style="text-align: center;">
-        <p>© 2026 <a href="/" style="color: inherit; text-decoration: underline;">Wildcat.chat</a></p>
-    </footer>
-
     <!-- Notification container -->
-    <div id="notification-container"></div>
-
-    <script type="module" src="js/theme-generator.js"></script>
-    <script type="module" src="js/theme-carousel.js"></script>
-    <script type="module" src="js/chat-scene-creator.js"></script>
-    <script>lucide.createIcons();</script>
-</body>
-</html>
+    <div id="notification-container" aria-live="polite" aria-atomic="true"></div>

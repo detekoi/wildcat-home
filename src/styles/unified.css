@@ -120,10 +120,13 @@ h6 {
   top: -100px;
   left: 16px;
   z-index: 10000;
-  background-color: white;
-  color: var(--color-text);
-  border: 2px solid var(--color-text);
-  box-shadow: 4px 4px 0 var(--color-text);
+  /* Scheme-independent: the background is always white, so the foreground must
+     always be dark. --color-text is #ffffff with no light branch, which rendered
+     this white-on-white outside a dark colour-scheme preference. */
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   padding: 12px 24px;
   font-size: var(--font-size-regular);
   font-weight: 700;

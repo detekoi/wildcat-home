@@ -728,6 +728,8 @@ input[type="color"]:disabled::-webkit-color-swatch,
     vertical-align: middle;
     letter-spacing: 0.3px;
     text-transform: uppercase;
+    /* Keep the dot and its label together on one line */
+    white-space: nowrap;
 }
 
 .unsaved-dot {

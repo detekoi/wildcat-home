@@ -1,78 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Wildcat Chat Overlay – a customizable Twitch and YouTube chat overlay for OBS with AI-generated themes. No login required.">
-    <title>Wildcat Chat Overlay</title>
-
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/logo192.png">
-
-    <!-- Fonts (matches base.njk) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/wildcat-theme.css">
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Analytics -->
-    <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
-</head>
-
-<body class="has-navbar">
-
-    <!-- Site Navbar -->
-    <nav class="wildcat-navbar">
-        <a href="/" class="wildcat-navbar-brand">
-            <span class="wildcat-navbar-kaomoji">- ˕ •マ</span>
-        </a>
-        <button class="wildcat-navbar-toggle" aria-label="Toggle navigation"
-            onclick="this.nextElementSibling.classList.toggle('active')"><i data-lucide="menu"></i></button>
-        <ul class="wildcat-navbar-menu">
-            <li><a href="/">Home</a></li>
-            <li><a href="/blog/">Blog</a></li>
-            <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
-            <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
-            <li><a href="/chat-overlay/" class="active">Chat Overlay</a></li>
-            <li><a href="https://docs.wildcat.chat">Docs</a></li>
-            <li><a href="https://parfaitfair.com/#contact">Contact</a></li>
-        </ul>
-    </nav>
-
-    <div class="card">
-        <h1>Chat Overlay for Twitch & YouTube</h1>
-        <p>A customizable chat overlay with themes generated using natural language. No login required — just plug into
-            OBS.</p>
-        <div class="buttons">
-            <a href="chat-scene-creator.html" class="button secondary"><i data-lucide="layout-grid"
-                    class="lucide-inline"></i> Chat Scene Creator</a>
-            <a href="chat.html" class="button"><i data-lucide="message-circle" class="lucide-inline"></i> Just Take Me
-                to Chat</a>
-        </div>
-        <p style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
-            <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank"
-                style="color: inherit; text-decoration: underline;">
-                View Documentation →
-            </a>
-        </p>
+---
+layout: base.njk
+permalink: /chat-overlay/index.html
+title: Wildcat Chat Overlay
+description: Wildcat Chat Overlay – a customizable Twitch and YouTube chat overlay for OBS with AI-generated themes. No login required.
+extraStyles:
+  - /chat-overlay/css/styles.css
+  - /chat-overlay/css/wildcat-theme.css
+---
+<div class="card">
+    <h1>Chat Overlay for Twitch &amp; YouTube</h1>
+    <p>A customizable chat overlay with themes generated using natural language. No login required — just plug into
+        OBS.</p>
+    <div class="buttons">
+        <a href="chat-scene-creator.html" class="button secondary"><i data-lucide="layout-grid"
+                class="lucide-inline"></i> Chat Scene Creator</a>
+        <a href="chat.html" class="button"><i data-lucide="message-circle" class="lucide-inline"></i> Just Take Me
+            to Chat</a>
     </div>
-
-    <footer class="wildcat-footer" style="text-align: center;">
-        <p>© 2026 <a href="/" style="color: inherit; text-decoration: underline;">Wildcat.chat</a></p>
-    </footer>
-
-    <script>lucide.createIcons();</script>
-</body>
-
-</html>
+    <p style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
+        <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank"
+            style="color: inherit; text-decoration: underline;">
+            View Documentation →
+        </a>
+    </p>
+</div>

@@ -41,15 +41,23 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/styles");
     eleventyConfig.addPassthroughCopy("src/scripts");
     eleventyConfig.addPassthroughCopy("src/assets");
-    eleventyConfig.addPassthroughCopy("src/chat-overlay");
-    
+
+    // chat-overlay static assets — the two hub pages are templated (see below),
+    // so only the asset dirs are copied wholesale
+    eleventyConfig.addPassthroughCopy("src/chat-overlay/css");
+    eleventyConfig.addPassthroughCopy("src/chat-overlay/js");
+    eleventyConfig.addPassthroughCopy("src/chat-overlay/assets");
+
     // Pass through favicons
     eleventyConfig.addPassthroughCopy("src/favicon.ico");
     eleventyConfig.addPassthroughCopy("src/logo192.png");
     eleventyConfig.addPassthroughCopy("src/logo512.png");
 
-    // Exclude chat-overlay from template processing — it's a standalone static app
-    eleventyConfig.ignores.add("src/chat-overlay/**");
+    // chat.html is the OBS browser source. It must never get the site chrome, and its
+    // URL is pasted into users' OBS scenes, so it stays out of the template pipeline
+    // and is copied byte-for-byte instead.
+    eleventyConfig.ignores.add("src/chat-overlay/chat.html");
+    eleventyConfig.addPassthroughCopy("src/chat-overlay/chat.html");
 
     // Date formatting filter
     eleventyConfig.addFilter("readableDate", (dateObj) => {

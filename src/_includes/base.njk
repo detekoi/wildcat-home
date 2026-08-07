@@ -16,7 +16,12 @@
     <link rel="stylesheet" href="/styles/reset.css">
     <link rel="stylesheet" href="/styles/unified.css">
     <link rel="stylesheet" href="/styles/components.css">
-    {% block styles %}{% endblock %}
+    {# Page-specific CSS. Must stay after the site stylesheets above — overlay
+       theming overrides unified.css by source order, not specificity.
+       Nunjucks blocks do not work here: Eleventy renders the page first and
+       injects it as `content`, so a child's {% block %} never reaches this head. #}
+    {% for href in extraStyles %}<link rel="stylesheet" href="{{ href }}">
+    {% endfor %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,20 +57,21 @@
                 <text x="50%" y="50%" class="kaomoji">- ˕ •マ</text>
             </svg>
         </a>
-        <button class="navbar-toggle" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
-        <ul class="site-navbar-menu">
+        <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false"
+            aria-controls="site-navbar-menu"><i data-lucide="menu"></i></button>
+        <ul class="site-navbar-menu" id="site-navbar-menu">
             <li><a href="/" {% if page.url == "/" %}class="active"{% endif %}>Home</a></li>
             <li><a href="/blog/" {% if page.url and page.url.startsWith("/blog/") %}class="active"{% endif %}>Blog</a></li>
             <li><a href="https://app.wildcat.chat">Wildcat Sage</a></li>
             <li><a href="https://tts.wildcat.chat">Wildcat TTS</a></li>
-            <li><a href="/chat-overlay/">Chat Overlay</a></li>
+            <li><a href="/chat-overlay/" {% if page.url and page.url.startsWith("/chat-overlay/") %}class="active"{% endif %}>Chat Overlay</a></li>
             <li><a href="https://docs.wildcat.chat">Docs</a></li>
             <li><a href="https://parfaitfair.com/#contact">Contact</a></li>
         </ul>
     </nav>
 
     <!-- Main Content -->
-    <main id="main-content">
+    <main id="main-content" tabindex="-1">
         {{ content | safe }}
     </main>
 
@@ -77,6 +83,8 @@
     <!-- Scripts -->
     <script src="/scripts/static-background.js"></script>
     <script src="/scripts/navigation.js"></script>
+    {% for src in extraScripts %}<script type="module" src="{{ src }}"></script>
+    {% endfor %}
     <script>lucide.createIcons();</script>
 </body>
 

@@ -100,165 +100,6 @@ body.has-navbar {
     padding-top: var(--nav-height);
 }
 
-/* =====================================================
-   SITE NAVBAR (matches base.njk .site-navbar)
-   ===================================================== */
-.wildcat-navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--nav-height);
-    background-color: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 64px;
-    font-family: var(--font-family);
-}
-
-.wildcat-navbar-brand {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-color);
-    text-decoration: none;
-    letter-spacing: -1px;
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-    display: inline-block;
-    transition: color 0.2s ease;
-    line-height: 1;
-}
-
-.wildcat-navbar-brand:hover {
-    color: #fffdd9;
-    text-decoration: none;
-    transform: none;
-    box-shadow: none;
-    background: none;
-    border: none;
-}
-
-@media (prefers-color-scheme: light) {
-    .wildcat-navbar-brand:hover {
-        color: #555555;
-    }
-}
-
-.wildcat-navbar-kaomoji {
-    font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Noto Sans CJK JP', sans-serif;
-}
-
-.wildcat-navbar-menu {
-    display: flex;
-    gap: 24px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.wildcat-navbar-menu li {
-    margin: 0;
-}
-
-.wildcat-navbar-menu a {
-    background-color: transparent;
-    color: var(--text-color) !important;
-    border: 1px solid var(--border-color);
-    text-decoration: none !important;
-    transition: all 0.2s ease;
-    padding: 6px 12px;
-    display: inline-block;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-radius: 0;
-    white-space: nowrap;
-    box-shadow: none;
-    transform: none;
-}
-
-.wildcat-navbar-menu a:hover,
-.wildcat-navbar-menu a:focus {
-    background-color: var(--text-color) !important;
-    color: var(--background-color) !important;
-    border-color: var(--text-color);
-    text-decoration: none !important;
-    transform: none;
-    box-shadow: none;
-}
-
-.wildcat-navbar-menu a.active {
-    background-color: var(--text-color) !important;
-    color: var(--background-color) !important;
-    border-color: var(--text-color);
-}
-
-/* Mobile nav toggle */
-.wildcat-navbar-toggle {
-    display: none;
-    background-color: transparent;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    border-radius: 0;
-    font-family: var(--font-family);
-}
-
-.wildcat-navbar-toggle:hover,
-.wildcat-navbar-toggle:focus {
-    background-color: var(--text-color);
-    color: var(--background-color);
-}
-
-@media (max-width: 1060px) {
-    .wildcat-navbar {
-        padding: 0 24px;
-    }
-
-    .wildcat-navbar-toggle {
-        display: block;
-    }
-
-    .wildcat-navbar-menu {
-        position: fixed;
-        top: var(--nav-height);
-        left: 0;
-        right: 0;
-        background-color: var(--background-color);
-        border-bottom: 3px solid var(--border-color);
-        flex-direction: column;
-        gap: 0;
-        padding: 24px;
-        display: none;
-    }
-
-    .wildcat-navbar-menu.active {
-        display: flex;
-    }
-
-    .wildcat-navbar-menu li {
-        width: 100%;
-    }
-
-    .wildcat-navbar-menu a {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 8px;
-        display: block;
-    }
-}
 
 /* =====================================================
    HEADINGS — Post-Industrial
@@ -812,7 +653,10 @@ html .theme-carousel-modal-overlay {
 /* =====================================================
    LINKS
    ===================================================== */
-a {
+/* Scoped to main: unscoped, this !important also captured the site navbar links,
+   which sit on unified.css's --color-background (#050505, no light branch) and
+   would render at 1.61:1 under a light colour-scheme preference. */
+main a {
     color: var(--link-color) !important;
 }
 
@@ -849,17 +693,3 @@ a {
     border-top-color: var(--border-color) !important;
 }
 
-/* =====================================================
-   FOOTER (minimal)
-   ===================================================== */
-.wildcat-footer {
-    margin-top: 64px;
-    padding: 32px 0 64px;
-    border-top: 1px solid var(--border-color);
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-color);
-    opacity: 0.5;
-    font-family: var(--font-family);
-}

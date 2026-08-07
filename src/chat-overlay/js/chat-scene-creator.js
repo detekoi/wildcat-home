@@ -11,8 +11,6 @@ import { CreatorSyncManager } from './modules/creator-sync-manager.js';
 import { CreatorIOManager } from './modules/creator-io-manager.js';
 import { CreatorDragHandler } from './modules/creator-drag-handler.js';
 
-let previousActiveElement = null;
-
 document.addEventListener('DOMContentLoaded', () => {
     class ChatSceneCreatorApp {
         constructor() {
@@ -20,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom = {};
             this.isDirty = false;
             this.isPopulating = false;
+            this.previousActiveElement = null;
 
             this.initializeDOM();
 
@@ -403,20 +402,20 @@ document.addEventListener('DOMContentLoaded', () => {
         importScene() {
             if (this.dom.importSceneToken) {
                 this.dom.importSceneToken.value = '';
-                previousActiveElement = document.activeElement;
+                this.previousActiveElement = document.activeElement;
             }
             if (this.dom.importSceneModal) {
                 this.dom.importSceneModal.style.display = 'flex';
-                this.dom.importSceneToken.focus();
+                this.dom.importSceneToken?.focus();
             }
         }
 
         closeImportSceneModal() {
             if (this.dom.importSceneModal) {
                 this.dom.importSceneModal.style.display = 'none';
-                if (previousActiveElement) {
-                    previousActiveElement.focus();
-                    previousActiveElement = null;
+                if (this.previousActiveElement) {
+                    this.previousActiveElement.focus();
+                    this.previousActiveElement = null;
                 }
             }
         }
