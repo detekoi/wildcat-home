@@ -579,6 +579,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            // Enter submits both dialogs. There is no <form> here — and adding one
+            // would be a trap, since these buttons would default to type="submit" —
+            // so route the key through the primary button's own handler.
+            // Empty input is safe on both paths: createInstance() falls back to a
+            // default name, and confirmImportScene() reports the error itself.
+            this.dom.modalInstanceName?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.dom.modalCreateBtn?.click();
+                }
+            });
+            this.dom.importSceneToken?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.dom.importModalConfirmBtn?.click();
+                }
+            });
+
             if (this.dom.saveSettingsBtn) this.dom.saveSettingsBtn.addEventListener('click', () => this.saveCurrentInstance({ includeChannel: false }));
             if (this.dom.applyChannelBtn) this.dom.applyChannelBtn.addEventListener('click', () => this.applyChannel());
 

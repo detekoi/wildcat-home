@@ -278,14 +278,16 @@ extraScripts:
             <div style="margin: 20px 0;">
                 <div>
                     <label for="modalInstanceName" class="modal-label">Descriptive Name:</label>
-                    <input type="text" id="modalInstanceName" style="width: 100%;" placeholder="e.g., Gaming, Just Chatting, Intro Screen">
+                    <input type="text" id="modalInstanceName" enterkeyhint="done" style="width: 100%;" placeholder="e.g., Gaming, Just Chatting, Intro Screen">
                     <p class="modal-description">A friendly name to identify this chat overlay in your scenes list</p>
                 </div>
             </div>
+            <p class="modal-description">
+                Or <a href="chat.html">open a chat overlay without creating a scene</a>.
+            </p>
             <div class="modal-actions">
-                <a href="chat.html" class="btn btn-secondary">Skip</a>
-                <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
-                <button id="modalCreateBtn" class="btn btn-primary"><i data-lucide="plus" class="lucide-inline"></i> Create</button>
+                <button type="button" id="modalCreateBtn" class="btn btn-primary"><i data-lucide="plus" class="lucide-inline"></i> Create</button>
+                <button type="button" id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -297,13 +299,13 @@ extraScripts:
             <div style="margin: 20px 0;">
                 <div>
                     <label for="importSceneToken" class="modal-label">Sync Token or OBS URL:</label>
-                    <input type="text" id="importSceneToken" style="width: 100%;" placeholder="e.g., 3f2a9c81-... or paste full OBS URL">
+                    <input type="text" id="importSceneToken" enterkeyhint="done" style="width: 100%;" placeholder="e.g., 3f2a9c81-... or paste full OBS URL">
                     <p class="modal-description">Paste the Sync Token or the full OBS URL from another scene to link and edit that scene from this browser.</p>
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="importModalCancelBtn" class="btn btn-secondary">Cancel</button>
-                <button id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
+                <button type="button" id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
+                <button type="button" id="importModalCancelBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -316,9 +318,9 @@ extraScripts:
                 <p id="unsavedModalMessage" class="modal-description">You have unsaved changes in this scene. What would you like to do before proceeding?</p>
             </div>
             <div class="modal-actions">
-                <button id="unsavedCancelBtn" class="btn btn-secondary">Cancel</button>
-                <button id="unsavedDiscardBtn" class="btn btn-danger">Discard Changes</button>
-                <button id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>
+                <button type="button" id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>
+                <button type="button" id="unsavedDiscardBtn" class="btn btn-danger">Discard Changes</button>
+                <button type="button" id="unsavedCancelBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>

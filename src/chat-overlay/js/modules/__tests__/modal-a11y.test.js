@@ -164,6 +164,23 @@ describe('ModalA11y trigger handoff', () => {
         expect(ModalA11y.isOpen).toBe(false);
     });
 
+    it('closeAll() releases inertness even when the dialog was detached by someone else', () => {
+        // theme-carousel.js and theme-name-modal.js both build overlays with the
+        // class .theme-carousel-modal-overlay and each tears down the other's. A
+        // bare remove() of a registered dialog would otherwise strand every inert
+        // attribute it set and leave the page permanently non-interactive.
+        const modal = $('#modalA');
+        ModalA11y.open(modal);
+        expect(isInert('#page-content')).toBe(true);
+
+        modal.remove();                 // foreign teardown, bypassing close()
+        ModalA11y.closeAll();
+
+        expect(isInert('#page-content')).toBe(false);
+        expect(isInert('.site-navbar')).toBe(false);
+        expect(ModalA11y.isOpen).toBe(false);
+    });
+
     it('ignores a double open of the same dialog', () => {
         ModalA11y.open($('#modalA'));
         ModalA11y.open($('#modalA'));

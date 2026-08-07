@@ -1046,7 +1046,10 @@ input:checked + .toggle-slider:before {
 
 .modal-actions {
     display: flex;
-    flex-direction: column-reverse;
+    /* Was column-reverse, which rendered the primary action on top while leaving
+       Tab in DOM order — so Tab from Cancel reached "Discard Changes" next. The
+       buttons are now authored in visual order, so focus order matches. */
+    flex-direction: column;
     gap: 10px;
     align-items: stretch;
     margin-top: 20px;

@@ -13,6 +13,8 @@
  * scope — needless side effects for a host that only wants the dialog.
  */
 
+import { ModalA11y } from './modal-a11y.js';
+
 /**
  * Ask the user to name something, returning their answer.
  *
@@ -40,8 +42,14 @@ export function promptForThemeName({
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
         // A stale overlay would stack on top of this one and steal the backdrop click.
+        // Close through ModalA11y first: confirmDeleteTheme builds an overlay with
+        // this same class and registers it, so a bare remove() would strand its
+        // `inert` attributes and freeze the page.
         const existingModal = document.querySelector('.theme-carousel-modal-overlay');
-        if (existingModal) existingModal.remove();
+        if (existingModal) {
+            ModalA11y.closeAll();
+            existingModal.remove();
+        }
 
         const overlay = document.createElement('div');
         overlay.className = 'theme-carousel-modal-overlay';

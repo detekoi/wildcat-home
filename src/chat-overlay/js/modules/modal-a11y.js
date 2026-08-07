@@ -135,7 +135,14 @@ export const ModalA11y = {
         return entry.trigger || null;
     },
 
-    /** Innermost first, so each close restores the layer beneath it. */
+    /**
+     * Innermost first, so each close restores the layer beneath it.
+     *
+     * Call this before removing a dialog element by any route other than its own
+     * close path. Bare `element.remove()` on a registered dialog leaves its entry
+     * on the stack with a detached modal, so the `inert` attributes it applied are
+     * never cleared and the whole page stays non-interactive until a reload.
+     */
     closeAll() {
         [...stack].reverse().forEach((entry) => ModalA11y.close(entry.modal));
     },

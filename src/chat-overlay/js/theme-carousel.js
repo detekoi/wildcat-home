@@ -9,6 +9,7 @@ export function getCurrentThemeIndex() { return currentThemeIndex; }
 import { DEFAULT_FONTS } from './data/font-data.js';
 import { DEFAULT_THEMES } from './data/builtin-themes.js';
 import * as themeLibraryClient from './modules/theme-library-client.js';
+import { ModalA11y } from './modules/modal-a11y.js';
 
 /**
  * Theme Carousel implementation for Twitch Chat Overlay
@@ -35,7 +36,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
     
 
     const CAROUSEL_MARKUP = `
-        <div class="theme-carousel-container" role="group" aria-labelledby="theme-selector-label">
+        <div class="theme-carousel-container" role="group" tabindex="-1" aria-labelledby="theme-selector-label">
             <div class="theme-cards-wrapper"></div>
         </div>
         <div class="theme-preview-container">
@@ -513,40 +514,80 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
      * Compatible with OBS CEF browser sources where system dialogs (confirm/alert) fail.
      * @param {Object} theme - Theme object to delete
      */
+    /**
+     * Removes any live .theme-carousel-modal-overlay, releasing its inertness first.
+     *
+     * Both this file and theme-name-modal.js build overlays with that same class and
+     * each used to bare-remove the other's. Once these dialogs register with
+     * ModalA11y, a bare remove() would strand `inert` on every element it had set,
+     * leaving the page permanently non-interactive.
+     */
+    function dismissThemeOverlay() {
+        const existing = document.querySelector('.theme-carousel-modal-overlay');
+        if (!existing) return;
+        ModalA11y.closeAll();
+        existing.remove();
+    }
+
     function confirmDeleteTheme(theme) {
         if (!theme) return;
 
-        const existingModal = document.querySelector('.theme-carousel-modal-overlay');
-        if (existingModal) existingModal.remove();
+        dismissThemeOverlay();
 
         const escapeHtml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+        // innerHTML, so the label/description ids must be unique per invocation
+        const uid = `tc-del-${Date.now().toString(36)}`;
         const overlay = document.createElement('div');
         overlay.className = 'theme-carousel-modal-overlay';
+        overlay.setAttribute('role', 'alertdialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', `${uid}-title`);
+        overlay.setAttribute('aria-describedby', `${uid}-desc`);
+        overlay.tabIndex = -1;
         overlay.innerHTML = `
             <div class="theme-carousel-modal">
-                <h3>Delete Theme?</h3>
-                <p>Are you sure you want to delete <span class="theme-name-highlight">"${escapeHtml(theme.name || 'Unnamed Theme')}"</span>? This will permanently remove it from your library and delete its background image from storage.</p>
+                <h3 id="${uid}-title">Delete Theme?</h3>
+                <p id="${uid}-desc">Are you sure you want to delete <span class="theme-name-highlight">"${escapeHtml(theme.name || 'Unnamed Theme')}"</span>? This will permanently remove it from your library and delete its background image from storage.</p>
                 <div class="theme-carousel-modal-actions">
                     <button type="button" class="theme-carousel-modal-cancel">Cancel</button>
-                    <button type="button" class="theme-carousel-modal-delete"><i data-lucide="trash-2"></i> Delete</button>
+                    <button type="button" class="theme-carousel-modal-delete"><i data-lucide="trash-2" aria-hidden="true"></i> Delete</button>
                 </div>
             </div>
         `;
 
-        const closeModal = () => overlay.remove();
+        // Release inertness before touching focus — focus() on a still-inert
+        // element is a silent no-op.
+        const closeModal = () => {
+            const trigger = ModalA11y.close(overlay);
+            overlay.remove();
+            return trigger;
+        };
 
-        overlay.querySelector('.theme-carousel-modal-cancel').addEventListener('click', closeModal);
+        const cancel = () => {
+            const trigger = closeModal();
+            if (trigger?.isConnected) trigger.focus();
+        };
+
+        overlay.querySelector('.theme-carousel-modal-cancel').addEventListener('click', cancel);
         overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
+            if (e.target === overlay) cancel();
         });
 
-        overlay.querySelector('.theme-carousel-modal-delete').addEventListener('click', () => {
+        overlay.querySelector('.theme-carousel-modal-delete').addEventListener('click', async () => {
             closeModal();
-            deleteGeneratedTheme(theme);
+            // The trigger is this theme's own delete button, which the re-render
+            // inside deleteGeneratedTheme destroys. Send focus to the carousel
+            // group instead: it survives every render and is named by
+            // aria-labelledby, so landing there announces where the user is.
+            await deleteGeneratedTheme(theme);
+            document.querySelector('.theme-carousel-container')?.focus();
         });
 
         document.body.appendChild(overlay);
+        ModalA11y.open(overlay, { onRequestClose: cancel });
+        overlay.querySelector('.theme-carousel-modal-cancel').focus();
+
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             window.lucide.createIcons();
         }
