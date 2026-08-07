@@ -236,12 +236,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const handleSave = async () => {
                     const trigger = settle();
-                    await this.saveCurrentInstance({ includeChannel: false });
+                    // saveCurrentInstance is try/finally with no catch, so a failure
+                    // inside it (a localStorage QuotaExceededError, a rejected cloud
+                    // push) propagates here. Unguarded, resolve() would never run and
+                    // every awaiting caller — scene switch, duplicate, delete — would
+                    // hang forever with no indication anything went wrong.
+                    let saved = true;
+                    try {
+                        await this.saveCurrentInstance({ includeChannel: false });
+                    } catch (err) {
+                        console.error('[SceneCreator] Save failed while confirming unsaved changes:', err);
+                        // Name the abandoned action: the user asked to save and
+                        // proceed, and the thing they were proceeding to silently
+                        // does not happen — there is no other cue that it did not.
+                        UIHelpers.showNotification('Save Failed', `Your changes could not be saved, so ${actionDescription} was cancelled. Your changes are still here — try again.`, 'error');
+                        saved = false;
+                    }
                     // Refocus AFTER the save: it re-renders the instance list, which
                     // destroys the item that had focus. Restoring first would leave
                     // focus on a detached node, i.e. on <body>.
                     this.restoreFocusTo(trigger);
-                    resolve(true);
+                    // Resolving false on failure abandons the pending action rather
+                    // than proceeding as though the changes were written.
+                    resolve(saved);
                 };
 
                 const handleDiscard = () => {
@@ -584,18 +601,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // so route the key through the primary button's own handler.
             // Empty input is safe on both paths: createInstance() falls back to a
             // default name, and confirmImportScene() reports the error itself.
-            this.dom.modalInstanceName?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
+            // isComposing guards the IME case: Enter confirms a CJK composition and
+            // must not also submit the dialog behind it.
+            const submitOnEnter = (input, button) => {
+                input?.addEventListener('keydown', (e) => {
+                    if (e.key !== 'Enter') return;
+                    if (e.isComposing || e.keyCode === 229) return;
                     e.preventDefault();
-                    this.dom.modalCreateBtn?.click();
-                }
-            });
-            this.dom.importSceneToken?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.dom.importModalConfirmBtn?.click();
-                }
-            });
+                    button?.click();
+                });
+            };
+            submitOnEnter(this.dom.modalInstanceName, this.dom.modalCreateBtn);
+            submitOnEnter(this.dom.importSceneToken, this.dom.importModalConfirmBtn);
 
             if (this.dom.saveSettingsBtn) this.dom.saveSettingsBtn.addEventListener('click', () => this.saveCurrentInstance({ includeChannel: false }));
             if (this.dom.applyChannelBtn) this.dom.applyChannelBtn.addEventListener('click', () => this.applyChannel());

@@ -51,11 +51,17 @@ export function promptForThemeName({
             existingModal.remove();
         }
 
+        // Unique per invocation, since the markup is built with innerHTML.
+        const uid = `tc-name-${Date.now().toString(36)}`;
         const overlay = document.createElement('div');
         overlay.className = 'theme-carousel-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', `${uid}-title`);
+        overlay.tabIndex = -1;
         overlay.innerHTML = `
             <div class="theme-carousel-modal">
-                <h3>${escapeHtml(title)}</h3>
+                <h3 id="${uid}-title">${escapeHtml(title)}</h3>
                 <p>${escapeHtml(message)}</p>
                 ${note ? `<p class="theme-carousel-modal-note">${escapeHtml(note)}</p>` : ''}
                 <input type="text" class="theme-carousel-modal-input" maxlength="${maxLength}"
@@ -81,8 +87,11 @@ export function promptForThemeName({
         const settle = (value) => {
             if (settled) return;
             settled = true;
-            document.removeEventListener('keydown', onDocumentKeydown);
+            // Release inertness before touching focus: focus() on a still-inert
+            // element is a silent no-op.
+            const trigger = ModalA11y.close(overlay);
             overlay.remove();
+            if (trigger?.isConnected) trigger.focus();
             resolve(value);
         };
 
@@ -96,16 +105,10 @@ export function promptForThemeName({
             confirmBtn.disabled = !input.value.trim();
         };
 
-        function onDocumentKeydown(e) {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                settle(null);
-            }
-        }
-
         input.addEventListener('input', syncDisabled);
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            // isComposing: Enter confirms an IME composition and must not also submit.
+            if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
                 e.preventDefault();
                 confirm();
             }
@@ -115,9 +118,11 @@ export function promptForThemeName({
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) settle(null);
         });
-        document.addEventListener('keydown', onDocumentKeydown);
 
         document.body.appendChild(overlay);
+        // Previously this dialog managed only its own Escape key and never inerted
+        // anything, so the whole page stayed tabbable behind an aria-modal dialog.
+        ModalA11y.open(overlay, { onRequestClose: () => settle(null) });
         syncDisabled();
 
         if (window.lucide && typeof window.lucide.createIcons === 'function') {

@@ -85,6 +85,34 @@ describe('ModalA11y background inerting', () => {
         ModalA11y.close($('#modalA'));
         expect(isInert('#page-content')).toBe(false);
     });
+
+    it('un-inerts a dialog that a lower one had already inerted as a sibling', () => {
+        // #modalB is a sibling of #modalA, so opening A inerts B. B must not come
+        // up inert when it is then opened on top — that renders it visible and
+        // completely unusable.
+        ModalA11y.open($('#modalA'));
+        expect(isInert('#modalB')).toBe(true);
+
+        ModalA11y.open($('#modalB'));
+        expect(isInert('#modalB')).toBe(false);
+        // ...and the dialog beneath becomes background like anything else
+        expect(isInert('#modalA')).toBe(true);
+        expect(isInert('#page-content')).toBe(true);
+    });
+
+    it('keeps containment intact when a dialog below the top is closed', () => {
+        ModalA11y.open($('#modalA'));
+        ModalA11y.open($('#modalB'));
+
+        ModalA11y.close($('#modalA'));   // out of order, not the top of the stack
+
+        // #modalB is still open, so the background must stay inert
+        expect(isInert('#page-content')).toBe(true);
+        expect(isInert('.site-navbar')).toBe(true);
+        expect(isInert('#modalB')).toBe(false);
+        // and the closed dialog is background now, not a hole
+        expect(isInert('#modalA')).toBe(true);
+    });
 });
 
 describe('ModalA11y Escape handling', () => {
@@ -108,6 +136,40 @@ describe('ModalA11y Escape handling', () => {
         escape();
         expect(inner).toHaveBeenCalledTimes(1);
         expect(outer).not.toHaveBeenCalled();
+    });
+
+    it('leaves Escape alone when an inner control already handled it', () => {
+        // A combobox dismissing its own popup signals ownership via preventDefault.
+        // Closing the whole dialog on that same keystroke discards the real intent.
+        const onRequestClose = vi.fn();
+        ModalA11y.open($('#modalA'), { onRequestClose });
+
+        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+        event.preventDefault();
+        document.dispatchEvent(event);
+
+        expect(onRequestClose).not.toHaveBeenCalled();
+    });
+
+    it('ignores Escape that is cancelling an IME composition', () => {
+        // A CJK user pressing Escape to cancel a composition would otherwise lose
+        // both the composition and the dialog. Browsers do not preventDefault this,
+        // so the defaultPrevented guard does not cover it.
+        const onRequestClose = vi.fn();
+        ModalA11y.open($('#modalA'), { onRequestClose });
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, isComposing: true }));
+        expect(onRequestClose).not.toHaveBeenCalled();
+
+        // legacy signal for the same condition
+        const legacy = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+        Object.defineProperty(legacy, 'keyCode', { value: 229 });
+        document.dispatchEvent(legacy);
+        expect(onRequestClose).not.toHaveBeenCalled();
+
+        // ...but a normal Escape still closes
+        escape();
+        expect(onRequestClose).toHaveBeenCalledTimes(1);
     });
 
     it('ignores other keys', () => {

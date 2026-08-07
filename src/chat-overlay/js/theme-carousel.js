@@ -10,6 +10,7 @@ import { DEFAULT_FONTS } from './data/font-data.js';
 import { DEFAULT_THEMES } from './data/builtin-themes.js';
 import * as themeLibraryClient from './modules/theme-library-client.js';
 import { ModalA11y } from './modules/modal-a11y.js';
+import { UIHelpers } from './modules/ui-helpers.js';
 
 /**
  * Theme Carousel implementation for Twitch Chat Overlay
@@ -620,11 +621,19 @@ import { ModalA11y } from './modules/modal-a11y.js';
             }
         }
 
+        const themeName = theme.name || 'Unnamed Theme';
+
         try {
             const client = await getLibraryClient();
             await client.deleteTheme(id);
+            // A permanent, irreversible delete previously gave no confirmation at
+            // all: the dialog vanished and the carousel silently re-rendered.
+            UIHelpers.showNotification('Theme Deleted', `"${themeName}" was removed from your library.`, 'success');
         } catch (e) {
             console.warn('[ThemeCarousel] Failed to delete theme from cloud library:', e);
+            // The theme is already gone locally, so say what actually happened
+            // rather than letting the failure disappear into the console.
+            UIHelpers.showNotification('Removed Locally', `"${themeName}" was removed here, but deleting it from your cloud library failed. It may return on another device.`, 'warning');
         }
     }
 

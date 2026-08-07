@@ -67,8 +67,44 @@ function inertBackground(modal) {
 /** Open dialogs, innermost last. Escape only ever reaches the topmost. */
 const stack = [];
 
+/** Every element this module currently has inerted, so it only ever clears its own. */
+const owned = new Set();
+
+/**
+ * Recomputes inertness from scratch against the topmost dialog.
+ *
+ * Deliberately not incremental. Only the topmost dialog is interactive, so when
+ * dialogs stack, a lower one becomes inert like any other background element.
+ * Two bugs fall out of computing it this way rather than per-open:
+ *
+ * - Opening a dialog that a lower one had already inerted as a sibling. Applying
+ *   inertness incrementally never cleared it, so the newly opened dialog came up
+ *   fully inert — visible, and completely unusable.
+ * - Closing a dialog that is not on top. Clearing exactly what that dialog had
+ *   applied would un-inert background elements the remaining dialog still needs
+ *   inert, silently reopening the containment hole.
+ */
+function syncInert() {
+    owned.forEach((el) => el.removeAttribute('inert'));
+    owned.clear();
+
+    const top = stack[stack.length - 1];
+    if (!top) return;
+
+    inertBackground(top.modal).forEach((el) => owned.add(el));
+}
+
 function onDocumentKeydown(event) {
-    if (event.key !== 'Escape') return;
+    // An inner control may own Escape — a combobox dismissing its popup, say —
+    // and signals that by calling preventDefault(). Closing the whole dialog on
+    // the same keystroke would discard the user's actual intent.
+    if (event.defaultPrevented || event.key !== 'Escape') return;
+
+    // Escape during IME composition cancels the composition, and browsers do not
+    // preventDefault() it — so defaultPrevented does not cover this. Without the
+    // guard, a user composing CJK text loses both the composition and the dialog.
+    // keyCode 229 is the legacy signal for the same thing.
+    if (event.isComposing || event.keyCode === 229) return;
 
     const top = stack[stack.length - 1];
     if (!top) return;
@@ -99,9 +135,9 @@ export const ModalA11y = {
         stack.push({
             modal,
             onRequestClose,
-            trigger: trigger || document.activeElement,
-            changed: inertBackground(modal)
+            trigger: trigger || document.activeElement
         });
+        syncInert();
     },
 
     /**
@@ -126,7 +162,9 @@ export const ModalA11y = {
         if (index === -1) return null;
 
         const [entry] = stack.splice(index, 1);
-        entry.changed.forEach((el) => el.removeAttribute('inert'));
+        // Recompute rather than clearing this entry's own elements: closing a
+        // dialog that is not on top must leave the remaining one contained.
+        syncInert();
 
         if (stack.length === 0) {
             document.removeEventListener('keydown', onDocumentKeydown);

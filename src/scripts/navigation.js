@@ -120,9 +120,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // The open menu is a full-width fixed overlay, so Escape should dismiss it
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeMenu({ returnFocus: true });
-            }
+            if (event.key !== 'Escape') return;
+            // Escape must not cancel an in-progress IME composition's keystroke.
+            if (event.isComposing || event.keyCode === 229) return;
+            // A modal dialog inerts the navbar; Escape belongs to that dialog, not
+            // to this menu. Checked via inertness rather than event.defaultPrevented
+            // because this listener is registered at DOMContentLoaded and therefore
+            // runs before a dialog's own listener has a chance to preventDefault.
+            if (navbarToggle.closest('[inert]')) return;
+            closeMenu({ returnFocus: true });
         });
 
         // Fires once on the actual breakpoint crossing, rather than on every
