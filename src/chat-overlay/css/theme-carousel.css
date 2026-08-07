@@ -206,6 +206,11 @@
     margin-top: 10px;
     padding: 0 4px;
     box-sizing: border-box;
+    /* The two 36px arrows don't shrink, so with min-width: 0 on the details
+       block the theme name was being squeezed to 8px — one clipped character
+       per line, with the actual name invisible behind text-overflow. Let the
+       details block claim its own row instead of disappearing. */
+    flex-wrap: wrap;
 }
 
 .theme-nav-btn {
@@ -245,8 +250,11 @@
 }
 
 #theme-details {
-    flex: 1 1 auto;
-    min-width: 0;
+    /* A real floor, not min-width: 0 — below ~7rem the name is unreadable, so
+       wrapping onto its own row (see flex-wrap above) is the correct outcome
+       rather than shrinking further. */
+    flex: 1 1 7rem;
+    min-width: 7rem;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -477,7 +485,12 @@
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
+    /* 2px of vertical padding around a 14px icon left this ~18px tall, under
+       the 24px minimum target — and it deletes a theme, so it's the last
+       control that should be hard to hit. */
+    min-height: 24px;
     opacity: 0.8;
     transition: opacity 0.15s, background-color 0.15s;
 }

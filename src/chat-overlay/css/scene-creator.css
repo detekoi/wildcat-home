@@ -191,18 +191,58 @@ input[type="color"]:disabled::-webkit-color-swatch,
     text-align: center;
 }
 
-.help-text {
-    font-size: 0.8em;
-    opacity: 0.75;
-    color: var(--text-muted, #a1a1aa);
-    margin-top: -4px;
-    margin-bottom: 8px;
-    margin-left: 196px;
+/* --text-muted had no definition anywhere in src/, so the #a1a1aa literal was
+   always what rendered. Defined here (this stylesheet is loaded only by the
+   scene creator, so the name can't collide with the overlay's own tokens) and
+   given a real light-scheme value: #a1a1aa on the near-white light panel is
+   2.5:1, nowhere near the 4.5:1 that 12.8px text needs. */
+:root {
+    --text-muted: #a1a1aa;   /* 7.5:1 on the dark section background */
 }
 
-@media (max-width: 768px) {
-    .help-text {
-        margin-left: 0;
+@media (prefers-color-scheme: light) {
+    :root {
+        --text-muted: #6b6b74;   /* 5.1:1 on the light section background */
+    }
+}
+
+/* Help text is a sibling of the row it describes, so it lines itself up with
+   the control column by reading --control-offset, which the label column also
+   drives (see .settings-section in styles.css), instead of hard-coding 196px.
+   When the row stacks, --control-offset goes to 0 and this follows.
+   --help-indent is set inline by creator-form-renderer for indented subfields.
+
+   No `opacity` here. Compositing at 0.75 dropped this to 1.9:1 in light mode,
+   and container opacity silently drags down every descendant with it — the
+   inline-coloured help link was landing at 2.3:1 the same way. Muting is the
+   colour token's job so each piece can be checked on its own. */
+.help-text {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-top: -4px;
+    margin-bottom: 8px;
+    /* 0px fallback, not 196px: outside a .settings-section there is no label
+       column, and a phantom indent would be the silent failure mode. */
+    margin-left: calc(var(--control-offset, 0px) + var(--help-indent, 0px));
+}
+
+/* Once the settings rows stack, the theme carousel's name/description block has
+   the full row width available — give it its own line above the arrows rather
+   than letting flex-wrap strand the two arrows on separate rows. Keyed to the
+   workspace container declared in styles.css; on chat.html, which loads this
+   carousel without that stylesheet, no such container exists and the query
+   simply never matches. */
+@container workspace (max-width: 28rem) {
+    #theme-info-and-nav {
+        justify-content: center;
+    }
+
+    /* Two IDs deliberately: theme-carousel.css loads after this file and its
+       `flex: 1 1 7rem` shorthand would otherwise reset the basis set here. */
+    #theme-info-and-nav > #theme-details {
+        order: -1;
+        flex-basis: 100%;
+        margin: 0 0 6px;
     }
 }
 
@@ -244,6 +284,7 @@ input[type="color"]:disabled::-webkit-color-swatch,
 .preview-bg-options {
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 3px;
     background: var(--secondary-color, rgba(0, 0, 0, 0.4));
     padding: 3px;
@@ -262,8 +303,13 @@ input[type="color"]:disabled::-webkit-color-swatch,
     position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     padding: 3px 7px;
+    /* 11px text on 3px padding rendered these 21px tall — under the 24px
+       minimum pointer target. The floor doesn't change the visual weight
+       because the swatch and label are centred inside it. */
+    min-height: 24px;
     background: transparent;
     color: var(--text-color, #ffffff);
     border: 1px solid transparent;
@@ -646,6 +692,13 @@ input[type="color"]:disabled::-webkit-color-swatch,
     margin-left: 4px;
     transition: opacity 0.15s ease;
     flex-shrink: 0;
+    /* A bare 20px glyph on zero vertical padding is a ~20x13 hit area; give the
+       dismiss control the 24px minimum without enlarging the glyph itself. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
 }
 
 .toast-close:hover {

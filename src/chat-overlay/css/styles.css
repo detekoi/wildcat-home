@@ -227,6 +227,18 @@ html {
     background-color: var(--background-color);
 }
 
+/* base.njk's <main> reserves 64px a side (unified.css), which is right for a
+   single column of prose but costs this three-pane layout 128px before it
+   starts — .container can't reach its own 1200px cap until a 1328px viewport.
+   Hand that space back below the cap. Scoped to this stylesheet, which only the
+   two chat-overlay pages load, so the rest of the site keeps its wide gutters. */
+@media (max-width: 1400px) {
+    main {
+        padding-left: var(--spacing-medium, 24px);
+        padding-right: var(--spacing-medium, 24px);
+    }
+}
+
 /* Layout */
 .container {
     max-width: 1200px;
@@ -367,6 +379,17 @@ header p {
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
+    /* The workspace is the query container for everything inside it. Its width
+       has nothing to do with the viewport's: base.njk's <main> takes 64px a
+       side and the scene list takes another 284px, so a 1213px viewport leaves
+       this panel ~706px of content. Viewport media queries can't see that, which
+       is how the settings column ended up laying out a 330px box as if it had
+       1000px. Deliberately NOT set on .settings-container as well —
+       container-type implies `contain: layout`, which would make that column a
+       stacking context and trap the font picker's z-index: 1100 dropdown
+       underneath the sticky .preview-panel. */
+    container-type: inline-size;
+    container-name: workspace;
 }
 
 .workspace-header {
@@ -390,6 +413,9 @@ header p {
 .workspace-actions {
     display: flex;
     gap: var(--spacing-sm);
+    /* Duplicate / Delete / Export hold their intrinsic widths; without this they
+       push straight out of the panel at narrow widths instead of stacking. */
+    flex-wrap: wrap;
 }
 
 .config-layout {
@@ -406,7 +432,10 @@ header p {
     gap: var(--spacing-lg);
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    /* No overflow-x: hidden here. It was masking the rows that overflowed this
+       column, and a clip on one axis makes the other a scroll container too,
+       which cut the 2px outline-offset off focus rings on the edge-most preset
+       buttons. The rows are now allowed to shrink instead of overflow. */
 }
 
 .settings-section {
@@ -414,6 +443,23 @@ header p {
     border-radius: var(--border-radius-md);
     padding: var(--spacing-md);
     border: 1px solid var(--border-color);
+    /* Width of the label column. Declared here rather than on .settings-row
+       because .help-text is rendered as a *sibling* of the row it describes
+       (creator-form-renderer appends it to the group, not the row), and both
+       need to agree on where the control column starts. The stacked state
+       zeroes this once and both follow. */
+    --label-column: 180px;
+    /* Where the control column begins: the label plus the gutter after it.
+       Nominal, not exact — the label may flex-shrink below --label-column on
+       rows whose control is intrinsically wide (the preset-swatch groups).
+       Measured across container widths 460-1000px: the rows that shrink are
+       exactly the ones with no help text, and the rows with help text hold
+       checkbox controls that can never force the row to overflow, so the
+       offset lands on the control every time. If a future schema entry gives
+       helpText to a preset-style control, that stops being true — the fix then
+       is `.settings-group { display: grid; grid-template-columns: var(--label-column) 1fr }`
+       with `.settings-row { display: contents }`, which aligns by construction. */
+    --control-offset: calc(var(--label-column) + var(--spacing-md));
 }
 
 .settings-section h3 {
@@ -434,8 +480,18 @@ header p {
 }
 
 .settings-row label {
-    flex: 0 0 180px;
-    min-width: 160px;
+    /* Shrinkable (0 1) rather than rigid (0 0): at 180px fixed it was claiming
+       two thirds of a 298px row and leaving 100px for the control. The 8ch
+       floor is the point where a label still wraps into readable words — labels
+       must never truncate, so the row stacks before this floor is reached.
+
+       Rigid `0 0` was considered, because it would make --control-offset exact
+       rather than nominal. Rejected on measurement: it buys nothing (no help
+       text sits on a row whose label can shrink — see --control-offset below)
+       and it costs real width on the rows that do shrink, squeezing the Sync
+       Token field from 172px to 113px at the narrowest horizontal layout. */
+    flex: 0 1 var(--label-column);
+    min-width: 8ch;
     margin-right: var(--spacing-md);
     line-height: 1.3;
 }
@@ -452,6 +508,26 @@ header p {
 .settings-row .input-group .form-control {
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Controls that sit directly in a row with no .input-group wrapper — the
+   channel inputs, the schema-generated selects and colour pickers. An <input>
+   defaults to min-width: auto, i.e. ~20 characters, so without this they
+   refuse to shrink and punch straight out through the panel edge. */
+.settings-row > .form-control,
+.settings-row > input:not([type="checkbox"]),
+.settings-row > select,
+.settings-row > .color-control-wrapper,
+.settings-row > .preset-group,
+.settings-row > .theme-carousel-mount {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Checkboxes keep their intrinsic size — stretching one across the row would
+   make a 16px box read as a full-width control. */
+.settings-row > input[type="checkbox"] {
+    flex: 0 0 auto;
 }
 
 /* Color Control Wrapper & Swatches */
@@ -1210,9 +1286,75 @@ input:checked + .toggle-slider:before {
     }
 }
 /* Responsive Design */
+
+/* --- Container-driven breakpoints ------------------------------------------
+   These react to the width .workspace-panel actually got, not the viewport's,
+   so a squeezed workspace on a wide screen reflows the same way a narrow
+   screen does. Thresholds are in rem so they also track the user's font size
+   (a row that needs 28rem of room needs proportionally more at 200% text).
+   Each block keeps its sticky-positioning reset in the SAME query that
+   collapses the grid — split across two queries there would be widths where
+   the preview rail is still sticky at full width and scroll-covers the control
+   the keyboard user just focused. --- */
+
+/* The preview rail is a fixed 350px. Two columns are only honest when the
+   settings column keeps ~460px beside it (350 + 24 gap + 460 ≈ 52rem of
+   content box); below that the rail drops underneath. */
+@container workspace (max-width: 52rem) {
+    .config-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .preview-panel {
+        position: static;
+        max-height: none;
+        margin-top: var(--spacing-lg);
+    }
+}
+
+/* Label beside control needs the 180px label plus ~200px of usable control
+   inside the section's padding. Under that the row stacks label-above-control
+   rather than crushing either one. */
+@container workspace (max-width: 28rem) {
+    .settings-section {
+        --label-column: 0px;
+        --control-offset: 0px;
+    }
+
+    .settings-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .settings-row > label {
+        flex: 0 0 auto;
+        margin-right: 0;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .settings-row > .input-group,
+    .settings-row > .form-control,
+    .settings-row > input:not([type="checkbox"]):not([type="color"]),
+    .settings-row > select,
+    .settings-row > .color-control-wrapper,
+    .settings-row > .theme-carousel-mount {
+        width: 100%;
+    }
+
+    /* The value read-out sits before the slider in source order; stacked, it
+       reads better right-aligned above it than orphaned on its own line. */
+    .settings-row > .range-val-display {
+        align-self: flex-end;
+        margin-right: 0 !important;
+    }
+}
+
 @media (max-width: 1100px) {
     .config-layout {
-        grid-template-columns: 1fr;
+        /* minmax(0, 1fr), not 1fr: a bare 1fr is minmax(auto, 1fr), so the track
+           floors at the column's min-content width and pushes past the grid —
+           measured 15px of clipped overflow at a 500px viewport. */
+        grid-template-columns: minmax(0, 1fr);
     }
     
     .preview-panel {
@@ -1230,7 +1372,7 @@ input:checked + .toggle-slider:before {
 
 @media (max-width: 850px) {
     .app-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
     
     .instances-panel {
@@ -1266,20 +1408,6 @@ input:checked + .toggle-slider:before {
         padding: var(--spacing-xs);
     }
     
-    .settings-row {
-        flex-direction: column;
-        align-items: flex-start;
-        padding-bottom: var(--spacing-sm);
-    }
-    
-    .settings-row label {
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .settings-row .input-group {
-        width: 100%;
-    }
-    
     .workspace-header {
         flex-direction: column;
         gap: var(--spacing-sm);
@@ -1297,5 +1425,56 @@ input:checked + .toggle-slider:before {
     .card {
         margin: 50px auto;
         padding: var(--spacing-md);
+    }
+}
+
+/* --- Settings-row stacking fallback, for browsers without container queries --
+   Gated behind @supports so exactly one stacking mechanism is ever live. These
+   rules used to sit unguarded in the 600px block above; being later in source
+   at equal specificity, they silently won over the @container block wherever
+   both fired. That band (~577-600px viewport, where the media query matches but
+   the workspace is still wider than 28rem) rendered every label 180px TALL:
+   this block never reset the label's flex, and in a column flex container
+   `flex-basis` sizes the block axis, so `0 1 180px` became a 180px height with
+   no negative free space for flex-shrink to claw back.
+
+   Keep the declarations below in sync with the @container block above — same
+   properties, same values. The only difference is what triggers them. --- */
+@supports not (container-type: inline-size) {
+    @media (max-width: 600px) {
+        .settings-section {
+            --label-column: 0px;
+            --control-offset: 0px;
+        }
+
+        .settings-row {
+            flex-direction: column;
+            align-items: stretch;
+            padding-bottom: var(--spacing-sm);
+        }
+
+        /* Explicitly `0 0 auto`, not left to --label-column being 0: a 0 basis
+           only looks correct because min-height:auto clamps it back up to the
+           content height, and that stops being true the moment anything sets
+           overflow on the label. */
+        .settings-row > label {
+            flex: 0 0 auto;
+            margin-right: 0;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .settings-row > .input-group,
+        .settings-row > .form-control,
+        .settings-row > input:not([type="checkbox"]):not([type="color"]),
+        .settings-row > select,
+        .settings-row > .color-control-wrapper,
+        .settings-row > .theme-carousel-mount {
+            width: 100%;
+        }
+
+        .settings-row > .range-val-display {
+            align-self: flex-end;
+            margin-right: 0 !important;
+        }
     }
 }

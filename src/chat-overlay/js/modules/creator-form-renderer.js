@@ -365,9 +365,15 @@ export class CreatorFormRenderer {
                     // Help text is a sibling of the row, not a child, so anything that
                     // hides a row (applyChatModeVisibility) has to hide this by id too.
                     helpDiv.id = `schema-help-${item.key}`;
+                    // Point the control at its own help text, so it's announced with
+                    // the field rather than being visual-only.
+                    input.setAttribute('aria-describedby', helpDiv.id);
                     if (item.indent) {
                         const indentPx = item.indent === 1 ? 20 : 35;
-                        helpDiv.style.marginLeft = `${indentPx}px`;
+                        // Set as a custom property, not margin-left: an inline margin
+                        // would beat .help-text's own rule and knock the text out of
+                        // alignment with the control column it belongs to.
+                        helpDiv.style.setProperty('--help-indent', `${indentPx}px`);
                     }
                     if (item.helpUrl) {
                         const linkText = item.helpLinkText || item.helpUrl;
@@ -386,8 +392,8 @@ export class CreatorFormRenderer {
                 aiCard.style.border = '1px dashed var(--primary-color, #9147ff)';
                 aiCard.innerHTML = `
                     <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--primary-light, #a970ff);">AI Theme Generator</h4>
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Describe vibe, e.g. 'Cyberpunk Neon Matrix'..." style="flex: 1;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Describe vibe, e.g. 'Cyberpunk Neon Matrix'..." style="flex: 1 1 10rem; min-width: 0;">
                         <button type="button" class="btn btn-secondary" id="creatorAiGenerateBtn"><i data-lucide="sparkles" class="lucide-inline"></i> Generate</button>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between;">
