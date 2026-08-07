@@ -208,7 +208,11 @@ export class CreatorFormRenderer {
                                 onApply: (theme, { userInitiated = true } = {}) => this.themeController.applyThemeToForm(theme, { suppressDirty: !userInitiated }),
                                 // The creator already renders a live preview beside the form,
                                 // so the carousel's own swatch would just be a duplicate.
-                                showPreview: false
+                                showPreview: false,
+                                // Prevent remote active-theme sync from firing onApply,
+                                // which would overwrite per-scene form fields (bgColor,
+                                // opacity, etc.) with the theme's defaults on page load.
+                                suppressRemoteApply: true
                             });
                         } catch (err) {
                             console.warn('[creator-form-renderer] themeCarousel.mount() threw:', err);

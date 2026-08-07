@@ -73,6 +73,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
         : `carousel-${Date.now()}-${Math.random()}`;
     let lastPushedActiveTheme = null; // Value we last pushed, to debounce.
     let suppressSync = false;          // True while applying a remote theme change.
+    let suppressRemoteApply = false;   // When true, remote activeTheme sync only highlights (no onApply).
 
     // Lazily import the theme-library-client ES module from this classic script.
     function getLibraryClient() { return Promise.resolve(themeLibraryClient); }
@@ -208,6 +209,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
 
         onApplyCallback = typeof options.onApply === 'function' ? options.onApply : null;
         showDeleteCards = options.showDelete !== false;
+        suppressRemoteApply = !!options.suppressRemoteApply;
 
         container.innerHTML = CAROUSEL_MARKUP;
         mountedRoot = container;
@@ -360,15 +362,22 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
 
                 // Cross-page active theme sync: if another page changed the
                 // active theme, select it here (echo suppression via clientId).
+                // When suppressRemoteApply is set (e.g. the scene creator),
+                // only highlight visually — don't fire onApply, which would
+                // overwrite per-scene form values with the theme's defaults.
                 if (meta && meta.activeTheme && meta.activeThemeUpdatedBy !== myClientId) {
                     const currentValue = availableThemes?.[currentThemeIndex]?.value;
                     if (meta.activeTheme !== currentValue) {
                         const idx = availableThemes?.findIndex(t => t.value === meta.activeTheme) ?? -1;
                         if (idx !== -1) {
                             console.log(`[ThemeCarousel] Remote active theme change: ${meta.activeTheme}`);
-                            suppressSync = true;
-                            applyAndScrollToTheme(idx, { userInitiated: false });
-                            suppressSync = false;
+                            if (suppressRemoteApply) {
+                                highlightByValue(meta.activeTheme);
+                            } else {
+                                suppressSync = true;
+                                applyAndScrollToTheme(idx, { userInitiated: false });
+                                suppressSync = false;
+                            }
                         }
                     }
                 }
