@@ -497,22 +497,7 @@ a.btn {
     box-shadow: 1px 1px 0 rgba(239, 83, 80, 0.15) !important;
 }
 
-/* Copy button */
-.copy-btn {
-    border-radius: 0 !important;
-    background-color: var(--primary-color) !important;
-    color: var(--button-text-color) !important;
-    border-color: var(--primary-color) !important;
-    font-family: var(--font-family) !important;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
 
-.copy-btn:hover {
-    background-color: var(--primary-dark) !important;
-    transform: translate(-1px, -1px);
-}
 
 /* =====================================================
    FORM INPUTS
