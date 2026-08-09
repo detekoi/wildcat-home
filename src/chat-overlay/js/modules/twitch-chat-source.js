@@ -22,7 +22,6 @@ export class TwitchChatSource extends ChatSource {
         this.isExplicitDisconnect = false;
         this.reconnectAttempts = 0;
         this.reconnectTimer = null;
-        this.MAX_RECONNECT_ATTEMPTS = 5;
         this.INITIAL_RECONNECT_DELAY = 1000;
         this.MAX_RECONNECT_DELAY = 30000;
         this.statusIndicator = document.getElementById('status-indicator');
@@ -38,16 +37,20 @@ export class TwitchChatSource extends ChatSource {
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = null;
 
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            console.warn("[connectToChat] Socket already open. Closing before reconnecting.");
-            this.isExplicitDisconnect = true;
-            this.socket.close();
+        // Detach handlers before closing any existing socket. close() is async, so a
+        // still-bound onclose would fire after the new socket exists and tear it down
+        // (nulling this.socket and clearing this.channel on a live connection), and a
+        // still-bound onopen would do the same for a socket left in CONNECTING.
+        if (this.socket) {
+            try {
+                this.socket.onopen = null;
+                this.socket.onclose = null;
+                this.socket.onerror = null;
+                this.socket.onmessage = null;
+                this.socket.close();
+            } catch (e) {}
             this.socket = null;
-            this.isExplicitDisconnect = false;
         }
-
-        // Ensure any existing socket is closed before creating a new one
-        if (this.socket) this.socket.close();
 
         const normalizedChannel = channelName.trim().toLowerCase();
         if (!normalizedChannel) {
@@ -128,7 +131,12 @@ export class TwitchChatSource extends ChatSource {
         this.emitConnectionChange(false, '');
 
         if (!this.isExplicitDisconnect) {
-            this.chatRenderer.addSystemMessage('Connection lost. Attempting to reconnect...');
+            // Announce once per outage, not once per attempt: reconnects are unlimited,
+            // so a message per attempt would grow without bound during a long outage.
+            if (this.reconnectAttempts === 0) {
+                this.chatRenderer.addSystemMessage('Connection lost. Attempting to reconnect...');
+            }
+            this.updateStatus(false);
             this.scheduleReconnect(lastConnectedChannel); // Attempt reconnect
         } else {
             this.chatRenderer.addSystemMessage('Disconnected from chat.');
@@ -498,20 +506,15 @@ export class TwitchChatSource extends ChatSource {
      * Schedule a reconnection attempt
      */
     scheduleReconnect(channelToReconnect) {
-        if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-            this.chatRenderer.addSystemMessage(`Failed to reconnect after ${this.MAX_RECONNECT_ATTEMPTS} attempts. Please try again manually.`);
-            this.reconnectAttempts = 0;
-            this.updateStatus(false);
-            return;
-        }
-
+        // Retry indefinitely, as YouTubeChatSource does. A capped attempt count meant any
+        // outage longer than the total backoff ended Twitch chat for the rest of the stream.
         const delay = Math.min(
             this.INITIAL_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts),
             this.MAX_RECONNECT_DELAY
         );
 
         this.reconnectAttempts++;
-        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
 
         this.reconnectTimer = setTimeout(() => {
             if (!this.isExplicitDisconnect && channelToReconnect) {
