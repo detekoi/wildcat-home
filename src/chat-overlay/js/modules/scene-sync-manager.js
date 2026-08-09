@@ -222,11 +222,7 @@ export class SceneSyncManager {
         if (!this._configManager) return;
 
         const defaults = this._configManager.getDefaultConfig();
-        const { config: mergedConfig, pendingNotice } = migrateConfig(data.config, defaults);
-
-        if (pendingNotice && this._chatRenderer) {
-            this._chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.', true, 8000);
-        }
+        const { config: mergedConfig } = migrateConfig(data.config, defaults);
 
         // Capture previous channel settings to check channel reconnection guard
         const oldTwitch = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel;

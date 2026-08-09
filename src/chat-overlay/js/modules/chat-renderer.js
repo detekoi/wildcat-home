@@ -23,6 +23,9 @@ export class ChatRenderer {
         this.cheermoteManager = cheermoteManager;
         this.thirdPartyEmoteManager = thirdPartyEmoteManager;
         this.chatMessages = document.getElementById('chat-messages');
+        // Diagnostics are opt-in per overlay URL. Off by default so nothing can reach
+        // a live stream; tests set this directly rather than faking the query string.
+        this.debugMode = UIHelpers.getUrlParameter('debug') === '1';
         this.currentBroadcasterId = null;
         this.eventRenderer = new EventRenderer(this);
     }
@@ -38,14 +41,21 @@ export class ChatRenderer {
      * Add a system message to the chat
      */
     addSystemMessage(message, autoRemove = false, removeDelayMs = 3000) {
-        if (!this.chatMessages) {
+        // Never render diagnostics on stream. In window mode the message container is
+        // the visible surface; in popup mode it is hidden, so the text was invisible
+        // anyway. Behind ?debug=1 it renders into whichever container is actually shown.
+        // Always log, so the console is a complete record whether or not debug is on.
+        console.info('[overlay]', message);
+        if (!this.debugMode) return;
+
+        const { container, isPopup } = this._resolveTargetContainer();
+        if (!container) {
             console.error("Chat messages container not found for system message.");
             return;
         }
 
-        const shouldScroll = this.config.chatMode === 'window' && this.scrollManager.autoFollow;
         const messageElement = document.createElement('div');
-        messageElement.className = 'chat-message system-message';
+        messageElement.className = isPopup ? 'popup-message system-message' : 'chat-message system-message';
 
         if (this.config.showTimestamps) {
             const now = new Date();
@@ -62,24 +72,15 @@ export class ChatRenderer {
         contentSpan.textContent = message;
         messageElement.appendChild(contentSpan);
 
-        this.chatMessages.appendChild(messageElement);
-        this._glideWindowEntry(messageElement);
+        this._finalizeAppend(messageElement, container, isPopup);
 
-        // Keep sentinel as the last element
-        this.scrollManager.ensureSentinelLast();
-
-        if (this.config.chatMode === 'window') {
-            this.limitMessages();
-        }
-
-        if (shouldScroll) {
-            this.scrollManager.scrollToBottom();
-        }
-
-        // Auto-remove temporary messages so they don't linger on stream
-        if (autoRemove) {
-            setTimeout(() => this._fadeOutAndRemove(messageElement), removeDelayMs);
-        }
+        // autoRemove / removeDelayMs are ignored. They existed so notices would not
+        // linger on a live stream, but this code path now only runs under ?debug=1,
+        // where a message that vanishes after three seconds hides the very thing you
+        // opened debug to read. Window mode still caps the list via limitMessages();
+        // popup mode expires items through handlePopupMessage, since stacked popups
+        // would otherwise cover the chat. The parameters stay in the signature so the
+        // ~24 call sites keep documenting which notices are transient.
     }
 
     renderSuperChat(data, targetContainer, currentScrollArea) {
@@ -659,32 +660,6 @@ export class ChatRenderer {
         if (!(gap > 1 && this._glideWindowBy(gap))) {
             this.scrollManager.stickToBottomSoon();
         }
-    }
-
-    /**
-     * Fade an auto-removed message out before dropping it from the DOM, so it doesn't
-     * blink off a live stream. Falls back to an immediate remove when motion is disabled.
-     */
-    _fadeOutAndRemove(el) {
-        if (!el || !el.parentNode) return;
-
-        const finish = () => {
-            if (el.parentNode) el.remove();
-        };
-
-        if (motionDisabled(el)) {
-            finish();
-            return;
-        }
-
-        const anim = el.animate(
-            [{ opacity: 1 }, { opacity: 0 }],
-            { duration: EXIT_MS, easing: 'ease-out', fill: 'forwards' }
-        );
-
-        anim.onfinish = finish;
-        anim.oncancel = finish;
-        setTimeout(finish, EXIT_MS + 100);
     }
 
     removePopup(el) {

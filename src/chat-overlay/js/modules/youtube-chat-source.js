@@ -63,6 +63,7 @@ export class YouTubeChatSource extends ChatSource {
         this.target = cleanTarget;
         this.isExplicitDisconnect = false;
         this.chatRenderer.addSystemMessage(`Connecting to YouTube: ${this.target}...`, true);
+        this.emitConnectionChange(false, this.target, 'connecting');
         
         this.configManager.updateConfig('lastYouTubeTarget', this.target);
         this.configManager.saveLastYouTubeTargetOnly(this.target, UIHelpers.getUrlParameter('scene') || 'default');
@@ -151,12 +152,15 @@ export class YouTubeChatSource extends ChatSource {
             // for routine Cloud Run timeouts or transient disconnects
             this.reconnectFailures = (this.reconnectFailures || 0) + 1;
             const delay = Math.min(5000 * this.reconnectFailures, 30000);
-            
+
             // Only show a message after 3+ consecutive failures (persistent problem)
             if (this.reconnectFailures >= 3) {
                 this.chatRenderer.addSystemMessage(`YouTube reconnecting... (attempt ${this.reconnectFailures})`, true);
             }
-            
+
+            // Report every attempt: without this the settings panel kept reading
+            // "Connected" for the whole outage.
+            this.emitConnectionChange(false, this.target, 'reconnecting', this.reconnectFailures);
             this.reconnectTimeout = setTimeout(() => this.connect(this.target), delay);
         } else {
             this.status = false;

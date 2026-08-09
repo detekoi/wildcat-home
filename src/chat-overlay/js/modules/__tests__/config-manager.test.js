@@ -3,12 +3,12 @@ import { ConfigManager, migrateConfig, CONFIG_VERSION, applyChromaKey } from '..
 
 describe('migrateConfig Unit Tests', () => {
     it('should return empty object or default clone when given null or non-object input', () => {
-        expect(migrateConfig(null)).toEqual({ config: {}, pendingNotice: false });
-        expect(migrateConfig(undefined)).toEqual({ config: {}, pendingNotice: false });
-        expect(migrateConfig('invalid')).toEqual({ config: {}, pendingNotice: false });
+        expect(migrateConfig(null)).toEqual({ config: {} });
+        expect(migrateConfig(undefined)).toEqual({ config: {} });
+        expect(migrateConfig('invalid')).toEqual({ config: {} });
 
         const defaults = { theme: 'default', fontSize: 14 };
-        expect(migrateConfig(null, defaults)).toEqual({ config: defaults, pendingNotice: false });
+        expect(migrateConfig(null, defaults)).toEqual({ config: defaults });
     });
 
     it('should merge loaded config over default config', () => {
@@ -29,7 +29,6 @@ describe('migrateConfig Unit Tests', () => {
 
         expect(result.config.thirdPartyEmotes).toBe(false);
         expect(result.config.configVersion).toBe(CONFIG_VERSION);
-        expect(result.pendingNotice).toBe(true);
     });
 
     it('should not override explicit thirdPartyEmotes boolean if set', () => {
@@ -40,7 +39,6 @@ describe('migrateConfig Unit Tests', () => {
 
         expect(result.config.thirdPartyEmotes).toBe(true);
         expect(result.config.configVersion).toBe(CONFIG_VERSION);
-        expect(result.pendingNotice).toBe(false);
     });
 });
 
@@ -135,7 +133,6 @@ describe('ConfigManager - State Persistence', () => {
 
             expect(configManager.config.thirdPartyEmotes).toBe(false);
             expect(configManager.config.configVersion).toBe(2);
-            expect(configManager.pendingUpgradeNotice).toBe(true);
 
             // Migration must be persisted so it only ever runs once per scene
             const persisted = JSON.parse(localStorage.getItem('chatConfig-default'));
@@ -147,7 +144,7 @@ describe('ConfigManager - State Persistence', () => {
             expect(configManager.config.fontSize).toBe(18);
         });
 
-        it('should not run the migration twice or re-announce the feature on reload', () => {
+        it('should not run the migration twice on reload', () => {
             localStorage.setItem('chatConfig-default', JSON.stringify({ theme: 'dracula' }));
             configManager.loadSavedConfig('default');
 
@@ -155,7 +152,6 @@ describe('ConfigManager - State Persistence', () => {
             reloaded.loadSavedConfig('default');
 
             expect(reloaded.config.thirdPartyEmotes).toBe(false);
-            expect(reloaded.pendingUpgradeNotice).toBe(false);
         });
 
         it('should preserve an explicit third-party emote choice rather than clobbering it', () => {
@@ -165,7 +161,6 @@ describe('ConfigManager - State Persistence', () => {
 
             expect(configManager.config.thirdPartyEmotes).toBe(true);
             expect(configManager.config.configVersion).toBe(2);
-            expect(configManager.pendingUpgradeNotice).toBe(false);
         });
 
         it('should give brand new users third-party emotes on with protective 7TV filters', () => {
@@ -178,8 +173,6 @@ describe('ConfigManager - State Persistence', () => {
             // Filters the streamer owns as a taste call stay opt-in
             expect(configManager.config.thirdPartyFilter7tvSexual).toBe(false);
             expect(configManager.config.thirdPartyFilter7tvEdgy).toBe(false);
-
-            expect(configManager.pendingUpgradeNotice).toBe(false);
         });
 
         it('should migrate configs with an older numeric configVersion (e.g. version 1)', () => {
@@ -189,7 +182,6 @@ describe('ConfigManager - State Persistence', () => {
 
             expect(configManager.config.thirdPartyEmotes).toBe(false);
             expect(configManager.config.configVersion).toBe(2);
-            expect(configManager.pendingUpgradeNotice).toBe(true);
         });
     });
 

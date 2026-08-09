@@ -6,8 +6,8 @@ export class ChatConnection {
         this.twitch = new TwitchChatSource(configManager, chatRenderer, badgeManager, cheermoteManager, thirdPartyEmoteManager);
         this.youtube = new YouTubeChatSource(configManager, chatRenderer);
         this.callbacks = [];
-        this.twitch.onConnectionChange((c, t) => this.emit('twitch', c, t));
-        this.youtube.onConnectionChange((c, t) => this.emit('youtube', c, t));
+        this.twitch.onConnectionChange((c, t, s, a) => this.emit('twitch', c, t, s, a));
+        this.youtube.onConnectionChange((c, t, s, a) => this.emit('youtube', c, t, s, a));
     }
 
     get currentBroadcasterId() {
@@ -31,7 +31,7 @@ export class ChatConnection {
     getCurrentChannel() { return this.getTwitchChannel(); }
 
     onConnectionChange(cb) { this.callbacks.push(cb); }
-    emit(platform, connected, target) {
-        for (const cb of this.callbacks) cb(platform, connected, target);
+    emit(platform, connected, target, state, attempt) {
+        for (const cb of this.callbacks) cb(platform, connected, target, state, attempt);
     }
 }

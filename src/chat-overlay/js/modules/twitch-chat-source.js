@@ -24,7 +24,6 @@ export class TwitchChatSource extends ChatSource {
         this.reconnectTimer = null;
         this.INITIAL_RECONNECT_DELAY = 1000;
         this.MAX_RECONNECT_DELAY = 30000;
-        this.statusIndicator = document.getElementById('status-indicator');
     }
 
     /**
@@ -67,6 +66,7 @@ export class TwitchChatSource extends ChatSource {
         this.lastJoinedChannel = normalizedChannel;
 
         this.chatRenderer.addSystemMessage(`Connecting to ${this.channel}'s chat...`, true);
+        this.emitConnectionChange(false, this.channel, 'connecting');
         this.socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         this.socket.onopen = () => this.handleSocketOpen();
@@ -92,7 +92,6 @@ export class TwitchChatSource extends ChatSource {
             this.socket.send(`NICK justinfan${Math.floor(Math.random() * 999999)}`);
             this.socket.send(`JOIN #${this.channel}`);
 
-            this.updateStatus(true);
             this.configManager.updateConfig('lastChannel', this.channel);
             this.configManager.updateConfig('lastTwitchChannel', this.channel);
             this.configManager.saveLastChannelOnly(this.channel, UIHelpers.getUrlParameter('scene') || 'default');
@@ -128,19 +127,19 @@ export class TwitchChatSource extends ChatSource {
         this.channel = '';
         this.currentBroadcasterId = null;
 
-        this.emitConnectionChange(false, '');
-
         if (!this.isExplicitDisconnect) {
             // Announce once per outage, not once per attempt: reconnects are unlimited,
             // so a message per attempt would grow without bound during a long outage.
             if (this.reconnectAttempts === 0) {
                 this.chatRenderer.addSystemMessage('Connection lost. Attempting to reconnect...');
             }
-            this.updateStatus(false);
-            this.scheduleReconnect(lastConnectedChannel); // Attempt reconnect
+            this.scheduleReconnect(lastConnectedChannel); // increments reconnectAttempts
+            // Report the channel we're returning to, not '', so the settings panel can
+            // name it while reconnecting.
+            this.emitConnectionChange(false, lastConnectedChannel, 'reconnecting', this.reconnectAttempts);
         } else {
             this.chatRenderer.addSystemMessage('Disconnected from chat.');
-            this.updateStatus(false);
+            this.emitConnectionChange(false, '', 'disconnected');
             this.isExplicitDisconnect = false; // Reset flag
         }
     }
@@ -152,6 +151,7 @@ export class TwitchChatSource extends ChatSource {
         console.error('WebSocket Error:', error);
         this.chatRenderer.addSystemMessage('Error connecting to chat. Check console for details.');
         this.isConnecting = false;
+        this.emitConnectionChange(false, this.channel, 'error');
         // Let socket.onclose handle potential reconnection logic
     }
 
@@ -497,8 +497,15 @@ export class TwitchChatSource extends ChatSource {
             this.reconnectAttempts = 0;
             this.socket.close();
         } else {
-            this.updateStatus(false);
+            // No live socket, but a reconnect may still be armed: during backoff
+            // this.socket is null. Cancel it, or an explicit disconnect would be
+            // undone by a retry the user can no longer stop.
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+            this.reconnectAttempts = 0;
+            this.channel = '';
             this.isExplicitDisconnect = false;
+            this.emitConnectionChange(false, '', 'disconnected');
         }
     }
 
@@ -522,15 +529,6 @@ export class TwitchChatSource extends ChatSource {
                 this.connect(channelToReconnect);
             }
         }, delay);
-    }
-
-    /**
-     * Update status indicator
-     */
-    updateStatus(connected) {
-        if (!this.statusIndicator) return;
-        this.statusIndicator.className = connected ? 'connected' : 'disconnected';
-        this.statusIndicator.title = connected ? `Connected to ${this.channel}'s chat` : 'Disconnected';
     }
 
     /**

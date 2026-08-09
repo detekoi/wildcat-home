@@ -30,6 +30,31 @@ describe('ChatRenderer - Security Mitigations', () => {
         };
 
         renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+        // System messages only render behind ?debug=1; these tests assert on the DOM.
+        renderer.debugMode = true;
+    });
+
+    describe('addSystemMessage (stream safety)', () => {
+        it('renders nothing without debug mode, so diagnostics cannot reach a stream', () => {
+            renderer.debugMode = false;
+            const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+            renderer.addSystemMessage('Connection lost. Attempting to reconnect...');
+
+            expect(document.querySelectorAll('#chat-messages .system-message')).toHaveLength(0);
+            expect(infoSpy).toHaveBeenCalled();
+            infoSpy.mockRestore();
+        });
+
+        it('renders into the popup container when popup mode is active', () => {
+            document.body.innerHTML += '<div id="popup-messages"></div>';
+            renderer.config.chatMode = 'popup';
+
+            renderer.addSystemMessage('Connecting...');
+
+            expect(document.querySelectorAll('#popup-messages .system-message')).toHaveLength(1);
+            expect(document.querySelectorAll('#chat-messages .system-message')).toHaveLength(0);
+        });
     });
 
     describe('addSystemMessage (DOM XSS Mitigation)', () => {
@@ -48,9 +73,12 @@ describe('ChatRenderer - Security Mitigations', () => {
         });
     });
 
-    describe('addSystemMessage (auto-removal)', () => {
+    describe('addSystemMessage (persistence under debug)', () => {
         beforeEach(() => vi.useFakeTimers());
-        afterEach(() => vi.useRealTimers());
+        afterEach(() => {
+            delete Element.prototype.animate;
+            vi.useRealTimers();
+        });
 
         const systemMessageCount = () => document.querySelectorAll('#chat-messages .system-message').length;
 
@@ -61,63 +89,47 @@ describe('ChatRenderer - Security Mitigations', () => {
             expect(systemMessageCount()).toBe(1);
         });
 
-        // jsdom has no Element.animate, so motionDisabled() short-circuits these to an
-        // immediate remove — i.e. they cover the reduced-motion fallback path.
-        it('should remove an auto-removing message after the default 3 seconds', () => {
+        // autoRemove/removeDelayMs existed so notices would not linger on a live stream.
+        // Rendering now only happens under ?debug=1, where a message that disappears
+        // hides the thing being diagnosed, so the flags are deliberately ignored.
+        it('should ignore the autoRemove flag so diagnostics stay readable', () => {
             renderer.addSystemMessage('Connecting to chat...', true);
 
-            vi.advanceTimersByTime(2999);
+            vi.advanceTimersByTime(60000);
             expect(systemMessageCount()).toBe(1);
-
-            vi.advanceTimersByTime(1);
-            expect(systemMessageCount()).toBe(0);
         });
 
-        it('should honour a custom removal delay so stream-facing notices clear themselves', () => {
-            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
+        it('should ignore a custom removal delay too', () => {
+            renderer.addSystemMessage('Connection lost. Attempting to reconnect...', true, 8000);
 
-            // Must outlive the 3s default — this notice needs to be readable
-            vi.advanceTimersByTime(3000);
+            vi.advanceTimersByTime(60000);
             expect(systemMessageCount()).toBe(1);
-
-            vi.advanceTimersByTime(5000);
-            expect(systemMessageCount()).toBe(0);
         });
 
-        it('should fade the message out before removing it when motion is available', () => {
-            const anim = {};
-            const animate = vi.fn(() => anim);
+        it('should never start a fade animation for a system message', () => {
+            const animate = vi.fn(() => ({ onfinish: null, oncancel: null }));
             Element.prototype.animate = animate;
 
-            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
-            vi.advanceTimersByTime(8000);
+            renderer.addSystemMessage('Connecting to chat...', true, 8000);
+            vi.advanceTimersByTime(60000);
 
-            // Fade starts at the delay; the element must still be on screen
-            expect(animate).toHaveBeenCalledTimes(1);
-            const [keyframes, options] = animate.mock.calls[0];
-            expect(keyframes).toEqual([{ opacity: 1 }, { opacity: 0 }]);
-            expect(options.duration).toBeGreaterThan(0);
             expect(systemMessageCount()).toBe(1);
-
-            // Removal happens when the animation reports finished
-            anim.onfinish();
-            expect(systemMessageCount()).toBe(0);
-
-            delete Element.prototype.animate;
+            const fades = animate.mock.calls.filter(
+                ([frames]) => JSON.stringify(frames) === JSON.stringify([{ opacity: 1 }, { opacity: 0 }])
+            );
+            expect(fades).toHaveLength(0);
         });
 
-        it('should still remove the message if the fade animation never fires', () => {
-            Element.prototype.animate = vi.fn(() => ({}));
+        it('still lets popup mode expire the message through the popup lifecycle', () => {
+            document.body.innerHTML = '<div id="chat-messages"></div><div id="popup-messages"></div>';
+            renderer.config = { ...renderer.config, chatMode: 'popup', popup: { maxMessages: 3, duration: 5 } };
 
-            renderer.addSystemMessage('Third-party emotes are now supported.', true, 8000);
-            vi.advanceTimersByTime(8000);
-            expect(systemMessageCount()).toBe(1);
+            renderer.addSystemMessage('Connecting to chat...', true);
+            const container = document.getElementById('popup-messages');
+            expect(container.children.length).toBe(1);
 
-            // Safety net: onfinish/oncancel never called (e.g. hidden tab)
-            vi.advanceTimersByTime(1000);
-            expect(systemMessageCount()).toBe(0);
-
-            delete Element.prototype.animate;
+            vi.advanceTimersByTime(5000);
+            expect(container.children.length).toBe(0);
         });
     });
 

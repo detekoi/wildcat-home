@@ -13,29 +13,28 @@ export const CONFIG_VERSION = 2;
 /**
  * Migration ladder for configuration objects.
  * Accepts a raw loaded config (e.g. from localStorage or Firestore) and a base default config.
- * Returns an object { config: mergedConfig, pendingNotice: boolean }.
+ * Returns an object { config: mergedConfig }.
  */
 export function migrateConfig(loadedConfig, defaultConfig = null) {
     if (!loadedConfig || typeof loadedConfig !== 'object') {
-        return { config: defaultConfig ? { ...defaultConfig } : {}, pendingNotice: false };
+        return { config: defaultConfig ? { ...defaultConfig } : {} };
     }
 
     const merged = defaultConfig ? { ...defaultConfig, ...loadedConfig } : { ...loadedConfig };
-    let pendingNotice = false;
 
     const storedVersion = loadedConfig.configVersion ?? 0;
     if (storedVersion < CONFIG_VERSION) {
         // v2: third-party emotes ship on by default. For an overlay that predates
         // them, turning them on would swap text for images in a look the user already
-        // tuned, so grandfather them off and announce the feature once instead.
+        // tuned, so grandfather them off. Users find the setting via the docs and the
+        // scene creator — the overlay itself never announces it.
         if (storedVersion < 2 && loadedConfig.thirdPartyEmotes === undefined) {
             merged.thirdPartyEmotes = false;
-            pendingNotice = true;
         }
         merged.configVersion = CONFIG_VERSION;
     }
 
-    return { config: merged, pendingNotice };
+    return { config: merged };
 }
 
 /**
@@ -67,7 +66,6 @@ export class ConfigManager {
         this.lastAppliedThemeValue = 'default';
         this.currentFontIndex = 0;
         this.switchChatModeCallback = null;
-        this.pendingUpgradeNotice = false;
     }
 
     /**
@@ -245,9 +243,6 @@ export class ConfigManager {
                 const defaultConfigForMerge = this.getDefaultConfig();
                 const migrationResult = migrateConfig(loadedConfig, defaultConfigForMerge);
                 this.config = migrationResult.config;
-                if (migrationResult.pendingNotice) {
-                    this.pendingUpgradeNotice = true;
-                }
                 const storedVersion = loadedConfig.configVersion ?? 0;
                 if (storedVersion < CONFIG_VERSION) {
                     this.saveConfig(sceneName);

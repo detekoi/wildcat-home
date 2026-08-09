@@ -249,25 +249,51 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
 
         // --- CONNECTION STATE UI ---
 
-        chatConnection.onConnectionChange((platform, isConnected, channelName) => {
+        // The overlay renders no status on stream, so the settings panel is the only
+        // place connection state is visible. Both platforms report the same states.
+        const STATUS_LABELS = {
+            connecting: 'Connecting…',
+            connected: 'Connected',
+            reconnecting: 'Reconnecting',
+            disconnected: 'Disconnected',
+            error: 'Connection error'
+        };
+
+        function renderPlatformStatus(prefix, isConnected, channelName, state, attempt) {
+            const statusEl = document.getElementById(`${prefix}-status`);
+            if (statusEl) {
+                let label = STATUS_LABELS[state] || (isConnected ? 'Connected' : 'Disconnected');
+                if (state === 'reconnecting' && attempt > 0) label += ` (attempt ${attempt})`;
+                // Text carries the meaning; the dot is a redundant cue, never the only one.
+                statusEl.textContent = label;
+                statusEl.dataset.state = state || (isConnected ? 'connected' : 'disconnected');
+            }
+
+            // Key the controls on "busy", not "connected". Reconnects are unlimited, and
+            // during backoff the source reports isActive(), so connectToChat() ignores the
+            // form. Hiding the button as well would leave no way to stop a retry loop.
+            const isBusy = isConnected || state === 'connecting' || state === 'reconnecting';
+
+            const disconnectBtn = document.getElementById(`${prefix}-disconnect-btn`);
+            if (disconnectBtn) {
+                disconnectBtn.style.display = isBusy ? 'block' : 'none';
+                if (isConnected) {
+                    disconnectBtn.textContent = `Disconnect from ${channelName}`;
+                } else if (isBusy) {
+                    disconnectBtn.textContent = state === 'reconnecting'
+                        ? `Stop reconnecting to ${channelName}`
+                        : `Cancel connecting to ${channelName}`;
+                }
+            }
+            const form = document.getElementById(`${prefix}-channel-form`);
+            if (form) form.style.display = isBusy ? 'none' : 'flex';
+        }
+
+        chatConnection.onConnectionChange((platform, isConnected, channelName, state, attempt) => {
             const isAnyActive = chatConnection.twitch.isActive() || chatConnection.youtube.isActive();
             updateConnectionStateUI(isAnyActive);
-            if (platform === 'twitch') {
-                if (twitchDisconnectBtn) {
-                    twitchDisconnectBtn.style.display = isConnected ? 'block' : 'none';
-                    if (isConnected) twitchDisconnectBtn.textContent = `Disconnect from ${channelName}`;
-                }
-                if (twitchChannelForm) twitchChannelForm.style.display = isConnected ? 'none' : 'flex';
-                if (document.getElementById('twitch-status')) document.getElementById('twitch-status').textContent = isConnected ? 'Connected' : '';
-            } else if (platform === 'youtube') {
-                if (youtubeDisconnectBtn) {
-                    youtubeDisconnectBtn.style.display = isConnected ? 'block' : 'none';
-                    if (isConnected) youtubeDisconnectBtn.textContent = `Disconnect from ${channelName}`;
-                }
-                if (youtubeChannelForm) youtubeChannelForm.style.display = isConnected ? 'none' : 'flex';
-                if (document.getElementById('youtube-status')) document.getElementById('youtube-status').textContent = isConnected ? 'Connected' : '';
-            }
-            
+            renderPlatformStatus(platform, isConnected, channelName, state, attempt);
+
             chatRenderer.config = configManager.config;
         });
 
@@ -296,12 +322,6 @@ import { bindSettingsEvents } from "./modules/chat-event-bindings.js";
         badgeManager.config = configManager.config;
         chatRenderer.config = configManager.config;
         themeManager.lastAppliedThemeValue = configManager.config.theme || 'default';
-
-        if (configManager.pendingUpgradeNotice && !isDemoMode) {
-            configManager.pendingUpgradeNotice = false;
-            // Long enough to read, short enough that it clears itself off a live stream.
-            chatRenderer.addSystemMessage('Third-party emotes (BTTV, FFZ, 7TV) are now supported — enable them in Settings.', true, 8000);
-        }
 
         UIHelpers.fixCssVariables();
 
