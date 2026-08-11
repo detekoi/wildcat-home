@@ -1,50 +1,85 @@
 # Wildcat.chat Platform Homepage
 
-The unified landing page and web hub for [wildcat.chat](https://wildcat.chat), featuring all Wildcat tools — Wildcat Sage, WildcatTTS, and Chat Overlay — with consistent branding. Deployed to Firebase Hosting.
+This repository contains the landing page for [wildcat.chat](https://wildcat.chat). The page presents the Wildcat tools: Wildcat Sage, WildcatTTS, and Chat Overlay. Firebase Hosting serves the static output built by Eleventy.
 
 ## Features
 
-- Animated TV-static canvas background
-- 3D skeuomorphic button design system
-- Automatic dark mode (system preference)
-- Mobile-responsive layout
-- Atkinson Hyperlegible Next typography
+- Canvas element with an animated TV-static background.
+- 3D skeuomorphic button design system.
+- Automatic dark mode based on system preferences.
+- Responsive layout for mobile devices.
+- Atkinson Hyperlegible Next typography.
 
 ## Chat Overlay
 
-This repository also hosts the **Wildcat Chat Overlay** (`src/chat-overlay/`), a customizable Twitch & YouTube chat overlay for OBS. Features include:
+This repository includes the **Wildcat Chat Overlay** (`src/chat-overlay/`). The overlay displays Twitch and YouTube chat in OBS Studio with these functions:
 
-- AI-generated themes via natural language prompts
-- No login required — just add the browser source URL to OBS
-- Pronoun badges, Twitch emote rendering, auto-linking, and animations
-- Chat Scene Creator for composing multi-source layouts
+- Theme generation with AI prompts.
+- No user sign-in required. Add the browser source URL directly to OBS Studio.
+- Pronoun badges, Twitch emote rendering, text auto-linking, and animations.
+- Chat Scene Creator to compose multi-source overlay layouts.
 
-The overlay depends on two companion services:
+The Chat Overlay uses two backend services:
 
-- **[chat-theme-proxy](https://github.com/detekoi/chat-theme-proxy/)** — Node.js/Express backend that delivers theme CSS and proxies AI generation (Gemini) and image asset (Runware) APIs. Deployed on Cloud Run.
-- **[yt-chat-proxy](https://github.com/detekoi/yt-chat-proxy)** — Proxy service for YouTube live chat, enabling the overlay to display YouTube chat alongside Twitch.
+- **[chat-theme-proxy](https://github.com/detekoi/chat-theme-proxy/)**: Express backend on Google Cloud Run. Delivers theme CSS and handles Google Gemini AI and Runware image API requests.
+- **[yt-chat-proxy](https://github.com/detekoi/yt-chat-proxy)**: Proxy service for YouTube live chat. Allows the overlay to display YouTube chat and Twitch chat together.
 
-## Setup & Deployment
+## Development and Deployment
 
-Requires the [Firebase CLI](https://firebase.google.com/docs/cli).
+Make sure that you install the [Firebase CLI](https://firebase.google.com/docs/cli) and Node.js.
+
+### Development
+
+To start the Eleventy development server with live reload, run:
 
 ```bash
-firebase login
-firebase use --add        # select your project
-firebase serve            # preview at localhost:5000
-firebase deploy --only hosting
+npm run dev
 ```
+
+To run unit tests with Vitest, run:
+
+```bash
+npm test
+```
+
+To build the production site into `public/`, run:
+
+```bash
+npm run build
+```
+
+### Local Preview and Deployment
+
+1. Log in to Firebase:
+
+   ```bash
+   firebase login
+   ```
+
+2. Select your Firebase project:
+
+   ```bash
+   firebase use --add
+   ```
+
+3. Preview local files with Firebase Hosting emulator:
+
+   ```bash
+   firebase serve
+   ```
+
+4. Deploy the site to Firebase Hosting:
+
+   ```bash
+   firebase deploy --only hosting
+   ```
 
 ## Related Projects
 
-- **Wildcat Sage** — AI-powered Twitch chatbot · [app.wildcat.chat](https://app.wildcat.chat)
-- **WildcatTTS** — Text-to-speech bot for Twitch · [tts.wildcat.chat](https://tts.wildcat.chat)
-- **Documentation** · [docs.wildcat.chat](https://docs.wildcat.chat)
-
-## License
-
-All rights reserved © 2026 Wildcat.chat
+- **Wildcat Sage:** AI-powered Twitch chatbot · [app.wildcat.chat](https://app.wildcat.chat)
+- **WildcatTTS:** Text-to-speech bot for Twitch · [tts.wildcat.chat](https://tts.wildcat.chat)
+- **Documentation:** Platform guides · [docs.wildcat.chat](https://docs.wildcat.chat)
 
 ## Support
 
-For questions or support, visit [https://parfaitfair.com/#contact](https://parfaitfair.com/#contact)
+For questions or support, use [this contact form](https://parfaitfair.com/#contact).
