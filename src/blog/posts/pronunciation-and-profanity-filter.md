@@ -33,15 +33,13 @@ Matching is case-insensitive and only fires on whole words, so an entry for `fr`
 
 The profanity filter replaces rude words with milder ones before the audio is generated. "What the fuck" becomes "what the freak." Turn it on with `!tts profanity on` or the toggle in the dashboard.
 
-It substitutes rather than bleeps. A bleep is jarring, and dropping the word entirely can leave a sentence that makes no sense, or in the worst case an empty message that never gets read at all.
+Dropping the word entirely can leave a sentence that makes no sense, or in the worst case an empty message that never gets read at all.
 
 Slurs work differently. Those are replaced with the word "slur," not with a milder insult. A softened slur still lands as the thing it was, so there's no point laundering it.
 
 ### Why substitute instead of bleep?
 
-People often ask why the filter does not just bleep out swear words.
-
-The short answer is that bleeping is an audio change, not a text change.
+Bleeping is an audio change, not a text change.
 
 Everything WildcatTTS does before generating speech is a text operation. The bot swaps acronyms and rude words in text, hands the cleaned sentence to the voice engine, and the engine streams the audio directly to your browser source. At no point does my server hold the raw audio data.
 
