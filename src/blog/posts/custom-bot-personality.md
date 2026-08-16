@@ -42,7 +42,7 @@ It's looking for the things you'd expect. Instructions to harass viewers, to run
 
 Tone isn't what it's checking. A rude, sarcastic, or foul-mouthed personality is a normal thing to want and it will pass.
 
-If the check can't run at all, the save fails rather than going through unscreened. Retrying a save is a much smaller problem than unscreened text reaching a system instruction.
+If the check can't run at all, the save fails rather than going through unscreened. Retrying a save is a much smaller problem than unscreened text reaching a system instruction. 
 
 ## Shared Chat
 
