@@ -33,7 +33,7 @@ export class CreatorThemeController {
                 const prompt = promptInput?.value?.trim();
 
                 if (!prompt) {
-                    alert('Please enter a vibe or theme description.');
+                    alert('Enter a theme description.');
                     return;
                 }
 
@@ -41,7 +41,7 @@ export class CreatorThemeController {
                     aiGenBtn.disabled = true;
                     if (statusEl) statusEl.textContent = 'Generating...';
                     const generateFn = generateThemeApi;
-                    if (!generateFn) throw new Error('AI Theme Generator service unavailable.');
+                    if (!generateFn) throw new Error('AI Theme Generator service is not available.');
 
                     const result = await generateFn({
                         prompt,
@@ -88,7 +88,7 @@ export class CreatorThemeController {
                             if (theme.username_color) this.renderer.updateColorControl('usernameColor', theme.username_color);
                             if (result.compressedImage) {
                                 this.renderer.bgImageHandler.currentBgImage = result.compressedImage;
-                                this.renderer.bgImageHandler.updatePreviewText('AI Background Image generated');
+                                this.renderer.bgImageHandler.updatePreviewText('AI background image generated');
                             }
                             this.renderer.sendPreviewUpdate();
                         }
@@ -141,9 +141,9 @@ export class CreatorThemeController {
 
         const name = await promptForThemeName({
             title: 'Save Theme Preset',
-            message: 'Save the current colors, font, radius, shadows and background image as a reusable preset.',
+            message: 'Save current colors, font, border, shadows, and background image as a reusable preset.',
             note: existingThemes.length >= MAX_LIBRARY_THEMES
-                ? `Your theme library is full (${MAX_LIBRARY_THEMES}). Saving will remove the oldest theme.`
+                ? `The theme library is full (${MAX_LIBRARY_THEMES}). Saving removes the oldest preset.`
                 : '',
             defaultValue: `My Preset ${presetCount + 1}`,
             maxLength: MAX_PRESET_NAME_LENGTH
@@ -166,7 +166,7 @@ export class CreatorThemeController {
                 if (statusEl) statusEl.textContent = 'Saved for this session only.';
                 UIHelpers.showNotification(
                     'Preset Not Synced',
-                    'Could not reach the theme library. This preset will be lost when you reload.',
+                    'Could not reach the theme library. This preset is saved for this session only.',
                     'warning'
                 );
                 return;
@@ -176,7 +176,7 @@ export class CreatorThemeController {
             UIHelpers.showNotification(
                 'Preset Saved',
                 e.detail.imageDropped
-                    ? `"${theme.name}" was saved, but its background image was too large to store.`
+                    ? `"${theme.name}" was saved without its background image because the image file was too large.`
                     : `"${theme.name}" was added to your theme library.`,
                 e.detail.imageDropped ? 'warning' : 'success'
             );

@@ -254,7 +254,7 @@ export const CONFIG_SCHEMA = [
         label: 'Show User Pronouns',
         control: 'checkbox',
         default: true,
-        helpText: 'Users can set theirs at',
+        helpText: 'Users can set pronouns at',
         helpUrl: 'https://pr.alejo.io/',
         helpLinkText: 'pr.alejo.io'
     },
@@ -278,7 +278,7 @@ export const CONFIG_SCHEMA = [
         label: 'Top Gradient Fade',
         control: 'checkbox',
         default: false,
-        helpText: 'Fades out messages at the top border'
+        helpText: 'Fades messages at the top border'
     },
 
     // --- Display Mode ---

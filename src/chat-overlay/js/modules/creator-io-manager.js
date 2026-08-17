@@ -69,10 +69,10 @@ export class CreatorIOManager {
     static async copyUrl(text, onNotification = UIHelpers.showNotification) {
         try {
             await navigator.clipboard.writeText(text);
-            onNotification('Copied', 'URL copied to clipboard!', 'success');
+            onNotification('Copied', 'URL copied to clipboard.', 'success');
         } catch (err) {
             console.error('Failed to copy URL:', err);
-            onNotification('Copy Failed', 'Please select and copy the text manually.', 'error');
+            onNotification('Copy Failed', 'Could not copy URL. Select and copy the text manually.', 'error');
         }
     }
 }

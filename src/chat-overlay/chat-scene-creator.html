@@ -14,7 +14,7 @@ extraScripts:
     <div class="container" id="page-content">
         <header>
             <h1>Chat Scene Creator</h1>
-            <p>Create and manage chat scenes for different parts of your stream</p>
+            <p>Create and manage chat scenes for your stream.</p>
             <p style="margin-top: 10px; font-size: 14px;">
                 <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank">Docs</a>
                 <span style="margin: 0 8px; opacity: 0.4;">•</span>
@@ -64,7 +64,7 @@ extraScripts:
                                 <div class="settings-row">
                                     <label for="instanceName">Scene Name</label>
                                     <div class="input-group">
-                                        <input type="text" id="instanceName" class="form-control" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="e.g. Gaming">
+                                        <input type="text" id="instanceName" class="form-control" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="Example: Gaming">
                                     </div>
                                 </div>
                                 <div class="settings-row">
@@ -83,11 +83,11 @@ extraScripts:
                             <div class="settings-group">
                                 <div class="settings-row">
                                     <label for="creatorTwitchChannel">Twitch Channel</label>
-                                    <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="e.g. shroud" autocomplete="off" spellcheck="false" enterkeyhint="done">
+                                    <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="Example: shroud" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
                                 <div class="settings-row">
-                                    <label for="creatorYoutubeTarget">YouTube Channel ID / Handle</label>
-                                    <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="e.g. @LofiGirl" autocomplete="off" spellcheck="false" enterkeyhint="done">
+                                    <label for="creatorYoutubeTarget">YouTube Channel ID or Handle</label>
+                                    <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="Example: @LofiGirl" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
                                 <div style="margin-top: 10px; text-align: right;">
                                     <button class="btn btn-secondary" id="applyChannelBtn"><i data-lucide="radio" class="lucide-inline"></i> Apply Channel</button>
@@ -137,7 +137,7 @@ extraScripts:
                                     </div>
                                 </div>
                             </div>
-                            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Form changes stream into the preview in real-time.</p>
+                            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Changes in this form update the preview in real time.</p>
                             <div id="previewIframeContainer" class="preview-iframe-container bg-checkerboard" style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 500px; transition: background 0.2s ease;">
                                 <!-- No default src: chat-scene-creator.js sets this to the selected
                                      scene's URL (chat.html?demo=1&scene=...) as soon as a scene is
@@ -151,7 +151,7 @@ extraScripts:
                 
                 <!-- Empty State -->
                 <div id="emptyState" class="empty-state" style="text-align: center; padding: 40px 0;">
-                    <p style="margin-bottom: 20px;">No chat scene selected. Create a new chat scene or select one from the list.</p>
+                    <p style="margin-bottom: 20px;">No chat scene is selected. Create a new chat scene or select one from the list.</p>
                     <button class="btn btn-primary" id="emptyStateCreateBtn"><i data-lucide="plus" class="lucide-inline"></i> Create First Chat Scene</button>
                     <p style="margin-top: 10px; font-size: 14px;">
                         <a href="chat.html" target="_blank" style="color: var(--link-color); text-decoration: none;">
@@ -167,11 +167,11 @@ extraScripts:
                 
                 <!-- OBS Setup Section -->
                 <div class="obs-setup" id="obsSetup" style="display: none;">
-                    <h2>OBS Setup & Configuration</h2>
+                    <h2>OBS Setup and Configuration</h2>
                     
                     <div class="obs-tip-banner">
                         <i data-lucide="lightbulb" class="lucide-inline obs-tip-icon"></i>
-                        <span><strong>OBS Tip:</strong> Leave <em>"Shutdown source when not visible"</em> and <em>"Refresh browser when scene becomes active"</em> unchecked in OBS Browser Source properties for background live sync.</span>
+                        <span><strong>OBS Tip:</strong> For background live sync, do not select <em>"Shutdown source when not visible"</em> and <em>"Refresh browser when scene becomes active"</em> in the OBS Browser Source properties.</span>
                     </div>
 
                     <div class="url-generator">
@@ -184,32 +184,32 @@ extraScripts:
                     </div>
                     
                     <div class="setup-steps">
-                        <h3>Steps to Add in OBS:</h3>
+                        <h3>Steps to Add in OBS</h3>
                         <ol>
-                            <li>In OBS Studio, right-click in the Sources panel and select <strong>Add</strong> → <strong>Browser</strong>.</li>
-                            <li>Name your source (e.g., "Twitch Chat - Gaming").</li>
-                            <li>Paste the URL copied above into the URL field.</li>
-                            <li><strong>IF YOU CAN'T PASTE:</strong> Uncheck "Local file" option.</li>
-                            <li>If running locally, adjust the file path in the URL to match where you saved this overlay on your computer.</li>
-                            <li>Set Width: 320 and Height: 600 (recommended, adjust as needed).</li>
-                            <li>Click "OK" to add the browser source.</li>
-                            <li>Position and resize the chat overlay as needed in your scene.</li>
-                            <li><i data-lucide="lightbulb" class="lucide-inline" style="color: #eab308; margin-right: 4px;"></i> <strong>For Instant Background Sync:</strong> Leave "Shutdown source when not visible" and "Refresh browser when scene becomes active" unchecked in Browser Source properties.</li>
+                            <li>In OBS Studio, right-click the Sources list and select <strong>Add</strong> → <strong>Browser</strong>.</li>
+                            <li>Enter a name for your source (Example: "Twitch Chat - Gaming").</li>
+                            <li>Paste the copied URL into the <strong>URL</strong> field.</li>
+                            <li><strong>If you cannot paste:</strong> Clear the <strong>Local file</strong> checkbox.</li>
+                            <li>If you run the overlay locally, change the URL path to the saved file location on your computer.</li>
+                            <li>Set <strong>Width</strong> to 320 and <strong>Height</strong> to 600. Adjust these values if necessary.</li>
+                            <li>Select <strong>OK</strong> to add the browser source.</li>
+                            <li>Move and resize the chat overlay in your scene.</li>
+                            <li><i data-lucide="lightbulb" class="lucide-inline" style="color: #eab308; margin-right: 4px;"></i> <strong>For background live sync:</strong> Do not select "Shutdown source when not visible" and "Refresh browser when scene becomes active" in Browser Source properties.</li>
                         </ol>
                     </div>
                     
                     <div class="setup-steps">
-                        <h3>Configuring Your Chat Overlay in OBS:</h3>
+                        <h3>Configure Your Chat Overlay in OBS</h3>
                         <ol>
-                            <li>To connect and customize the overlay: Right-click the Browser Source in OBS and select <strong>Interact</strong>.</li>
+                            <li>To open the configuration controls, right-click the Browser Source in OBS and select <strong>Interact</strong>.</li>
                             <li>In the interaction window:
                                 <ul>
-                                    <li>Enter your Twitch channel name and click "Connect".</li>
-                                    <li>Hover over the chat area and click the settings gear icon (<i data-lucide="settings" class="lucide-inline"></i>) in the top-right corner.</li>
-                                    <li>Use the settings panel to select themes, customize colors, fonts, opacity, display mode (window/popup), and other options.</li>
+                                    <li>Enter your channel name and select <strong>Connect</strong>.</li>
+                                    <li>Move your pointer over the chat area and select the settings gear icon (<i data-lucide="settings" class="lucide-inline"></i>) in the top-right corner.</li>
+                                    <li>Use the settings panel to select themes, change colors, choose fonts, and set display modes.</li>
                                 </ul>
                             </li>
-                            <li>Settings are saved automatically within OBS for that specific browser source.</li>
+                            <li>OBS saves these settings automatically for this browser source.</li>
                         </ol>
                     </div>
                     
@@ -222,11 +222,11 @@ extraScripts:
                         </h3>
                         <div id="troubleshooting-content" class="accordion-content">
                             <ul>
-                                <li><strong>Chat not connecting:</strong> In the OBS "Interact" window, double-check the channel name and ensure you have an internet connection.</li>
-                                <li><strong>Settings not saving:</strong> Settings are saved in OBS's browser cache. Ensure OBS has permissions to write cache files. Clearing OBS cache might reset settings.</li>
-                                <li><strong>Text too small/large:</strong> Adjust the font size in the overlay's settings (via "Interact") or scale the Browser Source itself in OBS.</li>
-                                <li><strong>Empty overlay:</strong> Right-click the Browser Source in OBS, select "Interact", and enter your channel name to connect.</li>
-                                <li><strong>Chat not refreshing:</strong> Try right-clicking the Browser Source in OBS and selecting "Refresh". If issues persist, try recreating the source.</li>
+                                <li><strong>Chat does not connect:</strong> In the OBS Interact window, verify the channel name and make sure that your computer is connected to the internet.</li>
+                                <li><strong>Settings do not save:</strong> OBS saves settings in the browser cache. Make sure that OBS has permission to write cache files. If you clear the OBS cache, OBS resets your settings.</li>
+                                <li><strong>Text size is incorrect:</strong> Change the font size in the overlay settings in the Interact window, or scale the Browser Source in OBS.</li>
+                                <li><strong>Overlay is empty:</strong> Right-click the Browser Source in OBS, select <strong>Interact</strong>, and enter your channel name to connect.</li>
+                                <li><strong>Chat does not update:</strong> Right-click the Browser Source in OBS and select <strong>Refresh</strong>. If the problem continues, delete and create the source again.</li>
                             </ul>
                         </div>
                     </div>
@@ -239,11 +239,11 @@ extraScripts:
                             </button>
                         </h3>
                         <div id="advanced-obs-content" class="accordion-content">
-                            <p>For optimal performance, configure these additional settings in your OBS Browser Source:</p>
+                            <p>To optimize performance, configure these settings in your OBS Browser Source:</p>
                             <ul>
-                                <li>Check "Shutdown source when not visible" to save resources.</li>
-                                <li>Check "Refresh browser when scene becomes active" for the most up-to-date chat.</li>
-                                <li>Set "Custom CSS" to remove scrollbars if needed:<br>
+                                <li>To reduce system load, select <strong>Shutdown source when not visible</strong>.</li>
+                                <li>To load recent messages when scenes switch, select <strong>Refresh browser when scene becomes active</strong>.</li>
+                                <li>To hide scrollbars, add this code to <strong>Custom CSS</strong>:<br>
                                 <code>body { overflow: hidden; }</code></li>
                             </ul>
                         </div>
@@ -258,9 +258,9 @@ extraScripts:
                         </h3>
                         <div id="customization-tips-content" class="accordion-content">
                             <ul>
-                                <li><strong>Overlaying on content:</strong> Use the Tranparent theme, or adjust the opacity slider features while setting the "none" border option for seamless integration with your gameplay.</li>
-                                <li><strong>Font size:</strong> Keep at least 12px for best readability.</li>
-                                <li><strong>Positioning:</strong> Place chat where it won't overlap important game elements, or use popup mode for temporary chat message appearance.</li>
+                                <li><strong>Overlay on gameplay:</strong> Select the <strong>Transparent</strong> theme, or set the border to <strong>None</strong> and reduce the background opacity.</li>
+                                <li><strong>Font size:</strong> Use a font size of 12px or larger for readability.</li>
+                                <li><strong>Positioning:</strong> Place chat where it does not cover game elements, or use popup mode to show messages temporarily.</li>
                             </ul>
                         </div>
                     </div>
@@ -275,9 +275,9 @@ extraScripts:
             <h2 id="modalTitle">Create New Chat Scene</h2>
             <div style="margin: 20px 0;">
                 <div>
-                    <label for="modalInstanceName" class="modal-label">Descriptive Name:</label>
-                    <input type="text" id="modalInstanceName" enterkeyhint="done" style="width: 100%;" placeholder="e.g., Gaming, Just Chatting, Intro Screen">
-                    <p class="modal-description">A friendly name to identify this chat overlay in your scenes list</p>
+                    <label for="modalInstanceName" class="modal-label">Scene Name:</label>
+                    <input type="text" id="modalInstanceName" enterkeyhint="done" style="width: 100%;" placeholder="Example: Gaming, Just Chatting, Intro Screen">
+                    <p class="modal-description">Enter a name to identify this chat overlay scene.</p>
                 </div>
             </div>
             <p class="modal-description">
@@ -297,8 +297,8 @@ extraScripts:
             <div style="margin: 20px 0;">
                 <div>
                     <label for="importSceneToken" class="modal-label">Sync Token or OBS URL:</label>
-                    <input type="text" id="importSceneToken" enterkeyhint="done" style="width: 100%;" placeholder="e.g., 3f2a9c81-... or paste full OBS URL">
-                    <p class="modal-description">Paste the Sync Token or the full OBS URL from another scene to link and edit that scene from this browser.</p>
+                    <input type="text" id="importSceneToken" enterkeyhint="done" style="width: 100%;" placeholder="Example: 3f2a9c81-... or full OBS URL">
+                    <p class="modal-description">Paste the Sync Token or the full OBS URL from another scene to link and edit that scene in this browser.</p>
                 </div>
             </div>
             <div class="modal-actions">
@@ -313,7 +313,7 @@ extraScripts:
         <div class="modal-content">
             <h2 id="unsavedModalTitle">Unsaved Changes</h2>
             <div style="margin: 20px 0;">
-                <p id="unsavedModalMessage" class="modal-description">You have unsaved changes in this scene. What would you like to do before proceeding?</p>
+                <p id="unsavedModalMessage" class="modal-description">This scene has unsaved changes. Choose an action before continuing:</p>
             </div>
             <div class="modal-actions">
                 <button type="button" id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>

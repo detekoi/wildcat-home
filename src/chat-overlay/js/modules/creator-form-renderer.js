@@ -393,7 +393,7 @@ export class CreatorFormRenderer {
                 aiCard.innerHTML = `
                     <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--primary-light, #a970ff);">AI Theme Generator</h4>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Describe vibe, e.g. 'Cyberpunk Neon Matrix'..." style="flex: 1 1 10rem; min-width: 0;">
+                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Describe a style, for example, 'Cyberpunk Neon Matrix'..." style="flex: 1 1 10rem; min-width: 0;">
                         <button type="button" class="btn btn-secondary" id="creatorAiGenerateBtn"><i data-lucide="sparkles" class="lucide-inline"></i> Generate</button>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between;">

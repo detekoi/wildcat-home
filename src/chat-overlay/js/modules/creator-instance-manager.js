@@ -31,7 +31,7 @@ export class CreatorInstanceManager {
             }
         } catch (error) {
             console.error('Error loading instances:', error);
-            this.onNotification('Error', 'Failed to load saved instance data.', 'error');
+            this.onNotification('Error', 'Failed to load saved scene data.', 'error');
             this.instances = {};
         }
 
@@ -156,7 +156,7 @@ export class CreatorInstanceManager {
     deleteCurrentInstance() {
         if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return null;
         const current = this.instances[this.currentInstanceId];
-        if (!window.confirm(`Are you sure you want to delete "${current.name}"?`)) return null;
+        if (!window.confirm(`Delete "${current.name}"?`)) return null;
 
         const deletedId = this.currentInstanceId;
         const deletedName = current.name;

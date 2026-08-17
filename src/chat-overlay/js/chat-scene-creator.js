@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (this.dom.unsavedModalMessage) {
-                this.dom.unsavedModalMessage.textContent = `You have unsaved changes in "${currentName}". What would you like to do before ${actionDescription}?`;
+                this.dom.unsavedModalMessage.textContent = `You have unsaved changes in "${currentName}". Choose an action before ${actionDescription}:`;
             }
 
             return new Promise((resolve) => {
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Name the abandoned action: the user asked to save and
                         // proceed, and the thing they were proceeding to silently
                         // does not happen — there is no other cue that it did not.
-                        UIHelpers.showNotification('Save Failed', `Your changes could not be saved, so ${actionDescription} was cancelled. Your changes are still here — try again.`, 'error');
+                        UIHelpers.showNotification('Save Failed', `Changes could not be saved. ${actionDescription} was cancelled. Try again.`, 'error');
                         saved = false;
                     }
                     // Refocus AFTER the save: it re-renders the instance list, which
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const instance = this.instanceManager.instances[instanceId];
             if (!instance) {
-                UIHelpers.showNotification('Error', 'Instance not found.', 'error');
+                UIHelpers.showNotification('Error', 'Chat scene not found.', 'error');
                 return false;
             }
 
@@ -395,9 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (instance.syncToken) {
                     const pushResult = await this.syncManager.pushToCloud(instance.syncToken, updatedConfig, instance.name);
                     if (pushResult.success) {
-                        UIHelpers.showNotification('Saved & Synced', `"${instance.name}" saved and live-synced to OBS.`, 'success');
+                        UIHelpers.showNotification('Saved & Synced', `"${instance.name}" saved and synced to OBS.`, 'success');
                     } else {
-                        UIHelpers.showNotification('Saved Locally', 'Saved locally, but cloud sync push failed.', 'warning');
+                        UIHelpers.showNotification('Saved Locally', 'Saved locally, but cloud sync failed.', 'warning');
                     }
                 } else {
                     UIHelpers.showNotification('Saved Locally', `"${instance.name}" saved locally.`, 'success');
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pushResult = await this.syncManager.pushToCloud(minted, instance.config, instance.name);
             if (!pushResult.success) {
-                UIHelpers.showNotification('Sync Pending', 'Scene saved locally; cloud sync will retry on next save.', 'warning');
+                UIHelpers.showNotification('Sync Pending', 'Scene saved locally. Cloud sync will retry on next save.', 'warning');
             }
 
             this.syncManager.updateInstanceUrl(instance, instanceId, this.dom);
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (existingId) {
                 this.closeImportSceneModal();
                 this.selectInstance(existingId);
-                UIHelpers.showNotification('Already Linked', 'That scene is already in this browser.');
+                UIHelpers.showNotification('Already Linked', 'This scene is already linked in this browser.');
                 return;
             }
 
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.closeImportSceneModal();
             this.renderInstanceList();
             this.selectInstance(newId);
-            UIHelpers.showNotification('Scene Linked', 'Pulling this scene\'s settings from the cloud.');
+            UIHelpers.showNotification('Scene Linked', 'Loading settings from the cloud.');
         }
 
         // createInstance/duplicateCurrentInstance mint a syncToken but have no sync manager
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!instance || !instance.syncToken) return;
             const pushResult = await this.syncManager.pushToCloud(instance.syncToken, instance.config, instance.name);
             if (!pushResult.success) {
-                UIHelpers.showNotification('Sync Pending', 'Scene saved locally; cloud sync will retry on next save.', 'warning');
+                UIHelpers.showNotification('Sync Pending', 'Scene saved locally. Cloud sync will retry on next save.', 'warning');
             }
         }
 
@@ -700,12 +700,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 this.instanceManager.instanceOrder.push(newId);
                                 importedCount = 1;
                             } else {
-                                UIHelpers.showNotification('Import Failed', 'JSON file does not match a recognized scene configuration schema.', 'error');
+                                UIHelpers.showNotification('Import Failed', 'The JSON file does not match the scene configuration format.', 'error');
                                 return;
                             }
                             this.instanceManager.saveInstances();
                             this.renderInstanceList();
-                            UIHelpers.showNotification('Imported', `Chat scene(s) imported successfully.`);
+                            UIHelpers.showNotification('Imported', importedCount > 1 ? `Imported ${importedCount} chat scenes.` : 'Imported 1 chat scene.');
                         },
                         (err) => UIHelpers.showNotification('Import Failed', 'Invalid JSON file.', 'error')
                     );
