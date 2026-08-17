@@ -150,3 +150,87 @@ custom chat overlays for streamers."
         </div>
     </div>
 </section>
+
+<!-- Floating Support Widget -->
+<aside class="floating-support" aria-label="Support">
+    <button type="button" id="kofi-open" class="floating-support__btn" aria-haspopup="dialog">
+        <span class="floating-support__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.797-.679.797s-.108 8.053.487 11.225c.605 3.22 3.197 3.518 3.197 3.518h7.986c5.77 0 6.64-5.26 6.64-5.26 1.83.003 3.633-.948 4.673-2.613 1.258-2.016 1.238-4.538.854-5.074zm-2.812 4.385c-.605.968-1.571 1.48-2.584 1.48v-6.38h2.083c.789 0 1.693.308 2.054 1.2.378.932.11 2.732-1.553 3.7zm-6.286-3.844c-.752.887-2.146 2.45-3.084 3.32-.234.218-.553.336-.87.336-.316 0-.636-.118-.87-.336-.938-.87-2.332-2.433-3.084-3.32-1.125-1.328-1.12-3.13.01-4.303 1.13-1.17 2.973-1.168 4.093.005l.006.006.006-.006c1.12-1.173 2.963-1.175 4.093-.005 1.13 1.173 1.135 3.175.01 4.303z"/>
+            </svg>
+        </span>
+        <span class="floating-support__text">Support me</span>
+    </button>
+</aside>
+
+<!-- Ko-fi Donation Modal Dialog -->
+<dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title">
+    <div class="kofi-sheet__header">
+        <h2 id="kofi-title" class="kofi-sheet__title">Support parfaitfair</h2>
+        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog">
+            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="kofi-sheet__body">
+        <div id="kofi-embed-container" class="kofi-embed-container">
+            <!-- Loaded on-demand when modal opens -->
+        </div>
+        <div class="kofi-fallback">
+            <a href="https://ko-fi.com/parfaitfair" target="_blank" rel="noopener noreferrer" class="kofi-direct-link">Open in new tab on Ko-fi.com</a>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    (function () {
+        const dialog = document.getElementById('kofi-modal');
+        const openBtn = document.getElementById('kofi-open');
+        const closeBtn = document.getElementById('kofi-close');
+        const embedContainer = document.getElementById('kofi-embed-container');
+        if (!dialog) return;
+
+        function open() {
+            if (typeof dialog.showModal === 'function') {
+                if (!dialog.open) dialog.showModal();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+            if (embedContainer && !embedContainer.querySelector('iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.src = 'https://ko-fi.com/parfaitfair/?hidefeed=true&widget=true&embed=true';
+                iframe.title = 'Support parfaitfair on Ko-fi';
+                iframe.className = 'kofi-iframe';
+                embedContainer.appendChild(iframe);
+            }
+        }
+
+        function close() {
+            if (typeof dialog.close === 'function') {
+                if (dialog.open) dialog.close();
+            } else {
+                dialog.removeAttribute('open');
+            }
+        }
+
+        openBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            open();
+        });
+
+        closeBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            close();
+        });
+
+        dialog.addEventListener('click', function (e) {
+            if (e.target !== dialog) return;
+            const rect = dialog.getBoundingClientRect();
+            const isInside =
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom;
+            if (!isInside) close();
+        });
+    })();
+</script>

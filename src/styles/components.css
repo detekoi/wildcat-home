@@ -1097,3 +1097,161 @@ footer {
     height: 60px;
   }
 }
+
+/* =====================================================
+   FLOATING SUPPORT WIDGET & KO-FI MODAL
+   ===================================================== */
+.floating-support {
+  position: fixed;
+  bottom: clamp(1rem, 2.5vw, 1.5rem);
+  left: clamp(1rem, 2.5vw, 1.5rem);
+  z-index: 90;
+}
+
+.floating-support__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #794bc4;
+  color: #ffffff;
+  border: 2px solid var(--color-border, #333333);
+  font-family: var(--font-primary, 'Atkinson Hyperlegible Next', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0 rgba(255, 253, 217, 0.28);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  border-radius: 0;
+}
+
+.floating-support__btn:hover,
+.floating-support__btn:focus-visible {
+  background: #683bb5;
+  color: #ffffff;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(255, 253, 217, 0.35);
+}
+
+.floating-support__btn:focus-visible {
+  outline: 2px solid var(--color-accent, #fffdd9);
+  outline-offset: 2px;
+}
+
+.floating-support__btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(255, 253, 217, 0.2);
+}
+
+.floating-support__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal Dialog */
+dialog.kofi-sheet {
+  border: 2px solid var(--color-border, #333333);
+  background: var(--color-card-bg, #0a0a0a);
+  color: var(--color-text, #ffffff);
+  padding: 0;
+  width: calc(100% - 2rem);
+  max-width: 480px;
+  margin: auto;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.8);
+  border-radius: 0;
+}
+
+dialog.kofi-sheet:not([open]) {
+  display: none !important;
+}
+
+dialog.kofi-sheet::backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(2px);
+}
+
+.kofi-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #121212;
+  border-bottom: 1px solid var(--color-rule, #262626);
+}
+
+.kofi-sheet__title {
+  font-family: var(--font-primary, 'Atkinson Hyperlegible Next', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent, #fffdd9);
+  margin: 0;
+}
+
+.kofi-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border, #333333);
+  color: var(--color-text, #ffffff);
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.kofi-icon-btn:hover,
+.kofi-icon-btn:focus-visible {
+  background: #1a1a1a;
+  border-color: var(--color-accent, #fffdd9);
+  color: var(--color-accent, #fffdd9);
+}
+
+.kofi-icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent, #fffdd9);
+  outline-offset: 2px;
+}
+
+.kofi-sheet__body {
+  padding: 16px 18px;
+}
+
+.kofi-embed-container {
+  width: 100%;
+  height: 520px;
+  max-height: 65vh;
+  border: 1px solid var(--color-rule, #262626);
+  background: #141414;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.kofi-embed-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.kofi-fallback {
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--color-text-muted, #888888);
+}
+
+.kofi-direct-link {
+  color: var(--color-accent, #fffdd9);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.kofi-direct-link:hover,
+.kofi-direct-link:focus-visible {
+  color: #ffffff;
+}
+
