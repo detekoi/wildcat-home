@@ -9,8 +9,6 @@ extraStyles:
   - /chat-overlay/css/theme-carousel.css
   - /chat-overlay/css/wildcat-theme.css
 extraScripts:
-  - /chat-overlay/js/theme-generator.js
-  - /chat-overlay/js/theme-carousel.js
   - /chat-overlay/js/chat-scene-creator.js
 ---
     <div class="container" id="page-content">
@@ -66,13 +64,13 @@ extraScripts:
                                 <div class="settings-row">
                                     <label for="instanceName">Scene Name</label>
                                     <div class="input-group">
-                                        <input type="text" id="instanceName" class="form-control">
+                                        <input type="text" id="instanceName" class="form-control" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="e.g. Gaming">
                                     </div>
                                 </div>
                                 <div class="settings-row">
                                     <label for="syncTokenDisplay">Sync Token</label>
                                     <div class="input-group url-display" style="margin-top: 0;">
-                                        <input type="text" id="syncTokenDisplay" class="url-text" readonly style="font-size: 13px;">
+                                        <input type="text" id="syncTokenDisplay" class="url-text" readonly style="font-size: 13px;" tabindex="0">
                                         <button type="button" class="btn btn-primary copy-btn" id="copySyncTokenBtn" title="Copy Sync Token"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
                                     </div>
                                 </div>
@@ -85,11 +83,11 @@ extraScripts:
                             <div class="settings-group">
                                 <div class="settings-row">
                                     <label for="creatorTwitchChannel">Twitch Channel</label>
-                                    <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="e.g. shroud">
+                                    <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="e.g. shroud" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
                                 <div class="settings-row">
                                     <label for="creatorYoutubeTarget">YouTube Channel ID / Handle</label>
-                                    <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="e.g. @LofiGirl">
+                                    <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="e.g. @LofiGirl" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
                                 <div style="margin-top: 10px; text-align: right;">
                                     <button class="btn btn-secondary" id="applyChannelBtn"><i data-lucide="radio" class="lucide-inline"></i> Apply Channel</button>
@@ -111,7 +109,7 @@ extraScripts:
                             <h3>Chat Scene OBS URL</h3>
                             <p>Paste this URL into your OBS Browser Source:</p>
                             <div class="url-display">
-                                <div class="url-text" id="instanceUrlConfig">chat.html?scene=example</div>
+                                <div class="url-text" id="instanceUrlConfig" tabindex="0">chat.html?scene=example</div>
                                 <button type="button" class="btn btn-primary copy-btn" id="copyUrlBtnConfig"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
                             </div>
                         </div>
@@ -145,7 +143,7 @@ extraScripts:
                                      scene's URL (chat.html?demo=1&scene=...) as soon as a scene is
                                      selected, so the preview never briefly loads the default scene's
                                      localStorage config. -->
-                                <iframe id="previewIframe" style="width: 100%; height: 100%; border: none;"></iframe>
+                                <iframe id="previewIframe" title="Live Preview of Chat Scene Overlay" loading="lazy" style="width: 100%; height: 100%; border: none;"></iframe>
                             </div>
                         </div>
                     </div>

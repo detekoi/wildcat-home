@@ -197,10 +197,17 @@ export class FontManager {
      * Returns local URL first; caller should fallback to prod on failure.
      */
     _getFontSearchApiUrl() {
-        const isLocalhost = window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1' ||
-            window.location.hostname === '';
-        return isLocalhost ? FontManager._LOCAL_PROXY : FontManager._PROD_PROXY;
+        if (typeof window !== 'undefined') {
+            if (window.__USE_LOCAL_PROXY__) {
+                return FontManager._LOCAL_PROXY;
+            }
+            try {
+                if (localStorage.getItem('useLocalProxy') === 'true') {
+                    return FontManager._LOCAL_PROXY;
+                }
+            } catch (_) {}
+        }
+        return FontManager._PROD_PROXY;
     }
 
     /**

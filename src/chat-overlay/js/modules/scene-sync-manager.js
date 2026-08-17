@@ -7,12 +7,15 @@ import { UIHelpers } from './ui-helpers.js';
 import { migrateConfig, CONFIG_VERSION } from './config-manager.js';
 
 export function getProxyBaseUrl() {
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.endsWith('.localhost');
-    if (isLocalhost) {
-        return 'http://localhost:8091/api';
+    if (typeof window !== 'undefined') {
+        if (window.__USE_LOCAL_PROXY__) {
+            return 'http://localhost:8091/api';
+        }
+        try {
+            if (localStorage.getItem('useLocalProxy') === 'true') {
+                return 'http://localhost:8091/api';
+            }
+        } catch (_) {}
     }
     return 'https://theme-proxy-361545143046.us-central1.run.app/api';
 }

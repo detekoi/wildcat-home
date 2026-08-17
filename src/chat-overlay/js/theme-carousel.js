@@ -958,7 +958,7 @@ import { UIHelpers } from './modules/ui-helpers.js';
             const API_URL = `${getProxyBaseUrl()}/fonts`;
 
             console.log(`Fetching fonts from: ${API_URL}`);
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, { signal: AbortSignal.timeout(5000) });
             if (response.ok) {
                 const fonts = await response.json();
                 if (Array.isArray(fonts) && fonts.length > 0) {

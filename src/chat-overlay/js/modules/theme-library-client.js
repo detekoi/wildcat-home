@@ -227,11 +227,13 @@ export async function setActiveTheme(themeValue, updatedBy) {
  * carousel simply keeps using fetchThemes()/the offline cache.
  */
 export function subscribe(cb) {
+    if (typeof cb !== 'function') return () => {};
+
     const token = getLibraryToken();
     let cancelled = false;
     let unsubscribeFn = null;
 
-    (async () => {
+    const startListener = async () => {
         try {
             const [firebaseApp, firebaseFirestore] = await Promise.all([
                 import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
@@ -273,7 +275,13 @@ export function subscribe(cb) {
         } catch (e) {
             console.warn('[ThemeLibraryClient] Could not initialize Firestore remote listener:', e);
         }
-    })();
+    };
+
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => startListener(), { timeout: 2000 });
+    } else {
+        setTimeout(startListener, 0);
+    }
 
     return () => {
         cancelled = true;

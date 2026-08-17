@@ -12,7 +12,17 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/logo192.png">
 
+    <!-- Resource hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://theme-proxy-361545143046.us-central1.run.app" crossorigin>
+
     <!-- Stylesheets -->
+    <link rel="preload" as="style" href="/styles/reset.css">
+    <link rel="preload" as="style" href="/styles/unified.css">
+    <link rel="preload" as="style" href="/styles/components.css">
+    {% for href in extraStyles %}<link rel="preload" as="style" href="{{ href }}">
+    {% endfor %}
     <link rel="stylesheet" href="/styles/reset.css">
     <link rel="stylesheet" href="/styles/unified.css">
     <link rel="stylesheet" href="/styles/components.css">
@@ -23,15 +33,19 @@
     {% for href in extraStyles %}<link rel="stylesheet" href="{{ href }}">
     {% endfor %}
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
+    <!-- Fonts (Non-blocking) -->
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Cabin+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap">
+    </noscript>
 
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Icons (Downloaded local script) -->
+    <script src="/scripts/lucide.min.js"></script>
 
     <!-- Analytics -->
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
@@ -81,11 +95,24 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="/scripts/static-background.js"></script>
-    <script src="/scripts/navigation.js"></script>
+    <script src="/scripts/static-background.js" defer></script>
+    <script src="/scripts/navigation.js" defer></script>
     {% for src in extraScripts %}<script type="module" src="{{ src }}"></script>
     {% endfor %}
-    <script>lucide.createIcons();</script>
+    <script>
+        (function() {
+            function initIcons() {
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initIcons);
+            } else {
+                initIcons();
+            }
+        })();
+    </script>
 </body>
 
 </html>
