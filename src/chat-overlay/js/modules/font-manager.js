@@ -1,28 +1,5 @@
-import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
-
-/**
- * Dynamically load a Google Font by injecting a <link> tag. Delegates to the
- * carousel-provided `loadGoogleFont` when available (the normal case for
- * chat.html), and falls back to a local <link> injection otherwise.
- * @param {string} fontFamily - The font family name.
- * @param {string} [customUrl] - Optional custom Google Fonts CSS URL.
- */
-export function ensureGoogleFontLoaded(fontFamily, customUrl) {
-    if (typeof loadGoogleFont === 'function') {
-        loadGoogleFont(fontFamily, customUrl);
-        return;
-    }
-    if (!fontFamily) return;
-
-    const fontId = `google-font-${fontFamily.replace(/\s+/g, '-').toLowerCase()}`;
-    if (document.getElementById(fontId)) return; // Already loaded
-
-    const link = document.createElement('link');
-    link.id = fontId;
-    link.rel = 'stylesheet';
-    link.href = customUrl || `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
-    document.head.appendChild(link);
-}
+import { availableFonts, availableThemes } from '../theme-carousel.js';
+import { loadGoogleFont } from './google-font-loader.js';
 
 export class FontManager {
     /**
@@ -114,7 +91,7 @@ export class FontManager {
                 };
                 // Add to the front of the fonts list and load the stylesheet
                 availableFonts.unshift(fontObj);
-                ensureGoogleFontLoaded(fontObj.googleFontFamily);
+                loadGoogleFont(fontObj.googleFontFamily);
                 fontIndex = 0;
             }
         }
@@ -154,7 +131,7 @@ export class FontManager {
 
         // Load Google Font if applicable
         if (currentFont.isGoogleFont && currentFont.googleFontFamily) {
-            ensureGoogleFontLoaded(currentFont.googleFontFamily, currentFont.googleFontUrl);
+            loadGoogleFont(currentFont.googleFontFamily, currentFont.googleFontUrl);
         }
 
         // Close dropdown when cycling
@@ -223,7 +200,7 @@ export class FontManager {
         nameSpan.textContent = font.name;
         nameSpan.style.fontFamily = font.value;
         if (font.isGoogleFont && font.googleFontFamily) {
-            ensureGoogleFontLoaded(font.googleFontFamily, font.googleFontUrl);
+            loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
         }
         item.appendChild(nameSpan);
 
@@ -361,7 +338,7 @@ export class FontManager {
                 nameSpan.textContent = font.name;
                 nameSpan.style.fontFamily = font.value;
                 if (font.isGoogleFont && font.googleFontFamily) {
-                    ensureGoogleFontLoaded(font.googleFontFamily, font.googleFontUrl);
+                    loadGoogleFont(font.googleFontFamily, font.googleFontUrl);
                 }
                 item.appendChild(nameSpan);
 
@@ -432,7 +409,7 @@ export class FontManager {
             };
         }
 
-        ensureGoogleFontLoaded(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
+        loadGoogleFont(fontObj.googleFontFamily || fontName, fontObj.googleFontUrl);
 
         const targetList = availableFonts;
         const existingIdx = targetList.findIndex(f => f?.name?.toLowerCase() === fontName.toLowerCase());
@@ -658,7 +635,7 @@ export function createFontPicker(container, { initialValue = '', onSelect, style
                 dummyConfigManager.config.googleFontFamily =
                     (resolved.isGoogleFont && resolved.googleFontFamily) ? resolved.googleFontFamily : null;
                 if (resolved.isGoogleFont && resolved.googleFontFamily) {
-                    ensureGoogleFontLoaded(resolved.googleFontFamily, resolved.googleFontUrl);
+                    loadGoogleFont(resolved.googleFontFamily, resolved.googleFontUrl);
                 }
             }
         },

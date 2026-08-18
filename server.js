@@ -23,12 +23,25 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-    let reqPath = decodeURIComponent(req.url.split('?')[0]);
+    let reqPath;
+    try {
+        reqPath = decodeURIComponent(req.url.split('?')[0]);
+    } catch {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('400 Bad Request');
+        return;
+    }
     if (reqPath.endsWith('/')) {
         reqPath += 'index.html';
     }
 
-    let filePath = path.join(PUBLIC_DIR, reqPath);
+    let filePath = path.resolve(PUBLIC_DIR, '.' + path.posix.normalize('/' + reqPath));
+    if (filePath !== PUBLIC_DIR && !filePath.startsWith(PUBLIC_DIR + path.sep)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('403 Forbidden');
+        return;
+    }
+
     if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
         filePath = path.join(filePath, 'index.html');
     }

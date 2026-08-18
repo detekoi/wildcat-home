@@ -9,6 +9,7 @@ export function getCurrentThemeIndex() { return currentThemeIndex; }
 import { DEFAULT_FONTS } from './data/font-data.js';
 import { DEFAULT_THEMES } from './data/builtin-themes.js';
 import * as themeLibraryClient from './modules/theme-library-client.js';
+import { loadGoogleFont } from './modules/google-font-loader.js';
 import { ModalA11y } from './modules/modal-a11y.js';
 import { UIHelpers } from './modules/ui-helpers.js';
 
@@ -979,25 +980,6 @@ import { UIHelpers } from './modules/ui-helpers.js';
         } catch (error) {
             console.warn('Failed to fetch fonts from proxy, using default list:', error);
         }
-    }
-
-    /**
-     * Dynamically loads a Google Font by injecting a link tag.
-     * @param {string} fontFamily - The font family name.
-     * @param {string} [customUrl] - Optional custom Google Fonts CSS URL (for variable fonts with special axes).
-     */
-    function loadGoogleFont(fontFamily, customUrl) {
-        if (!fontFamily) return;
-
-        const fontId = `google-font-${fontFamily.replace(/\s+/g, '-').toLowerCase()}`;
-        if (document.getElementById(fontId)) return; // Already loaded
-
-        const link = document.createElement('link');
-        link.id = fontId;
-        link.rel = 'stylesheet';
-        link.href = customUrl || `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
-        document.head.appendChild(link);
-        console.log(`Loaded Google Font: ${fontFamily}`);
     }
 
 

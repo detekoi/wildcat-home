@@ -4,7 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
-import { ensureGoogleFontLoaded } from './font-manager.js';
+import { loadGoogleFont } from './google-font-loader.js';
 
 // Bumped whenever a default changes in a way that would visibly alter an existing overlay.
 // Stored configs without a version predate third-party emote support.
@@ -171,7 +171,7 @@ export class ConfigManager {
         // stylesheet here or the browser silently falls back to whatever font
         // happens to be loaded already.
         if (cfg.googleFontFamily) {
-            ensureGoogleFontLoaded(cfg.googleFontFamily);
+            loadGoogleFont(cfg.googleFontFamily);
         }
         rootStyle.setProperty('--font-weight', cfg.fontWeight || 'normal');
         rootStyle.setProperty('--chat-width', `${cfg.chatWidth || 95}%`);

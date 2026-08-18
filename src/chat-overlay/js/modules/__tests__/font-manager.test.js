@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as themeCarousel from '../../theme-carousel.js';
 
-// Mock theme-carousel.js so we can control loadGoogleFont per-test.
-// Default loadGoogleFont to undefined to simulate pages (e.g. chat-scene-creator.html)
-// that don't load the full carousel. Tests needing it override via vi.spyOn.
+// Mock theme-carousel.js to simulate pages (e.g. chat-scene-creator.html) that
+// load font-manager.js without mounting the full carousel. Font loading itself
+// is NOT mocked — it lives in google-font-loader.js, which both pages import
+// directly, so these tests exercise the real <link> injection.
 vi.mock('../../theme-carousel.js', () => ({
     mount: vi.fn(),
     addTheme: vi.fn(),
@@ -13,7 +14,6 @@ vi.mock('../../theme-carousel.js', () => ({
     highlightActiveCard: vi.fn(),
     applyAndScrollToTheme: vi.fn(),
     scrollToThemeCard: vi.fn(),
-    loadGoogleFont: undefined,
     availableFonts: [],
     availableThemes: [],
     currentThemeIndex: 0,
@@ -171,9 +171,7 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         expect(fontSearchResults.textContent).toContain('More from Google Fonts');
     });
 
-    it('loads a Google Font via an injected <link> when loadGoogleFont is not available', () => {
-        // loadGoogleFont defaults to undefined in the mock, so this exercises the fallback path
-
+    it('loads a Google Font via an injected <link>', () => {
         fontManager._addAndSelectGoogleFont({
             name: 'Roboto',
             value: "'Roboto', sans-serif",
@@ -187,24 +185,18 @@ describe('FontManager - resilience without theme-carousel.js', () => {
         expect(link.href).toContain('fonts.googleapis.com');
     });
 
-    it('prefers loadGoogleFont when the carousel module has defined it', () => {
-        // Override loadGoogleFont to be a real function for this test
-        const mockLoadGoogleFont = vi.fn();
-        themeCarousel.loadGoogleFont = mockLoadGoogleFont;
-
-        fontManager._addAndSelectGoogleFont({
+    it('does not inject a duplicate <link> when the same font is selected twice', () => {
+        const font = {
             name: 'Roboto',
             value: "'Roboto', sans-serif",
             isGoogleFont: true,
             googleFontFamily: 'Roboto'
-        });
+        };
 
-        expect(mockLoadGoogleFont).toHaveBeenCalledWith('Roboto', undefined);
-        // No fallback <link> should be injected when the carousel handles it.
-        expect(document.getElementById('google-font-roboto')).toBeNull();
+        fontManager._addAndSelectGoogleFont(font);
+        fontManager._addAndSelectGoogleFont(font);
 
-        // Restore
-        themeCarousel.loadGoogleFont = undefined;
+        expect(document.head.querySelectorAll('#google-font-roboto').length).toBe(1);
     });
 
     it('updateFontDisplay suppresses _onFontChange when silent is true', () => {
@@ -309,7 +301,7 @@ describe('createFontPicker - end-to-end remote font selection (chat-scene-creato
         expect(themeCarousel.availableFonts.some(f => f.name === 'Orbitron')).toBe(true);
         // 2) Applied to config (surfaced via getValue(), which reads the picker's config)
         expect(picker.getValue()).toBe("'Orbitron', sans-serif");
-        // 3) Loaded via the ensureGoogleFontLoaded fallback (no loadGoogleFont on this page)
+        // 3) Stylesheet loaded via google-font-loader.js
         expect(document.getElementById('google-font-orbitron')).not.toBeNull();
     });
 
