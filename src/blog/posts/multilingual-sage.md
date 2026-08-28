@@ -8,17 +8,19 @@ Game messages, command replies, and the whole dashboard now come pre-translated 
 
 ## The Bot Could Already Do This. It Was Just Slow.
 
-`!botlang spanish` has worked for a long time. Every outgoing message went to a model, came back translated, and then got sent. That is fine for one message and wrong for a game.
+`!botlang spanish` has worked for a long time. What happened underneath was that every single message got handed off to be translated at the moment it was needed, and only then went to chat.
 
-A single round of trivia sends the question, the result, and a header announcing the next round, and each one waited on a network round trip before it reached chat. The wording drifted between rounds, because a model asked the same question twice does not answer identically. And every `!command`, every `$(user)` token and every emoji in the string went through a step that had no obligation to leave them intact.
+That is fine for one message and wrong for a game. A single round of trivia sends the question, the result, and a header announcing the next round, and each one sat waiting on a translation before anyone in chat saw it. The wording wandered too, because asking for the same sentence twice does not give you the same sentence back. "Time's up!" came out a little different every round.
 
-The 353 fixed strings the bot sends are now translated once, ahead of time, into Spanish, French, German, Italian, Portuguese, Japanese and Russian. On a channel set to one of those, sending a message is a lookup, so it arrives at the speed an English one always did and says the same thing every time.
+It could also rewrite the parts that were never meant to be read as words. `!trivia` looks like a word to a translator. So does the `$(user)` in your custom commands. Emoji were fair game as well.
 
-Anything the bot makes up on the spot still goes the old way. Answers to questions, trivia questions themselves, the text of a quote: none of that exists until the moment it is needed, so none of it can be translated in advance. `!botlang thai` also still works exactly as before. Thai has no catalog, so those messages take the live route, and so does every other language the command accepts.
+So the 353 fixed things the bot says are now translated ahead of time into Spanish, French, German, Italian, Portuguese, Japanese and Russian. On a channel set to one of those, the bot already has the sentence ready. It arrives as fast as English always did and says the same thing every time.
+
+What the bot makes up on the spot still works the way it always has. Answers to questions, the trivia questions themselves, the text of a quote: none of that exists until the second it is needed, so none of it can be written in advance. `!botlang thai` is unchanged too. Thai is not one of the eight, so those messages still get translated as they are sent, along with every other language the command accepts.
 
 ## Games
 
-Trivia, riddles and geo-guessing send the most messages per minute, so they went first. The same line in three of the eight:
+Trivia, riddles and geo-guessing send the most messages per minute, so they went first. Here is the opening announcement in three of the eight:
 
 ```
 en  🎯 Starting {roundText} of Trivia! Topic: {topic}. You have {questionTimeSeconds}
@@ -29,19 +31,15 @@ ja  🎯 トリビア（{roundText}）スタート！トピック: {topic}。回
     {questionTimeSeconds}秒。チャットで答えを入力してね！
 ```
 
-Japanese moves the round count into brackets right after the game name, where English trails it after a preposition. That reordering is a property of the sentence, so it lives in the translation rather than in the code that assembles it.
+The words in braces are the bits that change each game, like your topic. Japanese moves the round count into brackets straight after the game name, where English leaves it trailing at the end. Which order the sentence goes in belongs to the language, so it is part of what gets translated rather than something the bot decides.
 
-### The English Hiding Inside the Templates
+### One Sentence, Not Pieces of One
 
-`{roundText}` is where this got interesting. The old code picked the phrase with a ternary:
+`{roundText}` turned out to be the interesting one. That slot holds either "a round" or "3 rounds", and the bot used to choose between them separately and drop the winner into the sentence.
 
-```js
-totalRounds > 1 ? `${totalRounds} rounds` : 'a round'
-```
+Translate the sentence and that piece stays behind. You get a Spanish announcement with the words "3 rounds" sitting in the middle of it, because by the time anyone looks at the sentence, the English fragment is already baked into it.
 
-Translate only the sentence around it and you get a Spanish announcement with the words "3 rounds" sitting in the middle of it. The fragment never reaches the translator, because by the time the sentence is assembled it is already a finished string.
-
-So both branches became catalog entries of their own:
+So both versions of the phrase get translated too:
 
 ```
 en    a round        /  {totalRounds} rounds
@@ -49,13 +47,13 @@ es    una ronda      /  {totalRounds} rondas
 ja    1ラウンド       /  {totalRounds}ラウンド
 ```
 
-The round header (`[Round 1/3] `) and the pieces the result line is built from, the elapsed time, the streak counter and the points, all had the same problem. Each is its own catalog entry now rather than a fragment glued on afterwards.
+The same trap was hiding in the round header (`[Round 1/3] `) and in the pieces the result line is assembled from: how fast you answered, your streak, and the points. Those are all full phrases now rather than words glued on at the end.
 
 ## Follow Age and Language Names
 
-`!followage` and the `$(followage)` variable built their answer by gluing a number to a unit and adding an `s` when the number was not 1. Only English pluralises that way, and only sometimes.
+`!followage` and the `$(followage)` variable used to count up the years and months and then stick an `s` on the end if the number was not 1. That is how English works and very little else does.
 
-Both now hand the numbers to the platform's own formatter, which knows the rules for each language:
+The numbers now go through the same built-in formatter your phone and browser use, which already knows the rules for each language:
 
 ```
 en    2 years 3 months 1 week 3 days
@@ -63,25 +61,25 @@ es    2 años, 3 meses, 1 semana y 3 días
 ru    2 года, 3 месяца, 1 неделя и 3 дня
 ```
 
-Russian is why this is not a catalog. It picks between `года` and `лет` based on the number, and the boundary is not where an English speaker would guess. Encoding that by hand would mean a phrase per unit per plural category per language, and it is already encoded correctly somewhere else.
+Russian is the reason this is not just a list of translated words. It swaps between `года` and `лет` depending on the number, and the switch does not happen where an English speaker would expect. Writing that out by hand would mean a separate phrase for every unit, for every number pattern, in every language, and someone has already done it correctly.
 
-Language names get the same treatment. `!botlang status` on a Russian channel says `русский`, not `russian`.
+Language names get read out properly too. Ask a Russian channel what language the bot is set to and it answers `русский` rather than `russian`.
 
 ## The Dashboard
 
-All five pages are translated, 245 strings, with the bulk of them on the dashboard itself. The picker sits in the bottom corner of every page.
+All five pages are translated, 245 phrases in total, most of them on the [dashboard](https://bot.wildcat.chat) itself. The language picker sits in the bottom corner of every page.
 
-If you have never touched it, the page follows your browser. Set it once and it sticks. `?lang=ja` on the end of the URL forces a language for one visit, which is the fastest way to check something.
+If you have never touched it, the page follows whatever language your browser is set to. Choose one and it sticks. Putting `?lang=ja` on the end of the URL forces a language for a single visit, which is the quickest way to look at something.
 
-A further 81 messages come from the server rather than the page. Those are the ones that appear as toasts when you save something or when a save fails, and the dashboard prints them exactly as it receives them. Before this, you could translate the entire interface and still get an English sentence thrown at you the first time something went wrong. The page now tells the server which language it is showing, and the reply comes back to match.
+Not everything you read on the dashboard is written by the page. The little messages that pop up when you save a setting, or when a save goes wrong, are sent back by the bot itself, and the page shows them exactly as they arrive. Until now you could put the whole dashboard into French and still get an English sentence in your face the first time something failed. There are 81 of those messages and they are translated now. The page tells the bot which language you are looking at, and the answer comes back to match.
 
 ## Your Channel Language Gets Detected
 
-Twitch already knows what language you stream in, because you set it on your own channel. The bot reads it and uses it as the default.
+Twitch already knows what language you stream in, because you chose it on your own channel. The bot reads that and uses it as the starting point, so most channels get this without doing anything.
 
-It is only ever a default. If a mod has run `!botlang`, that wins, and detection cannot undo it or overwrite it. Nothing gets saved to your channel behind your back either; the detected value is read live, so changing your language on Twitch changes the bot with it.
+It is only ever a starting point. If a mod has run `!botlang`, that choice wins and detection cannot override it or quietly undo it. Nothing is written to your channel behind your back either. The bot checks the live value, so if you change your language on Twitch, the bot follows.
 
-Channels declaring English are skipped, because English is already what the bot does and naming it would change nothing. `!botlang status` tells you which of the two you are getting:
+Channels set to English are skipped, since English is what the bot does anyway. To see which of the two you are on, run `!botlang status`:
 
 ```
 El bot está configurado actualmente para hablar en español
@@ -91,13 +89,13 @@ El bot está configurado actualmente para hablar en español
 (establecido por un moderador).
 ```
 
-## The Personality Prompt
+## Which Language It Answers You In
 
-The bot's own replies were never catalogued and never will be, but the instructions it works from were written as if everyone reading them spoke English.
+The bot's own replies are written fresh every time, so there is nothing to translate in advance. What changed is the instructions it works from, which were written as though everyone reading them spoke English.
 
-It now gets the stream's language as context and one rule about what to do with it: answer people in whatever language they wrote to you in, and if that is unclear, use the language of the stream. There is no instruction anywhere telling it to speak a particular language, which matters for channels where chat is genuinely mixed. Someone typing English into a Spanish stream gets English back, and nobody gets a comment on which language they picked.
+It now knows what language your stream is in, and the rule is simple: reply to people in whatever language they wrote to you in, and if that is not clear, use the language of the stream. There is nothing anywhere telling it to speak one particular language, which matters on channels where chat is genuinely mixed. Type English into a Spanish stream and you get English back, with no remark about the language you chose.
 
-The style rules got scoped too. The persona carries a list of overused words to avoid, and the list is English:
+The style notes needed the same care. The bot's personality includes a short list of words to stop leaning on, and those words are English ones:
 
 ```
 When writing in English, avoid these words: chaos, vibe(s), basically, bold move.
@@ -105,21 +103,21 @@ In other languages, avoid the same kind of overused filler rather than
 translating this list.
 ```
 
-Translated literally, that rule would have banned four ordinary Spanish words for no reason while leaving actual Spanish filler untouched.
+Handed over word for word, that would have banned four perfectly ordinary Spanish words while leaving actual Spanish filler alone.
 
 ## How the Translations Are Made
 
-Gemini writes them once and the result is committed, same as WildcatTTS. Each English string is stored with a hash of itself, so editing one line re-translates that line and nothing else.
+Gemini writes them once and they get saved, the same way WildcatTTS does it. Change the English wording of a line and only that line is redone.
 
-Nothing ships without being checked against the English first. A translation is rejected outright if it dropped or renamed a `{placeholder}`, changed a `!command` literal, came back empty, or altered the HTML tags in the strings that carry markup. The command literals are the check that most obviously earns its place: `!trivia` looks like a word to a translator and is an instruction to the bot, and translating it produces a help message telling people to type something that does nothing.
+None of it goes out without being compared against the English first. A translation is thrown away if it came back empty, if it lost or renamed one of the slots that get filled in later like `{topic}`, or if it touched a command name. Command names are the check that most earns its place: `!trivia` reads like an ordinary word, but it is something people are supposed to type, and translating it leaves you with a help message pointing at a command that does not exist.
 
-There is one rule underneath all of it: a language is either completely translated or absent. There is no half-catalogued state, which is what makes it safe for the bot to decide once per message whether to do a lookup or call the model, rather than checking key by key and producing a message that switches languages partway through. A test enforces it, and a translation run that dies partway through fails that test rather than shipping.
+One rule sits underneath all of it. A language is either finished or not offered at all, with nothing in between. That is what lets the bot decide once, for a whole message, whether it already has the sentence or needs to go and get it translated. Without that rule you would eventually get a message that starts in one language and finishes in another.
 
 ## What's Still English
 
-Everything the bot generates rather than sends. Where that text can be produced in the target language directly it is, and where it cannot it still gets translated live, which is slower and less consistent than a catalog but is the only option for text that did not exist a second ago.
+Everything the bot thinks up rather than looks up. Where it can write that directly in your language it does, and where it cannot, it still gets translated on the way out, which is slower and less predictable than having the words ready but is the only option for a sentence that did not exist a moment ago.
 
-There is no bot language control in the dashboard yet. `!botlang` in chat is still the only way to set one explicitly, though most channels no longer need to.
+The dashboard has no bot language setting yet. `!botlang` in chat is still the only way to pick one on purpose, though most channels no longer have to.
 
 This website is English only.
 
