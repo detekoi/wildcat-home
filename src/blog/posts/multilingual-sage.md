@@ -97,7 +97,7 @@ Detection covers most channels, but the choice is on the [dashboard](https://bot
 
 The default is Automatic, and it says what that currently works out to instead of leaving you to figure it out: "Automatic (Spanish, from Twitch)". Pick a language instead and the channel holds that language whatever Twitch says. Pick English and it stays English, the same as `!botlang off`.
 
-The list puts the eight pre-translated languages first and the rest underneath, so you can see which half you are choosing from. Chat still takes languages the list does not offer, and if a mod has set one of those, the dashboard shows it rather than quietly swapping it for something from the list.
+The list comes in two groups, "Written in advance" and "Translated when sent", so you can see which half you are choosing from. Chat still takes languages the list does not offer, and if a mod has set one of those, the dashboard shows it rather than quietly swapping it for something from the list.
 
 Your choice saves as you make it and the bot has it within seconds. Nothing restarts and there is nothing to sync.
 
