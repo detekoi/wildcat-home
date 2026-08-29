@@ -129,6 +129,6 @@ One rule sits underneath all of it. A language is either finished or not offered
 
 Everything the bot thinks up rather than looks up. Where it can write that directly in your language it does, and where it cannot, it still gets translated on the way out, which is slower and less predictable than having the words ready but is the only option for a sentence that did not exist a moment ago.
 
-This website is English only.
+This website is English only for now.
 
 Full details are in the [WildcatSage documentation](https://docs.wildcat.chat/botcommands.html#bot-language).
