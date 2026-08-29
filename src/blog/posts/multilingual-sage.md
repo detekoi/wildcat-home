@@ -1,10 +1,10 @@
 ---
 title: "New: WildcatSage in 8 Languages"
 date: 2026-08-28
-description: "Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command."
+description: "Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command, and you can pick one on the dashboard now too."
 ---
 
-Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command.
+Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command, and you can pick one on the dashboard now too.
 
 ## The Bot Could Already Do This. It Was Just Slow.
 
@@ -71,15 +71,17 @@ All five pages are translated, 245 phrases in total, most of them on the [dashbo
 
 If you have never touched it, the page follows whatever language your browser is set to. Choose one and it sticks. Putting `?lang=ja` on the end of the URL forces a language for a single visit, which is the quickest way to look at something.
 
+That picker sets the language of the page, not the language of the bot. Those are two separate settings, and the second one is further down.
+
 Not everything you read on the dashboard is written by the page. The little messages that pop up when you save a setting, or when a save goes wrong, are sent back by the bot itself, and the page shows them exactly as they arrive. Until now you could put the whole dashboard into French and still get an English sentence in your face the first time something failed. There are 81 of those messages and they are translated now. The page tells the bot which language you are looking at, and the answer comes back to match.
 
 ## Your Channel Language Gets Detected
 
 Twitch already knows what language you stream in, because you chose it on your own channel. The bot reads that and uses it as the starting point, so most channels get this without doing anything.
 
-It is only ever a starting point. If a mod has run `!botlang`, that choice wins and detection cannot override it or quietly undo it. Nothing is written to your channel behind your back either. The bot checks the live value, so if you change your language on Twitch, the bot follows.
+It is only ever a starting point. If someone has picked a language, in chat or on the dashboard, that choice wins and detection cannot override it or quietly undo it. Nothing is written to your channel behind your back either. The bot checks the live value, so if you change your language on Twitch, the bot follows.
 
-Channels set to English are skipped, since English is what the bot does anyway. To see which of the two you are on, run `!botlang status`:
+Channels set to English are skipped, since English is what the bot does anyway. The dashboard says which of the two you are on, and so does `!botlang status`:
 
 ```
 El bot está configurado actualmente para hablar en español
@@ -88,6 +90,16 @@ El bot está configurado actualmente para hablar en español
 El bot está configurado actualmente para hablar en español
 (establecido por un moderador).
 ```
+
+### Or Pick One on the Dashboard
+
+Detection covers most channels, but the choice is on the [dashboard](https://bot.wildcat.chat) now too, in a card called Bot Language. It does what `!botlang` does, from a list rather than from a guess at the spelling.
+
+The default is Automatic, and it says what that currently works out to instead of leaving you to figure it out: "Automatic (Spanish, from Twitch)". Pick a language instead and the channel holds that language whatever Twitch says. Pick English and it stays English, the same as `!botlang off`.
+
+The list puts the eight pre-translated languages first and the rest underneath, so you can see which half you are choosing from. Chat still takes languages the list does not offer, and if a mod has set one of those, the dashboard shows it rather than quietly swapping it for something from the list.
+
+Your choice saves as you make it and the bot has it within seconds. Nothing restarts and there is nothing to sync.
 
 ## Which Language It Answers You In
 
@@ -117,8 +129,6 @@ One rule sits underneath all of it. A language is either finished or not offered
 
 Everything the bot thinks up rather than looks up. Where it can write that directly in your language it does, and where it cannot, it still gets translated on the way out, which is slower and less predictable than having the words ready but is the only option for a sentence that did not exist a moment ago.
 
-The dashboard has no bot language setting yet. `!botlang` in chat is still the only way to pick one on purpose, though most channels no longer have to.
-
 This website is English only.
 
-Full details are in the [WildcatSage documentation](https://docs.wildcat.chat/botcommands.html#general).
+Full details are in the [WildcatSage documentation](https://docs.wildcat.chat/botcommands.html#bot-language).
