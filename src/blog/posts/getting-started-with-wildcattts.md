@@ -60,7 +60,7 @@ The **TTS Permission** setting applies here too, so you can still limit speech t
 
 Cheers bypass this permission rule. Because the viewer spent bits, the bot reads their message even if they do not meet the permission tier. If you want to change that, turn off **Read Cheer Messages** or set **Minimum Bits** in the **Cheers** card.
 
-If chat gets busy, raising the permission level is usually better than turning TTS off. Viewers who would rather not be read can opt out with `!tts ignore`. Mods can add anyone with `!tts ignore add username`.
+If chat gets busy, raising the permission level can be better than turning TTS off. Viewers who would rather not be read can opt out with `!tts ignore`. You can also encourage viewers to use `!myvoice` in chat. It sends them a link to a web page where they can choose a voice and manage channel opt-outs. Mods can add anyone to the ignore list with `!tts ignore add username`.
 
 ### Read only when someone spends bits or channel points
 
@@ -86,7 +86,7 @@ The channel point reward works in every mode, so you can run All Messages or Com
 
 The **Voice Defaults** tab sets the voice your channel uses. There are 472 to choose from across 45 languages, each with a play button next to it so you can hear a sample before committing. The default is "Friendly_Person". Pitch, speed, and emotion are there too. Type something into the **Voice preview** card on the right and click **Send preview** to hear the result with your current settings; that preview plays in your browser, not through OBS.
 
-Viewers can pick their own voice. Typing `!myvoice` in chat sends them a private link to a settings page where they choose a voice, pitch, speed, and language that follows them into any channel running WildcatTTS. If you'd rather everyone sound the same, turn off **Allow Viewer Voice Preferences**.
+Viewers can pick their own voice. Typing `!myvoice` in chat gives them a link to the viewer settings page with your channel loaded. There they can choose a voice, pitch, speed, and language that follows them across channels. They can also manage channel opt-outs on that page. If you'd rather everyone sound the same, turn off **Allow Viewer Voice Preferences**.
 
 If your chat isn't in English, set **Default Language** so the voice pronounces things properly. The bot reads the language you declared on Twitch and fills this in for you if you never touch it, and announcements come out in that language too. There's more on that in the [40 languages post](https://wildcat.chat/blog/posts/multilingual-tts/).
 
