@@ -18,13 +18,13 @@ WildcatTTS is invite-only. Send a request through the [contact form](https://par
 
    ![The WildcatTTS landing page. Under the heading "I run the channel" is a purple Manage my channel button; under "I am a viewer" is a Set my own voice button. A notice above them says access is invite-only.](/assets/images/tts-landing.png)
 
-2. Twitch asks you to authorize the app. The permissions cover reading your chat, subs, bits, follows and channel point redemptions, creating a channel point reward on your behalf, and adding the bot as a moderator. Approve it. (The app still appears under its original name, ChatVibesTTS.)
+2. Twitch asks you to authorize the app. The permissions cover reading your chat, subs, bits, follows and channel point redemptions, creating a channel point reward on your behalf, and adding the bot as a moderator. Approve it.
 
-   ![Twitch's authorization screen listing what ChatVibesTTS will be allowed to do: manage channel point rewards and redemptions, grant or remove the moderator role, list subscribers, view Bits information, read followers, and join chat as a bot user. Authorize and Cancel buttons are at the bottom.](/assets/images/tts-twitch-authorize.png)
+   ![Twitch's authorization screen listing what WildcatTTS will be allowed to do: manage channel point rewards and redemptions, grant or remove the moderator role, list subscribers, view Bits information, read followers, and join chat as a bot user. Authorize and Cancel buttons are at the bottom.](/assets/images/tts-twitch-authorize.png)
 
 3. You land on the dashboard. In the **Channel service** card on the right, click **Activate TTS service**.
 
-   ![The WildcatTTS channel dashboard. A status bar shows Service: Active, the channel name, and who is signed in. Below it are Broadcaster and Voice Defaults tabs, with the Engine & Mode card listing toggles for TTS Engine Enabled, Announce Events, Anonymize New Followers and more. The Channel service card on the right shows a Deactivate TTS service button; on a channel that has not been switched on yet, the same button reads Activate TTS service.](/assets/images/tts-dashboard.png)
+   ![The WildcatTTS channel dashboard for a newly approved channel. A status bar shows Service: Inactive, the channel name, and who is signed in. Below it are Broadcaster and Voice Defaults tabs, with the Engine & Mode card listing toggles for TTS Engine Enabled, Announce Events, Anonymize New Followers and more. The Channel service card on the right has a purple Activate TTS service button.](/assets/images/tts-dashboard.png)
 
 Signing in also makes the WildcatTTS account a moderator in your channel, so you do not have to mod it by hand. The bot shows up under "Chat Bots" in your viewer list.
 
