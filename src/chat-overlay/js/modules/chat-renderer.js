@@ -166,6 +166,8 @@ export class ChatRenderer {
                 return;
             }
 
+            if (this.config.hideCommands && data.message.trimStart().startsWith('!')) return;
+
             const shouldScroll = this.config.chatMode === 'window' && this.scrollManager.autoFollow;
             const messageElement = document.createElement('div');
 

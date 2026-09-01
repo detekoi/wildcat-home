@@ -223,6 +223,7 @@ export class SettingsPanelManager {
                 thirdPartyEmoteCacheChannelTTL: this._configManager.config.thirdPartyEmoteCacheChannelTTL,
                 enlargeSingleEmotes: getValue(enlargeSingleEmotesToggle, this._configManager.config.enlargeSingleEmotes, false, true),
                 topFade: getValue(topFadeToggle, this._configManager.config.topFade ?? false, false, true),
+                hideCommands: getValue(document.getElementById('hide-commands-toggle'), this._configManager.config.hideCommands ?? false, false, true),
                 chromaKey: this._configManager.config.chromaKey ?? false,
                 preChromaKeyOpacity: this._configManager.config.preChromaKeyOpacity,
                 preChromaKeyColor: this._configManager.config.preChromaKeyColor,
@@ -495,6 +496,9 @@ export class SettingsPanelManager {
         if (showMembershipsToggle) showMembershipsToggle.checked = this._configManager.config.showMembershipEvents ?? true;
         const showPlatformBadgesToggle = document.getElementById('show-platform-badges-toggle');
         if (showPlatformBadgesToggle) showPlatformBadgesToggle.checked = this._configManager.config.showPlatformBadges ?? true;
+
+        const hideCommandsToggle = document.getElementById('hide-commands-toggle');
+        if (hideCommandsToggle) hideCommandsToggle.checked = this._configManager.config.hideCommands ?? false;
 
         const thirdPartyEmotesToggle = document.getElementById('third-party-emotes-toggle');
         if (thirdPartyEmotesToggle) thirdPartyEmotesToggle.checked = this._configManager.config.thirdPartyEmotes ?? true;

@@ -16,7 +16,7 @@ const PROXY_ALLOWED_CONFIG_KEYS = new Set([
   'thirdPartyEmoteCacheGlobalTTL', 'thirdPartyEmoteCacheChannelTTL',
   'enlargeSingleEmotes', 'bgColorOpacity', 'bgImageOpacity', 'topFade', 'chromaKey',
   'googleFontFamily', 'bgImage', 'lastTwitchChannel', 'lastYouTubeTarget',
-  'showSuperChats', 'showMembershipEvents', 'showPlatformBadges', 'preChromaKeyOpacity'
+  'showSuperChats', 'showMembershipEvents', 'showPlatformBadges', 'preChromaKeyOpacity', 'hideCommands'
 ]);
 
 describe('Config Schema Parity & Coverage', () => {

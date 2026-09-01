@@ -474,3 +474,86 @@ describe('ChatRenderer - Security Mitigations', () => {
         });
     });
 });
+
+describe('ChatRenderer - Command filtering', () => {
+    let renderer;
+    let mockScrollManager;
+    let mockBadgeManager;
+
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <div id="chat-messages"></div>
+        `;
+
+        mockScrollManager = {
+            ensureSentinelLast: vi.fn(),
+            scrollToBottom: vi.fn(),
+            isUserScrolledToBottom: vi.fn(() => true),
+            setScrollTop: vi.fn(),
+            stickToBottomSoon: vi.fn()
+        };
+        mockBadgeManager = {
+            generateBadgeHTML: vi.fn(() => '')
+        };
+    });
+
+    it('hides a message that starts with "!" when hideCommands is true', () => {
+        const config = { chatMode: 'window', hideCommands: true };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+
+        renderer.addChatMessage({ username: 'bot', message: '!so someone' });
+
+        expect(document.querySelectorAll('#chat-messages .chat-message')).toHaveLength(0);
+    });
+
+    it('hides a command message with leading whitespace when hideCommands is true', () => {
+        const config = { chatMode: 'window', hideCommands: true };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+
+        renderer.addChatMessage({ username: 'bot', message: '  !lurk' });
+
+        expect(document.querySelectorAll('#chat-messages .chat-message')).toHaveLength(0);
+    });
+
+    it('still renders a message that merely contains "!" mid-message when hideCommands is true', () => {
+        const config = { chatMode: 'window', hideCommands: true };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+
+        renderer.addChatMessage({ username: 'bot', message: 'hello !world' });
+
+        expect(document.querySelectorAll('#chat-messages .chat-message')).toHaveLength(1);
+    });
+
+    it('renders a command message when hideCommands is false', () => {
+        const config = { chatMode: 'window', hideCommands: false };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+
+        renderer.addChatMessage({ username: 'bot', message: '!so someone' });
+
+        expect(document.querySelectorAll('#chat-messages .chat-message')).toHaveLength(1);
+    });
+
+    it('renders a command message when hideCommands is absent from config', () => {
+        const config = { chatMode: 'window' };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+
+        renderer.addChatMessage({ username: 'bot', message: '!so someone' });
+
+        expect(document.querySelectorAll('#chat-messages .chat-message')).toHaveLength(1);
+    });
+
+    it('still routes a superchat starting with "!" to renderSuperChat even when hideCommands is true', () => {
+        const config = { chatMode: 'window', hideCommands: true };
+        renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null);
+        const superChatSpy = vi.spyOn(renderer, 'renderSuperChat').mockImplementation(() => {});
+
+        renderer.addChatMessage({
+            username: 'fan',
+            message: '!hype',
+            eventType: 'superchat',
+            amount: '$5.00'
+        });
+
+        expect(superChatSpy).toHaveBeenCalled();
+    });
+});

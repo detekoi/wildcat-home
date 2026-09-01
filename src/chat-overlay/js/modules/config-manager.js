@@ -130,6 +130,7 @@ export class ConfigManager {
             bgColorOpacity: 0.8,
             bgImageOpacity: 0.55,
             topFade: false,
+            hideCommands: false,
             chromaKey: false
         };
     }

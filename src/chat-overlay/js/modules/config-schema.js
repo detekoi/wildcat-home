@@ -280,6 +280,14 @@ export const CONFIG_SCHEMA = [
         default: false,
         helpText: 'Fades messages at the top border'
     },
+    {
+        key: 'hideCommands',
+        group: 'message_elements',
+        label: 'Hide Commands',
+        control: 'checkbox',
+        default: false,
+        helpText: 'Skips chat messages that start with !'
+    },
 
     // --- Display Mode ---
     {

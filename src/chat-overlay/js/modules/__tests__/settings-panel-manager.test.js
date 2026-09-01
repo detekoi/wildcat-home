@@ -154,7 +154,10 @@ describe('SettingsPanelManager - readPanelConfig reads live DOM state', () => {
 
     beforeEach(() => {
         localStorage.clear();
-        document.body.innerHTML = '<input type="text" id="text-color-hex">';
+        document.body.innerHTML = `
+            <input type="text" id="text-color-hex">
+            <input type="checkbox" id="hide-commands-toggle">
+        `;
         textColorHex = document.getElementById('text-color-hex');
 
         configManager = new ConfigManager();
@@ -188,5 +191,17 @@ describe('SettingsPanelManager - readPanelConfig reads live DOM state', () => {
         textColorHex.value = '';
 
         expect(settingsPanel.readPanelConfig().textColor).toBe('#000000');
+    });
+
+    it('reads hideCommands as true when the checkbox is checked', () => {
+        document.getElementById('hide-commands-toggle').checked = true;
+
+        expect(settingsPanel.readPanelConfig().hideCommands).toBe(true);
+    });
+
+    it('reads hideCommands as false when the checkbox is unchecked', () => {
+        document.getElementById('hide-commands-toggle').checked = false;
+
+        expect(settingsPanel.readPanelConfig().hideCommands).toBe(false);
     });
 });

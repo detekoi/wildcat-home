@@ -372,7 +372,16 @@ export function bindSettingsEvents(domRefs, managers) {
             chatRenderer.config = configManager.config;
         });
     }
-    
+
+    // Hide commands toggle
+    const hideCommandsToggle = document.getElementById('hide-commands-toggle');
+    if (hideCommandsToggle) {
+        hideCommandsToggle.addEventListener('change', () => {
+            configManager.updateConfig('hideCommands', hideCommandsToggle.checked);
+            chatRenderer.config = configManager.config;
+        });
+    }
+
     if (showBadgesToggle) {
         showBadgesToggle.addEventListener('change', () => themeManager.updateThemePreview());
     }
