@@ -191,7 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const workspaceTitle = this.dom.workspaceTitle;
             const currentId = this.instanceManager.currentInstanceId;
 
-            if (saveBtn && !saveBtn.disabled) {
+            // setDirty(true) fires on every keystroke in the name/channel inputs, so only
+            // rewrite the button (and re-scan its icon) when its rendered state actually
+            // changes. The marker is cleared by saveCurrentInstance() when it swaps in the
+            // "Saving..." label, so the post-save call always restores the button.
+            const wantState = this.isDirty ? 'dirty' : 'clean';
+            if (saveBtn && !saveBtn.disabled && saveBtn.dataset.dirtyState !== wantState) {
                 if (this.isDirty) {
                     saveBtn.classList.add('btn-dirty');
                     saveBtn.innerHTML = '<i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings <span class="unsaved-badge">● Unsaved</span>';
@@ -199,7 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveBtn.classList.remove('btn-dirty');
                     saveBtn.innerHTML = '<i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings';
                 }
-                if (window.lucide) window.lucide.createIcons();
+                saveBtn.dataset.dirtyState = wantState;
+                if (window.lucide) window.lucide.createIcons({ root: saveBtn });
             }
 
             if (workspaceTitle && currentId && this.instanceManager.instances[currentId]) {
@@ -408,8 +414,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.classList.remove('btn-dirty');
+                delete saveBtn.dataset.dirtyState;
                 saveBtn.innerHTML = '<i data-lucide="loader" class="lucide-inline spin"></i> Saving & Syncing...';
-                if (window.lucide) window.lucide.createIcons();
+                if (window.lucide) window.lucide.createIcons({ root: saveBtn });
             }
 
             try {
