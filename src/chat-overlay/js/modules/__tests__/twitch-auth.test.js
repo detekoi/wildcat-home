@@ -100,6 +100,35 @@ describe('TwitchAuth Module', () => {
             expect(hist.replaceState).toHaveBeenCalledTimes(1);
         });
 
+        it('rejects a token when no login is in flight and the hash carries no state (null === null must not pass)', () => {
+            sessionStorage.removeItem(authModule.STATE_KEY);
+            const hist = { replaceState: vi.fn() };
+            const loc = {
+                hash: '#access_token=injected-token&scope=&token_type=bearer',
+                search: '',
+                pathname: '/scene-creator.html'
+            };
+
+            const result = authModule.handleRedirect({ loc, hist });
+
+            expect(result.status).toBe('state_mismatch');
+            expect(localStorage.getItem(authModule.AUTH_KEY)).toBeNull();
+            expect(hist.replaceState).toHaveBeenCalledTimes(1);
+        });
+
+        it('rejects a token that carries a state when no login is in flight', () => {
+            sessionStorage.removeItem(authModule.STATE_KEY);
+            const hist = { replaceState: vi.fn() };
+            const loc = {
+                hash: '#access_token=injected-token&scope=&state=whatever&token_type=bearer',
+                search: '',
+                pathname: '/scene-creator.html'
+            };
+
+            expect(authModule.handleRedirect({ loc, hist }).status).toBe('state_mismatch');
+            expect(localStorage.getItem(authModule.AUTH_KEY)).toBeNull();
+        });
+
         it('returns "error" with the description on ?error=access_denied, and cleans the URL', () => {
             const hist = { replaceState: vi.fn() };
             const loc = {

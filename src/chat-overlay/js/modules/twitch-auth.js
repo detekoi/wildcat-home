@@ -94,7 +94,9 @@ export function handleRedirect({ loc = window.location, hist = window.history } 
     let result;
     if (accessToken) {
         const state = hashParams.get('state');
-        if (state !== expectedState) {
+        // Both sides must be present: with no login in flight expectedState is
+        // null, and a crafted link with no state would otherwise pass null === null.
+        if (!state || !expectedState || state !== expectedState) {
             result = { status: 'state_mismatch', message: 'Sign-in could not be verified. Try again.' };
         } else {
             try {

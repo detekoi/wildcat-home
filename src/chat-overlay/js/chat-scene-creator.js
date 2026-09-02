@@ -741,6 +741,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.syncManager.updateInstanceUrl(this.instanceManager.instances[selectedId], selectedId, this.dom);
                 }
 
+                // A token can exist locally without a cloud doc (its first push failed
+                // and nothing has been saved since). Local is the only copy, so push it
+                // now; a device that only has the account would otherwise hydrate defaults.
+                const localByToken = new Map(
+                    Object.values(this.instanceManager.instances).filter(i => i.syncToken).map(i => [i.syncToken, i])
+                );
+                await Promise.allSettled(
+                    account.scenes
+                        .filter(s => s.exists === false && localByToken.has(s.token))
+                        .map(s => this.pushFreshTokenToCloud(localByToken.get(s.token)))
+                );
+
                 const accountTokenSet = new Set(account.scenes.map(s => s.token));
                 const localToLink = Object.values(this.instanceManager.instances)
                     .filter(inst => inst.syncToken && !accountTokenSet.has(inst.syncToken));
@@ -929,6 +941,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const deletedId = this.instanceManager.deleteCurrentInstance({ confirmMessage });
                     if (deletedId) {
+                        // The deleted scene's unsaved edits died with it; otherwise the
+                        // next selectInstance() would offer to save a scene that no longer exists.
+                        this.setDirty(false);
                         // The cloud sceneConfigs doc is NOT deleted here — only the
                         // account's link to it, so the OBS source keeps working.
                         if (this.accountUser && token) {
