@@ -11,6 +11,14 @@ import { CreatorSyncManager } from './modules/creator-sync-manager.js';
 import { CreatorIOManager } from './modules/creator-io-manager.js';
 import { CreatorDragHandler } from './modules/creator-drag-handler.js';
 import { ModalA11y } from './modules/modal-a11y.js';
+import { login, handleRedirect, restoreSession, logout, getCachedUser, clearSession } from './modules/twitch-auth.js';
+import { AUTH_EXPIRED_EVENT, fetchAccount, linkScenes, unlinkScene, setSceneOrder } from './modules/account-client.js';
+import { mergeSceneOrder } from './modules/account-merge.js';
+
+// The Twitch access token rides in the URL hash on a successful OAuth redirect
+// and must be stripped before any other deferred script (analytics) runs, so
+// this has to happen at module top level, before DOMContentLoaded.
+const authRedirect = handleRedirect();
 
 document.addEventListener('DOMContentLoaded', () => {
     class ChatSceneCreatorApp {
@@ -19,6 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom = {};
             this.isDirty = false;
             this.isPopulating = false;
+
+            this.accountUser = null;
+            this.accountTokens = new Set();
+            this._accountSyncInFlight = false;
+            this._revalidateTimer = null;
+            this._orderPushTimer = null;
 
             this.initializeDOM();
 
@@ -56,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.instanceManager.instanceOrder = newOrder;
                     this.instanceManager.saveInstances();
                     this.renderInstanceList();
+                    this.pushOrderToAccount();
                 }
             });
 
@@ -80,6 +95,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 this.instanceManager.showEmptyState(this.dom);
             }
+
+            // Event delegation: the plate's innerHTML is fully re-rendered by
+            // renderAccountUI(), which would detach a directly-bound listener.
+            if (this.dom.accountPlate) {
+                this.dom.accountPlate.addEventListener('click', (e) => {
+                    if (e.target.closest('#twitchLoginBtn')) {
+                        this.handleLogin();
+                    } else if (e.target.closest('#twitchLogoutBtn')) {
+                        this.handleLogout();
+                    }
+                });
+            }
+
+            // Not awaited: account sync happens in the background so first paint
+            // isn't blocked on a network round trip.
+            this.initAccount(authRedirect);
         }
 
         setupAccordion() {
@@ -102,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeDOM() {
             this.dom = {
                 instanceList: document.getElementById('instanceList'),
+                accountPlate: document.getElementById('accountPlate'),
                 createInstanceBtn: document.getElementById('createInstanceBtn'),
                 importBtn: document.getElementById('importBtn'),
                 exportAllBtn: document.getElementById('exportAllBtn'),
@@ -296,7 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.instanceManager.renderInstanceList(
                 this.dom.instanceList,
                 (id) => this.selectInstance(id),
-                () => this.isDirty
+                () => this.isDirty,
+                { isInAccount: (inst) => !!this.accountUser && this.accountTokens.has(inst.syncToken) }
             );
         }
 
@@ -398,6 +431,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         UIHelpers.showNotification('Saved & Synced', `"${instance.name}" saved and synced to OBS.`, 'success');
                     } else {
                         UIHelpers.showNotification('Saved Locally', 'Saved locally, but cloud sync failed.', 'warning');
+                    }
+                    // The account registry keeps its own copy of the name (the
+                    // config doc's sceneName gets overwritten with the scene id by
+                    // the overlay), so a rename has to be sent explicitly. No force:
+                    // saving must not resurrect a scene unlinked elsewhere.
+                    if (this.accountUser && this.accountTokens.has(instance.syncToken)) {
+                        this.linkToAccount([instance], { force: false });
                     }
                 } else {
                     UIHelpers.showNotification('Saved Locally', `"${instance.name}" saved locally.`, 'success');
@@ -516,6 +556,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.closeImportSceneModal();
                 this.selectInstance(existingId);
                 UIHelpers.showNotification('Already Linked', 'This scene is already linked in this browser.');
+                // Explicit action re-links a scene even if the account had it
+                // tombstoned (unlinked elsewhere) — unlike the automatic merge in
+                // syncWithAccount, which must leave a tombstone alone.
+                this.linkToAccount([this.instanceManager.instances[existingId]]);
                 return;
             }
 
@@ -524,13 +568,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // here, unlike duplicate. Deliberately no push: this scene's config is still
             // empty defaults and would overwrite the remote scene — the Firestore snapshot
             // populates it instead.
-            const newId = this.instanceManager.createInstance('Linked Scene');
-            this.instanceManager.instances[newId].syncToken = token;
-            this.instanceManager.saveInstances();
+            const newId = this.instanceManager.createLinkedInstance({ name: 'Linked Scene', syncToken: token });
 
             this.closeImportSceneModal();
             this.renderInstanceList();
             this.selectInstance(newId);
+            this.linkToAccount([this.instanceManager.instances[newId]]);
             UIHelpers.showNotification('Scene Linked', 'Loading settings from the cloud.');
         }
 
@@ -542,6 +585,247 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!pushResult.success) {
                 UIHelpers.showNotification('Sync Pending', 'Scene saved locally. Cloud sync will retry on next save.', 'warning');
             }
+        }
+
+        // ---- Account (Twitch sign-in / cross-device scene sync) ----------------
+
+        renderAccountUI({ status } = {}) {
+            const plate = this.dom.accountPlate;
+            if (!plate) return;
+
+            if (!this.accountUser) {
+                plate.classList.remove('account-plate--signed-in');
+                const statusHtml = status
+                    ? `<p class="account-status account-status--warning">${UIHelpers.escapeHtml(status)}</p>`
+                    : '';
+                plate.innerHTML = `
+                    <p class="account-eyebrow">Scene list stored in</p>
+                    <p class="account-value">This browser only</p>
+                    <button type="button" class="btn btn-secondary account-signin" id="twitchLoginBtn"><svg class="lucide-inline" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg> Sign in with Twitch</button>
+                    <p class="account-hint">Optional. Keeps your scenes on every computer you use.</p>
+                    ${statusHtml}
+                `;
+            } else {
+                plate.classList.add('account-plate--signed-in');
+                const { displayName, avatarUrl } = this.accountUser;
+                const avatarHtml = (typeof avatarUrl === 'string' && avatarUrl.startsWith('https://'))
+                    ? `<img class="account-avatar" src="${UIHelpers.escapeHtml(avatarUrl)}" alt="" width="24" height="24">`
+                    : `<span class="account-avatar account-avatar--empty" aria-hidden="true"></span>`;
+                plate.innerHTML = `
+                    <p class="account-eyebrow">Scene list stored in</p>
+                    <div class="account-user">
+                        ${avatarHtml}
+                        <span class="account-name">${UIHelpers.escapeHtml(displayName)}</span>
+                        <button type="button" class="account-signout" id="twitchLogoutBtn">Sign out</button>
+                    </div>
+                    <p class="account-status" id="accountStatus" aria-live="polite">${UIHelpers.escapeHtml(status || 'Twitch account · synced')}</p>
+                `;
+            }
+
+            window.lucide?.createIcons();
+        }
+
+        /** Updates the status line in place, without tearing down and re-rendering the plate. */
+        setAccountStatus(text, { warning = false } = {}) {
+            const el = document.getElementById('accountStatus');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.toggle('account-status--warning', !!warning);
+        }
+
+        async initAccount(redirectResult) {
+            if (redirectResult && (redirectResult.status === 'error' || redirectResult.status === 'state_mismatch')) {
+                UIHelpers.showNotification('Sign-in failed', redirectResult.message, 'error');
+            }
+
+            // Paint whatever is cached immediately so there's no flash of "signed
+            // out" while restoreSession() round-trips to Twitch.
+            const cached = getCachedUser();
+            if (cached) {
+                this.accountUser = cached;
+                this.renderAccountUI();
+            }
+
+            this.accountUser = await restoreSession();
+            this.renderAccountUI();
+
+            // Registered before the first sync so a 401 during that sync is not
+            // misreported as "could not reach your account".
+            window.addEventListener(AUTH_EXPIRED_EVENT, () => this.handleSessionExpired());
+
+            if (this.accountUser) {
+                if (redirectResult && redirectResult.status === 'ok') {
+                    UIHelpers.showNotification('Signed in', `Signed in as ${this.accountUser.displayName}`);
+                }
+                await this.syncWithAccount({ announce: true });
+                this._revalidateTimer = setInterval(() => this.revalidateSession(), 60 * 60 * 1000);
+            }
+        }
+
+        async revalidateSession() {
+            const user = await restoreSession();
+            if (!user && this.accountUser) {
+                this.handleSessionExpired();
+            } else if (user) {
+                this.accountUser = user;
+            }
+        }
+
+        handleSessionExpired() {
+            // The 401 event can fire after a deliberate sign-out; nothing to do then.
+            if (!this.accountUser) return;
+            clearSession();
+            this.accountUser = null;
+            this.accountTokens.clear();
+            if (this._revalidateTimer) {
+                clearInterval(this._revalidateTimer);
+                this._revalidateTimer = null;
+            }
+            this.renderAccountUI();
+            this.renderInstanceList();
+            UIHelpers.showNotification('Twitch session expired', 'Sign in again to keep syncing your scene list.', 'warning');
+        }
+
+        async handleLogin() {
+            const ok = await this.confirmSaveIfDirty('signing in');
+            if (!ok) return;
+            login();
+        }
+
+        async handleLogout() {
+            await logout();
+            this.accountUser = null;
+            this.accountTokens.clear();
+            if (this._revalidateTimer) {
+                clearInterval(this._revalidateTimer);
+                this._revalidateTimer = null;
+            }
+            this.renderAccountUI();
+            this.renderInstanceList();
+            UIHelpers.showNotification('Signed out', 'Your scenes stay in this browser.');
+        }
+
+        async syncWithAccount({ announce = false } = {}) {
+            if (this._accountSyncInFlight) return;
+            this._accountSyncInFlight = true;
+
+            try {
+                // Another tab may have written to localStorage since this tab last
+                // read it. Re-reading is safe only while nothing here is unsaved —
+                // an in-progress edit takes priority over a re-read.
+                if (!this.isDirty) {
+                    this.instanceManager.loadInstances();
+                    const currentId = this.instanceManager.currentInstanceId;
+                    if (currentId && !this.instanceManager.instances[currentId]) {
+                        this.instanceManager.currentInstanceId = null;
+                    }
+                }
+
+                this.setAccountStatus('Syncing…');
+                const account = await fetchAccount();
+                if (!account) {
+                    this.setAccountStatus('Could not reach your account. Working locally.', { warning: true });
+                    if (announce) {
+                        UIHelpers.showNotification('Sync unavailable', 'Could not reach your account. Working locally.', 'warning');
+                    }
+                    return;
+                }
+
+                for (const id of [...this.instanceManager.instanceOrder]) {
+                    await this.ensureSyncTokenAndPush(id);
+                }
+                // ensureSyncTokenAndPush rewrites the OBS URL panel for whichever
+                // scene it minted for; put the selected scene's URL back.
+                const selectedId = this.instanceManager.currentInstanceId;
+                if (selectedId && this.instanceManager.instances[selectedId]) {
+                    this.syncManager.updateInstanceUrl(this.instanceManager.instances[selectedId], selectedId, this.dom);
+                }
+
+                const accountTokenSet = new Set(account.scenes.map(s => s.token));
+                const localToLink = Object.values(this.instanceManager.instances)
+                    .filter(inst => inst.syncToken && !accountTokenSet.has(inst.syncToken));
+                // No force: an account-side tombstone (a scene the user explicitly
+                // unlinked elsewhere) must stay skipped on this automatic merge —
+                // only an explicit user action re-links it.
+                const result = await linkScenes(localToLink.map(i => ({ token: i.syncToken, name: i.name })));
+                this.accountTokens = new Set([...accountTokenSet, ...(result?.linked || []), ...(result?.existing || [])]);
+                const linkedCount = result?.linked?.length || 0;
+                const skippedCount = result?.skipped?.length || 0;
+
+                let addedFromAccount = 0;
+                const localTokens = new Set(
+                    Object.values(this.instanceManager.instances).map(i => i.syncToken).filter(Boolean)
+                );
+                for (const scene of account.scenes) {
+                    if (!localTokens.has(scene.token)) {
+                        this.instanceManager.createLinkedInstance({ name: scene.name, syncToken: scene.token, config: scene.config });
+                        addedFromAccount++;
+                    }
+                }
+
+                const tokenById = new Map(
+                    this.instanceManager.instanceOrder.map(id => [id, this.instanceManager.instances[id]?.syncToken])
+                );
+                const { order, changed } = mergeSceneOrder(account.sceneOrder, this.instanceManager.instanceOrder, tokenById);
+                this.instanceManager.instanceOrder = order;
+                if (changed) {
+                    const orderedTokens = order
+                        .map(id => this.instanceManager.instances[id]?.syncToken)
+                        .filter(token => token && this.accountTokens.has(token));
+                    await setSceneOrder(orderedTokens);
+                }
+
+                this.instanceManager.saveInstances();
+                this.renderInstanceList();
+
+                if (!this.instanceManager.currentInstanceId && order.length > 0) {
+                    this.selectInstance(order[0]);
+                }
+
+                this.setAccountStatus('Twitch account · synced');
+
+                if (announce) {
+                    const parts = [];
+                    if (linkedCount > 0) parts.push(`${linkedCount} added to your account`);
+                    if (addedFromAccount > 0) parts.push(`${addedFromAccount} added from your account`);
+                    if (skippedCount > 0) parts.push(`${skippedCount} kept in this browser only`);
+                    UIHelpers.showNotification(
+                        'Scene list synced',
+                        parts.length > 0 ? parts.join(' · ') : 'Scene list up to date'
+                    );
+                }
+            } catch (err) {
+                console.error('[SceneCreator] Account sync failed:', err);
+                this.setAccountStatus('Sync failed. Working locally.', { warning: true });
+            } finally {
+                this._accountSyncInFlight = false;
+            }
+        }
+
+        async linkToAccount(instances, { force = true } = {}) {
+            if (!this.accountUser) return;
+            const list = (instances || []).filter(inst => inst && inst.syncToken);
+            if (list.length === 0) return;
+
+            const r = await linkScenes(list.map(inst => ({ token: inst.syncToken, name: inst.name })), { force });
+            if (r) {
+                for (const token of [...(r.linked || []), ...(r.existing || [])]) {
+                    this.accountTokens.add(token);
+                }
+                this.renderInstanceList();
+            }
+        }
+
+        pushOrderToAccount() {
+            if (!this.accountUser) return;
+            if (this._orderPushTimer) clearTimeout(this._orderPushTimer);
+            this._orderPushTimer = setTimeout(() => {
+                this._orderPushTimer = null;
+                const tokens = this.instanceManager.instanceOrder
+                    .map(id => this.instanceManager.instances[id]?.syncToken)
+                    .filter(token => token && this.accountTokens.has(token));
+                setSceneOrder(tokens);
+            }, 300);
         }
 
         setupEventListeners() {
@@ -593,6 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.renderInstanceList();
                     await this.selectInstance(newId);
                     await this.pushFreshTokenToCloud(this.instanceManager.instances[newId]);
+                    await this.linkToAccount([this.instanceManager.instances[newId]]);
                 });
             }
 
@@ -626,14 +911,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.renderInstanceList();
                         await this.selectInstance(newId);
                         await this.pushFreshTokenToCloud(this.instanceManager.instances[newId]);
+                        await this.linkToAccount([this.instanceManager.instances[newId]]);
                     }
                 });
             }
 
             if (this.dom.deleteBtn) {
                 this.dom.deleteBtn.addEventListener('click', () => {
-                    const deletedId = this.instanceManager.deleteCurrentInstance();
+                    const currentId = this.instanceManager.currentInstanceId;
+                    const currentInstance = currentId ? this.instanceManager.instances[currentId] : null;
+                    // Captured before deleteCurrentInstance() runs — it deletes the
+                    // instance, so this is the last point the token is reachable.
+                    const token = currentInstance?.syncToken;
+                    const confirmMessage = this.accountUser
+                        ? `Delete "${currentInstance?.name}"? It will also be removed from your Twitch account's scene list. The OBS overlay keeps working until you remove the source.`
+                        : undefined;
+
+                    const deletedId = this.instanceManager.deleteCurrentInstance({ confirmMessage });
                     if (deletedId) {
+                        // The cloud sceneConfigs doc is NOT deleted here — only the
+                        // account's link to it, so the OBS source keeps working.
+                        if (this.accountUser && token) {
+                            this.accountTokens.delete(token);
+                            unlinkScene(token);
+                        }
                         this.renderInstanceList();
                         if (this.instanceManager.instanceOrder.length > 0) {
                             this.selectInstance(this.instanceManager.instanceOrder[0]);
@@ -662,14 +963,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const confirmed = await this.confirmSaveIfDirty('importing scenes');
                     if (!confirmed) return;
                     CreatorIOManager.importInstanceFile(
-                        (parsed) => {
+                        async (parsed) => {
                             let importedCount = 0;
+                            // Instances touched by this import, and the subset of
+                            // those that had no syncToken in the file (so a token
+                            // was just minted here and has never been pushed).
+                            const importedInstances = [];
+                            const minted = [];
                             if (parsed.instances && parsed.instanceOrder) {
                                 for (const id of Object.keys(parsed.instances)) {
                                     const rawInstance = parsed.instances[id];
                                     if (rawInstance && rawInstance.config) {
                                         const { config: safeConfig } = migrateConfig(rawInstance.config, this.configManagerHelper.getDefaultConfig());
-                                        this.instanceManager.instances[id] = {
+                                        const instance = {
                                             id: String(rawInstance.id || id),
                                             name: String(rawInstance.name || 'Imported Scene').trim() || 'Imported Scene',
                                             config: safeConfig,
@@ -677,6 +983,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                             lastModified: new Date().toISOString(),
                                             syncToken: rawInstance.syncToken ? String(rawInstance.syncToken) : this.instanceManager.mintSyncToken()
                                         };
+                                        this.instanceManager.instances[id] = instance;
+                                        importedInstances.push(instance);
+                                        if (!rawInstance.syncToken) minted.push(instance);
                                     }
                                 }
                                 parsed.instanceOrder.forEach(id => {
@@ -689,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else if (parsed.id && parsed.name && parsed.config) {
                                 const newId = UIHelpers.generateSecureId('scene');
                                 const { config: safeConfig } = migrateConfig(parsed.config, this.configManagerHelper.getDefaultConfig());
-                                this.instanceManager.instances[newId] = {
+                                const instance = {
                                     id: newId,
                                     name: String(parsed.name).trim() || 'Imported Scene',
                                     config: safeConfig,
@@ -697,7 +1006,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     lastModified: new Date().toISOString(),
                                     syncToken: parsed.syncToken ? String(parsed.syncToken) : this.instanceManager.mintSyncToken()
                                 };
+                                this.instanceManager.instances[newId] = instance;
                                 this.instanceManager.instanceOrder.push(newId);
+                                importedInstances.push(instance);
+                                if (!parsed.syncToken) minted.push(instance);
                                 importedCount = 1;
                             } else {
                                 UIHelpers.showNotification('Import Failed', 'The JSON file does not match the scene configuration format.', 'error');
@@ -706,6 +1018,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             this.instanceManager.saveInstances();
                             this.renderInstanceList();
                             UIHelpers.showNotification('Imported', importedCount > 1 ? `Imported ${importedCount} chat scenes.` : 'Imported 1 chat scene.');
+
+                            // Freshly minted tokens must be pushed before the scene can be
+                            // shared or linked, same atomicity requirement as elsewhere.
+                            await Promise.allSettled(minted.map(i => this.pushFreshTokenToCloud(i)));
+                            await this.linkToAccount(importedInstances);
                         },
                         (err) => UIHelpers.showNotification('Import Failed', 'Invalid JSON file.', 'error')
                     );

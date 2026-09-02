@@ -183,5 +183,113 @@ describe('CreatorInstanceManager - Sync Token Handling', () => {
             expect(item.textContent).toContain('Local Scene');
             expect(item.textContent).not.toContain('Sync Active');
         });
+
+        it('should display "In account" when isInAccount returns true for the instance', () => {
+            const container = document.createElement('div');
+            instanceManager.createInstance('Gaming Scene');
+
+            instanceManager.renderInstanceList(container, vi.fn(), undefined, { isInAccount: () => true });
+
+            const item = container.querySelector('.instance-item');
+            expect(item.textContent).toContain('In account');
+            expect(item.textContent).not.toContain('Sync Active');
+        });
+
+        it('should fall back to "Sync Active" when isInAccount returns false for a synced instance', () => {
+            const container = document.createElement('div');
+            instanceManager.createInstance('Gaming Scene');
+
+            instanceManager.renderInstanceList(container, vi.fn(), undefined, { isInAccount: () => false });
+
+            const item = container.querySelector('.instance-item');
+            expect(item.textContent).toContain('Sync Active');
+            expect(item.textContent).not.toContain('In account');
+        });
+
+        it('should still render "Sync Active"/"Local Scene" when called without the 4th argument (existing 2/3-arg callers)', () => {
+            const container = document.createElement('div');
+            const syncedId = instanceManager.createInstance('Synced Scene');
+            const localId = instanceManager.createInstance('Local Scene Two');
+            delete instanceManager.instances[localId].syncToken;
+
+            instanceManager.renderInstanceList(container, vi.fn(), () => false);
+
+            const items = container.querySelectorAll('.instance-item');
+            const syncedItem = Array.from(items).find(el => el.dataset.id === syncedId);
+            const localItem = Array.from(items).find(el => el.dataset.id === localId);
+            expect(syncedItem.textContent).toContain('Sync Active');
+            expect(localItem.textContent).toContain('Local Scene');
+        });
+    });
+
+    describe('createLinkedInstance', () => {
+        it('should set the given syncToken on the new instance', () => {
+            const id = instanceManager.createLinkedInstance({ name: 'Remote Scene', syncToken: 'abc-123' });
+
+            expect(instanceManager.instances[id].syncToken).toBe('abc-123');
+        });
+
+        it('should merge a provided config over the defaults: provided keys override, missing keys fall back', () => {
+            const id = instanceManager.createLinkedInstance({
+                name: 'Remote Scene',
+                syncToken: 'abc-123',
+                config: { theme: 'dark' }
+            });
+
+            expect(instanceManager.instances[id].config).toEqual({ theme: 'dark', fontSize: 14 });
+        });
+
+        it('should use the default config when config is null', () => {
+            const id = instanceManager.createLinkedInstance({ name: 'Remote Scene', syncToken: 'abc-123', config: null });
+
+            expect(instanceManager.instances[id].config).toEqual({ theme: 'default', fontSize: 14 });
+        });
+
+        it('should append the new instance to instanceOrder', () => {
+            const id = instanceManager.createLinkedInstance({ name: 'Remote Scene', syncToken: 'abc-123' });
+
+            expect(instanceManager.instanceOrder).toContain(id);
+        });
+
+        it('should persist the new instance to localStorage', () => {
+            const id = instanceManager.createLinkedInstance({ name: 'Remote Scene', syncToken: 'abc-123' });
+
+            const persisted = JSON.parse(localStorage.getItem('twitch-chat-overlay-instances'));
+            expect(persisted[id].syncToken).toBe('abc-123');
+        });
+
+        it('should fire no notification', () => {
+            instanceManager.createLinkedInstance({ name: 'Remote Scene', syncToken: 'abc-123' });
+
+            expect(onNotification).not.toHaveBeenCalled();
+        });
+
+        it('should default the name to "Linked Scene" when no name is given', () => {
+            const id = instanceManager.createLinkedInstance({ syncToken: 'abc-123' });
+
+            expect(instanceManager.instances[id].name).toBe('Linked Scene');
+        });
+    });
+
+    describe('deleteCurrentInstance', () => {
+        it('should use the default confirm message when none is given', () => {
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+            const id = instanceManager.createInstance('My Scene');
+            instanceManager.currentInstanceId = id;
+
+            instanceManager.deleteCurrentInstance();
+
+            expect(confirmSpy).toHaveBeenCalledWith('Delete "My Scene"?');
+        });
+
+        it('should use the custom confirm message when given', () => {
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+            const id = instanceManager.createInstance('My Scene');
+            instanceManager.currentInstanceId = id;
+
+            instanceManager.deleteCurrentInstance({ confirmMessage: 'This scene is linked to your account. Delete anyway?' });
+
+            expect(confirmSpy).toHaveBeenCalledWith('This scene is linked to your account. Delete anyway?');
+        });
     });
 });

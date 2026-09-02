@@ -130,6 +130,39 @@ export class CreatorInstanceManager {
         return id;
     }
 
+    /**
+     * Registers a scene that already exists as a remote Firestore document
+     * (e.g. one the account owner linked from another browser) into the local
+     * instance list. Deliberately does NOT push anything to the cloud: the
+     * remote doc already exists, and the Firestore snapshot listener populates
+     * or refreshes `config` as soon as this instance is selected. Callers are
+     * responsible for their own success/error toast — this method fires no
+     * notification itself, unlike createInstance/duplicateCurrentInstance.
+     * @param {Object} opts
+     * @param {string} opts.name - Display name for the linked scene
+     * @param {string} opts.syncToken - The existing Firestore sync token to link to
+     * @param {Object|null} [opts.config=null] - Optional config to merge over defaults
+     * @returns {string} The new local instance id
+     */
+    createLinkedInstance({ name, syncToken, config = null }) {
+        const id = UIHelpers.generateSecureId('scene');
+
+        this.instances[id] = {
+            id: id,
+            name: (name || '').trim() || 'Linked Scene',
+            config: (config && typeof config === 'object')
+                ? { ...this.getDefaultConfig(), ...config }
+                : this.getDefaultConfig(),
+            createdAt: new Date().toISOString(),
+            lastModified: new Date().toISOString(),
+            syncToken: syncToken
+        };
+
+        this.instanceOrder.push(id);
+        this.saveInstances();
+        return id;
+    }
+
     duplicateCurrentInstance() {
         if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return null;
         const current = this.instances[this.currentInstanceId];
@@ -153,10 +186,11 @@ export class CreatorInstanceManager {
         return newId;
     }
 
-    deleteCurrentInstance() {
+    deleteCurrentInstance({ confirmMessage } = {}) {
         if (!this.currentInstanceId || !this.instances[this.currentInstanceId]) return null;
         const current = this.instances[this.currentInstanceId];
-        if (!window.confirm(`Delete "${current.name}"?`)) return null;
+        const message = (typeof confirmMessage === 'string' && confirmMessage) ? confirmMessage : `Delete "${current.name}"?`;
+        if (!window.confirm(message)) return null;
 
         const deletedId = this.currentInstanceId;
         const deletedName = current.name;
@@ -188,7 +222,7 @@ export class CreatorInstanceManager {
         return token;
     }
 
-    renderInstanceList(container, onSelectCallback, isDirtyCallback) {
+    renderInstanceList(container, onSelectCallback, isDirtyCallback, { isInAccount } = {}) {
         if (!container) return;
         container.innerHTML = '';
 
@@ -204,7 +238,9 @@ export class CreatorInstanceManager {
             item.setAttribute('role', 'button');
             if (id === this.currentInstanceId) item.classList.add('active');
 
-            const statusText = instance.syncToken ? 'Sync Active' : 'Local Scene';
+            const statusText = (typeof isInAccount === 'function' && isInAccount(instance))
+                ? 'In account'
+                : (instance.syncToken ? 'Sync Active' : 'Local Scene');
             const isDirty = (typeof isDirtyCallback === 'function' && id === this.currentInstanceId) ? isDirtyCallback() : false;
             const unsavedTag = isDirty ? ' <span class="unsaved-dot" title="Unsaved changes">●</span>' : '';
 

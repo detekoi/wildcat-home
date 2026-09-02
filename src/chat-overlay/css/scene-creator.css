@@ -819,5 +819,137 @@ input[type="color"]:disabled::-webkit-color-swatch,
     }
 }
 
+/* =====================================================
+   ACCOUNT PLATE — sign-in placard above the instance list
+   Signed-out state is pre-rendered in chat-scene-creator.html so there is
+   no flash; JS swaps #accountPlate's innerHTML and toggles
+   .account-plate--signed-in once auth state is known. Square corners, hard
+   borders, blurless shadows: matches the rest of the boxy post-industrial
+   look via wildcat-theme.css tokens (no bespoke color literals except the
+   Twitch purple noted below).
+   ===================================================== */
+
+.account-plate {
+    margin-bottom: var(--spacing-md, 16px);
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--panel-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: 0;
+}
+
+/* Twitch purple, used nowhere else on the site — this is deliberately the one
+   spot that marks "connected to an external service", so it stays a literal
+   hex rather than a theme token. */
+.account-plate--signed-in {
+    border-left: 3px solid #9146FF;
+}
+
+.account-eyebrow {
+    font-family: 'Atkinson Hyperlegible Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.account-value {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-color);
+}
+
+/* Mirrors .action-buttons .btn (styles.css) so the sign-in button lines up
+   with the New/Link/Import/Export stack below it. */
+.account-signin {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin-top: 4px;
+    /* Keeps the label on one line at the sidebar's width; .btn's uppercase
+       tracking otherwise wraps "Sign in with Twitch". */
+    font-size: 13px;
+    white-space: nowrap;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.account-hint {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.account-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.account-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 0;
+    border: 1px solid var(--border-color);
+    flex: none;
+    object-fit: cover;
+}
+
+.account-avatar--empty {
+    background: var(--secondary-color);
+}
+
+.account-name {
+    font-weight: 600;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Unstyled text button, not a .btn — the sign-out affordance is deliberately
+   quiet next to the account name. */
+.account-signout {
+    margin-left: auto;
+    background: none;
+    border: 0;
+    padding: 2px 0;
+    font: inherit;
+    font-size: 12px;
+    color: var(--text-color);
+    text-decoration: underline;
+    cursor: pointer;
+    flex: none;
+}
+
+.account-signout:hover,
+.account-signout:focus {
+    text-decoration-thickness: 2px;
+}
+
+.account-signout:focus-visible {
+    outline: 2px solid var(--text-color);
+    outline-offset: 2px;
+}
+
+.account-status {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.account-status--warning {
+    color: var(--warning-color, #ffb300);
+}
+
 
 
