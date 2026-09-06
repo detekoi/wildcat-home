@@ -150,6 +150,7 @@ describe('YouTubeChatSource - Liveness watchdog', () => {
         source.disconnect();
         vi.useRealTimers();
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     it('retries when the socket never opens', async () => {
@@ -209,6 +210,40 @@ describe('YouTubeChatSource - Liveness watchdog', () => {
         sockets[0].receive({ type: 'system', status: 'connected', message: 'Connected to YouTube stream.' });
         expect(source.isConnected()).toBe(true);
         expect(states.at(-1).connected).toBe(true);
+    });
+
+    it('starts the backoff counter fresh on a user-initiated connect', async () => {
+        await source.connect('@first');
+        // Two transient failures on the first channel escalate the backoff.
+        sockets[0].onclose();
+        expect(source.reconnectFailures).toBe(1);
+        vi.advanceTimersByTime(5000);
+        sockets[1].onclose();
+        expect(source.reconnectFailures).toBe(2);
+
+        source.disconnect();
+        mockChatRenderer.addSystemMessage.mockClear();
+        await source.connect('@second');
+        expect(source.reconnectFailures).toBe(0);
+
+        // First failure on the new channel must be attempt 1: 5s backoff, no warning.
+        sockets.at(-1).onclose();
+        expect(source.reconnectFailures).toBe(1);
+        expect(mockChatRenderer.addSystemMessage).not.toHaveBeenCalledWith(expect.stringContaining('reconnecting'), true);
+        const before = sockets.length;
+        vi.advanceTimersByTime(5000);
+        expect(sockets.length).toBe(before + 1);
+        expect(source.reconnectFailures).toBe(1); // retries keep escalating from 1, not reset
+    });
+
+    it('ignores a late open event from a socket abandoned mid-handshake', async () => {
+        await source.connect('@parfaitfair');
+        const abandoned = sockets[0];
+        const savedOnOpen = abandoned.onopen;
+        source.disconnect(); // socket still CONNECTING
+        expect(abandoned.onopen).toBeNull();
+        expect(() => savedOnOpen?.()).not.toThrow(); // even if a queued event slips through
+        expect(abandoned.send).not.toHaveBeenCalled();
     });
 
     it('stops all timers on explicit disconnect', async () => {

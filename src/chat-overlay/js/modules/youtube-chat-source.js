@@ -1,8 +1,9 @@
 import { ChatSource } from './chat-source.js';
 import { UIHelpers } from './ui-helpers.js';
 
-// Liveness tuning. The proxy answers every PING with a pong and sends its own
-// heartbeat, so a healthy socket is never silent for longer than one ping period.
+// Liveness tuning. The client pings every PING_INTERVAL_MS and the proxy answers
+// each one with a pong, so a healthy socket is never silent for longer than one
+// ping period. (The proxy's own WebSocket-level pings are invisible to browser JS.)
 const PING_INTERVAL_MS = 30000;
 const CONNECT_TIMEOUT_MS = 15000;
 const STALE_AFTER_MS = 90000;
@@ -19,6 +20,7 @@ export class YouTubeChatSource extends ChatSource {
         this.isConnecting = false;
         this.status = false;
         this.reconnectTimeout = null;
+        this.reconnectFailures = 0;
         this.seenIds = new Set();
         this.pingInterval = null;
         this.connectTimeout = null;
@@ -26,10 +28,13 @@ export class YouTubeChatSource extends ChatSource {
         this.lastServerMessageAt = 0;
     }
 
-    async connect(target) {
+    // `isRetry` is set only by the automatic reconnect loop so that a user-initiated
+    // connect starts the backoff counter fresh while retries keep escalating it.
+    async connect(target, { isRetry = false } = {}) {
         // Prevent duplicate connections
         if (this.isConnecting) return;
         if (this.status && this.target === target) return;
+        if (!isRetry) this.reconnectFailures = 0;
 
         // Clean up target if the user pasted a full URL
         let cleanTarget = target.trim();
@@ -62,10 +67,7 @@ export class YouTubeChatSource extends ChatSource {
         this.isConnecting = true;
 
         // Silently clean up any existing socket without emitting state changes
-        if (this.ws) {
-            try { this.ws.onclose = null; this.ws.onerror = null; this.ws.close(); } catch(e) {}
-            this.ws = null;
-        }
+        this.teardownSocket();
         this.clearSocketTimers();
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
@@ -130,18 +132,27 @@ export class YouTubeChatSource extends ChatSource {
         if (this.watchdogInterval) { clearInterval(this.watchdogInterval); this.watchdogInterval = null; }
     }
 
+    // Detach every handler before closing so a queued open/message/close event on
+    // a socket we have abandoned can never run against the new state (in
+    // particular handleOpen touching a null this.ws).
+    teardownSocket() {
+        const ws = this.ws;
+        this.ws = null;
+        if (ws) {
+            try { ws.onopen = null; ws.onmessage = null; ws.onclose = null; ws.onerror = null; ws.close(); } catch(e) {}
+        }
+    }
+
     // Drop the current socket without waiting for the browser's close handshake
     // (which never completes against a dead peer) and go through the normal
     // reconnect path.
     forceReconnect() {
-        const ws = this.ws;
-        if (ws) {
-            try { ws.onopen = null; ws.onmessage = null; ws.onclose = null; ws.onerror = null; ws.close(); } catch(e) {}
-        }
+        this.teardownSocket();
         this.handleClose();
     }
 
     handleOpen() {
+        if (!this.ws) return;
         this.isConnecting = false;
         this.lastServerMessageAt = Date.now();
         if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
@@ -209,7 +220,7 @@ export class YouTubeChatSource extends ChatSource {
         if (!this.isExplicitDisconnect && this.target) {
             // Silent reconnect — don't disrupt the chat overlay with system messages
             // for routine Cloud Run timeouts or transient disconnects
-            this.reconnectFailures = (this.reconnectFailures || 0) + 1;
+            this.reconnectFailures += 1;
             const delay = Math.min(5000 * this.reconnectFailures, 30000);
 
             // Only show a message after 3+ consecutive failures (persistent problem)
@@ -220,7 +231,10 @@ export class YouTubeChatSource extends ChatSource {
             // Report every attempt: without this the settings panel kept reading
             // "Connected" for the whole outage.
             this.emitConnectionChange(false, this.target, 'reconnecting', this.reconnectFailures);
-            this.reconnectTimeout = setTimeout(() => this.connect(this.target), delay);
+            this.reconnectTimeout = setTimeout(() => {
+                this.reconnectTimeout = null;
+                this.connect(this.target, { isRetry: true });
+            }, delay);
         } else {
             this.status = false;
             this.reconnectFailures = 0;
@@ -240,11 +254,9 @@ export class YouTubeChatSource extends ChatSource {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
-        if (this.ws) {
-            try { this.ws.onclose = null; this.ws.close(); } catch(e) {}
-            this.ws = null;
-        }
+        this.teardownSocket();
         this.clearSocketTimers();
+        this.reconnectFailures = 0;
         this.target = '';
         this.emitConnectionChange(false, '');
     }
