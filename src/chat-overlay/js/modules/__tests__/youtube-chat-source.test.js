@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { YouTubeChatSource } from '../youtube-chat-source.js';
 
 describe('YouTubeChatSource - URL Substring URL Redirection Mitigations', () => {
@@ -111,3 +111,113 @@ describe('YouTubeChatSource - System Message Handling', () => {
     });
 });
 
+
+describe('YouTubeChatSource - Liveness watchdog', () => {
+    let source;
+    let sockets;
+    let mockChatRenderer;
+    let mockConfigManager;
+
+    class WebSocketMock {
+        static OPEN = 1;
+        constructor() {
+            this.readyState = 0;
+            this.send = vi.fn();
+            this.close = vi.fn();
+            sockets.push(this);
+        }
+        open() {
+            this.readyState = WebSocketMock.OPEN;
+            this.onopen?.();
+        }
+        receive(obj) {
+            this.onmessage?.({ data: JSON.stringify(obj) });
+        }
+    }
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        sockets = [];
+        mockChatRenderer = { addSystemMessage: vi.fn(), addChatMessage: vi.fn() };
+        mockConfigManager = { updateConfig: vi.fn(), saveLastYouTubeTargetOnly: vi.fn() };
+        vi.stubGlobal('WebSocket', WebSocketMock);
+        vi.stubGlobal('window', { location: { hostname: 'localhost' } });
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        source = new YouTubeChatSource(mockConfigManager, mockChatRenderer);
+    });
+
+    afterEach(() => {
+        source.disconnect();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('retries when the socket never opens', async () => {
+        await source.connect('@parfaitfair');
+        expect(sockets).toHaveLength(1);
+
+        vi.advanceTimersByTime(15000);
+        expect(sockets[0].close).toHaveBeenCalled();
+        expect(source.isActive()).toBe(true); // reconnect scheduled
+
+        vi.advanceTimersByTime(5000); // first backoff step
+        expect(sockets).toHaveLength(2);
+    });
+
+    it('reconnects an open socket that goes silent', async () => {
+        await source.connect('@parfaitfair');
+        sockets[0].open();
+        sockets[0].receive({ type: 'system', status: 'connected', message: 'Connected to YouTube stream.' });
+        expect(source.isConnected()).toBe(true);
+
+        vi.advanceTimersByTime(120000);
+        expect(sockets[0].close).toHaveBeenCalled();
+        expect(source.isConnected()).toBe(false);
+
+        vi.advanceTimersByTime(5000);
+        expect(sockets).toHaveLength(2);
+        expect(sockets[1]).not.toBe(sockets[0]);
+    });
+
+    it('treats pong replies as liveness and keeps a quiet chat connected', async () => {
+        await source.connect('@parfaitfair');
+        sockets[0].open();
+        sockets[0].receive({ type: 'system', status: 'connected', message: 'Connected to YouTube stream.' });
+
+        for (let i = 0; i < 10; i++) {
+            vi.advanceTimersByTime(30000);
+            expect(sockets[0].send).toHaveBeenLastCalledWith(JSON.stringify({ action: 'PING' }));
+            sockets[0].receive({ type: 'pong' });
+        }
+
+        expect(sockets[0].close).not.toHaveBeenCalled();
+        expect(source.isConnected()).toBe(true);
+        expect(sockets).toHaveLength(1);
+        expect(mockChatRenderer.addChatMessage).not.toHaveBeenCalled();
+    });
+
+    it('does not report connected on the bare JOIN ack, only once the stream is found', async () => {
+        const states = [];
+        source.onConnectionChange((connected, target, state) => states.push({ connected, state }));
+        await source.connect('@parfaitfair');
+        sockets[0].open();
+
+        sockets[0].receive({ type: 'system', status: 'connected', target: '@parfaitfair' });
+        expect(source.isConnected()).toBe(false);
+        expect(states.at(-1)).toEqual({ connected: false, state: 'connecting' });
+
+        sockets[0].receive({ type: 'system', status: 'connected', message: 'Connected to YouTube stream.' });
+        expect(source.isConnected()).toBe(true);
+        expect(states.at(-1).connected).toBe(true);
+    });
+
+    it('stops all timers on explicit disconnect', async () => {
+        await source.connect('@parfaitfair');
+        sockets[0].open();
+        source.disconnect();
+
+        vi.advanceTimersByTime(600000);
+        expect(sockets).toHaveLength(1);
+        expect(source.isActive()).toBe(false);
+    });
+});

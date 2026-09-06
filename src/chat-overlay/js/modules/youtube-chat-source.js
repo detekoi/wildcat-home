@@ -1,6 +1,13 @@
 import { ChatSource } from './chat-source.js';
 import { UIHelpers } from './ui-helpers.js';
 
+// Liveness tuning. The proxy answers every PING with a pong and sends its own
+// heartbeat, so a healthy socket is never silent for longer than one ping period.
+const PING_INTERVAL_MS = 30000;
+const CONNECT_TIMEOUT_MS = 15000;
+const STALE_AFTER_MS = 90000;
+const WATCHDOG_TICK_MS = 15000;
+
 export class YouTubeChatSource extends ChatSource {
     constructor(configManager, chatRenderer) {
         super();
@@ -13,6 +20,10 @@ export class YouTubeChatSource extends ChatSource {
         this.status = false;
         this.reconnectTimeout = null;
         this.seenIds = new Set();
+        this.pingInterval = null;
+        this.connectTimeout = null;
+        this.watchdogInterval = null;
+        this.lastServerMessageAt = 0;
     }
 
     async connect(target) {
@@ -55,6 +66,7 @@ export class YouTubeChatSource extends ChatSource {
             try { this.ws.onclose = null; this.ws.onerror = null; this.ws.close(); } catch(e) {}
             this.ws = null;
         }
+        this.clearSocketTimers();
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
@@ -80,20 +92,59 @@ export class YouTubeChatSource extends ChatSource {
             this.ws.onclose = this.handleClose.bind(this);
             this.ws.onerror = this.handleError.bind(this);
 
-            // Start client-side heartbeat to keep Cloud Run connection alive
+            // Client-side heartbeat. The proxy answers with a pong, which feeds the
+            // staleness watchdog below.
             this.pingInterval = setInterval(() => {
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                     this.ws.send(JSON.stringify({ action: 'PING' }));
                 }
-            }, 30000); // 30 seconds
+            }, PING_INTERVAL_MS);
+
+            // A socket that never opens (e.g. network not ready when OBS starts the
+            // browser source) would otherwise leave isConnecting stuck forever.
+            this.lastServerMessageAt = Date.now();
+            this.connectTimeout = setTimeout(() => {
+                if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+                    console.warn('[YouTube] proxy socket did not open in time; retrying');
+                    this.forceReconnect();
+                }
+            }, CONNECT_TIMEOUT_MS);
+
+            // A socket that opened but has gone quiet (half-open TCP, proxy restart
+            // without a close frame) looks "connected" to the overlay forever.
+            this.watchdogInterval = setInterval(() => {
+                if (this.ws && Date.now() - this.lastServerMessageAt > STALE_AFTER_MS) {
+                    console.warn('[YouTube] no data from proxy for ' + STALE_AFTER_MS / 1000 + 's; reconnecting');
+                    this.forceReconnect();
+                }
+            }, WATCHDOG_TICK_MS);
         } catch (err) {
             this.isConnecting = false;
             this.chatRenderer.addSystemMessage(`Could not connect to proxy: ${err}`, true);
         }
     }
 
+    clearSocketTimers() {
+        if (this.pingInterval) { clearInterval(this.pingInterval); this.pingInterval = null; }
+        if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
+        if (this.watchdogInterval) { clearInterval(this.watchdogInterval); this.watchdogInterval = null; }
+    }
+
+    // Drop the current socket without waiting for the browser's close handshake
+    // (which never completes against a dead peer) and go through the normal
+    // reconnect path.
+    forceReconnect() {
+        const ws = this.ws;
+        if (ws) {
+            try { ws.onopen = null; ws.onmessage = null; ws.onclose = null; ws.onerror = null; ws.close(); } catch(e) {}
+        }
+        this.handleClose();
+    }
+
     handleOpen() {
         this.isConnecting = false;
+        this.lastServerMessageAt = Date.now();
+        if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
         this.ws.send(JSON.stringify({
             action: 'JOIN',
             target: this.target
@@ -101,10 +152,21 @@ export class YouTubeChatSource extends ChatSource {
     }
 
     handleMessage(event) {
+        this.lastServerMessageAt = Date.now();
         try {
             const data = JSON.parse(event.data);
+            if (data.type === 'pong') {
+                return;
+            }
             if (data.type === 'system') {
-                if (data.status === 'connected') {
+                if (data.status === 'connected' && !data.message) {
+                    // Bare JOIN ack: the proxy accepted the subscription but has not
+                    // necessarily found a live stream yet. Stay in "connecting" so the
+                    // UI does not claim a connection that is not delivering chat.
+                    this.reconnectFailures = 0;
+                    this.emitConnectionChange(false, this.target, 'connecting');
+                } else if (data.status === 'connected') {
+                    // "Connected to YouTube stream." — the poller is attached to a live chat.
                     this.status = true;
                     this.reconnectFailures = 0;
                     this.emitConnectionChange(true, this.target);
@@ -142,10 +204,7 @@ export class YouTubeChatSource extends ChatSource {
         this.isConnecting = false;
         this.status = false;
         this.ws = null;
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
-        }
+        this.clearSocketTimers();
         
         if (!this.isExplicitDisconnect && this.target) {
             // Silent reconnect — don't disrupt the chat overlay with system messages
@@ -185,10 +244,7 @@ export class YouTubeChatSource extends ChatSource {
             try { this.ws.onclose = null; this.ws.close(); } catch(e) {}
             this.ws = null;
         }
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
-        }
+        this.clearSocketTimers();
         this.target = '';
         this.emitConnectionChange(false, '');
     }
