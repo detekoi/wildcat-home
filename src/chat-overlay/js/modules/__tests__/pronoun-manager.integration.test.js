@@ -2,20 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { PronounManager } from '../pronoun-manager.js';
 
 describe('PronounManager - Live API Integration', () => {
-    // These tests hit the real Alejo API to ensure the API contract hasn't changed.
+    // These tests hit the real Alejo v1 API to ensure the API contract hasn't changed.
     // They should run quickly but might fail if Alejo API goes down.
-    
+
     it('should successfully fetch the pronouns dictionary from the live API', async () => {
         const manager = new PronounManager();
         await manager.loadDefinitions();
-        
+
         expect(manager.hasLoadedDefinitions).toBe(true);
-        expect(manager.pronounsMap.size).toBeGreaterThan(0);
-        
-        // Ensure common pronouns exist
+        expect(manager.definitions.size).toBeGreaterThan(0);
+
+        // Ensure common pronouns exist with subject/object forms
+        expect(manager.definitions.get('hehim')).toMatchObject({ subject: 'He', object: 'Him' });
+        expect(manager.definitions.get('sheher')).toMatchObject({ subject: 'She', object: 'Her' });
+        expect(manager.definitions.get('theythem')).toMatchObject({ subject: 'They', object: 'Them' });
+
         expect(manager.pronounsMap.get('hehim')).toBe('He/Him');
-        expect(manager.pronounsMap.get('sheher')).toBe('She/Her');
-        expect(manager.pronounsMap.get('theythem')).toBe('They/Them');
+        expect(manager.formatDisplay('sheher', 'theythem')).toBe('She/They');
     });
 
     it('should fetch null for a known non-existent user', async () => {
