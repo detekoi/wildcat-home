@@ -83,11 +83,52 @@ describe('PronounManager - Display formatting', () => {
         });
     });
 
-    it('loads v1 definitions keyed by ID and fills the legacy pronounsMap', async () => {
+    it('loads v1 definitions keyed by ID', async () => {
         await pronounManager.loadDefinitions();
         expect(pronounManager.hasLoadedDefinitions).toBe(true);
         expect(pronounManager.definitions.get('sheher')).toEqual({ subject: 'She', object: 'Her', singular: false });
-        expect(pronounManager.pronounsMap.get('hehim')).toBe('He/Him');
+        expect(pronounManager.formatDisplay('hehim')).toBe('He/Him');
+    });
+
+    it('does not expose a cached user until definitions have loaded (no raw-ID flash)', async () => {
+        // Hold the definitions request open while the user request completes
+        let releaseDefinitions;
+        const gate = new Promise(resolve => { releaseDefinitions = resolve; });
+        const inner = global.fetch;
+        global.fetch = vi.fn(async (url) => {
+            if (url.endsWith('/pronouns')) await gate;
+            return inner(url);
+        });
+
+        const pending = pronounManager.getUserPronoun('coconutmelonss');
+        await new Promise(r => setTimeout(r, 0)); // let the /users request resolve
+        expect(pronounManager.getPronounDisplay('coconutmelonss')).toBeNull();
+
+        releaseDefinitions();
+        expect(await pending).toBe('She/They');
+        expect(pronounManager.getPronounDisplay('coconutmelonss')).toBe('She/They');
+    });
+
+    it('keeps an unrecognized alternate rather than silently dropping it', async () => {
+        await pronounManager.loadDefinitions();
+        expect(pronounManager.formatDisplay('sheher', 'brandnew')).toBe('She/brandnew');
+        expect(pronounManager.formatDisplay('brandnew', 'theythem')).toBe('brandnew/theythem');
+    });
+
+    it('backs off re-fetching definitions after a failure', async () => {
+        vi.useFakeTimers();
+        try {
+            global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 503 }));
+            await pronounManager.loadDefinitions();
+            await pronounManager.loadDefinitions();
+            expect(global.fetch).toHaveBeenCalledTimes(1);
+
+            vi.advanceTimersByTime(pronounManager.DEFINITIONS_RETRY_MS + 1);
+            await pronounManager.loadDefinitions();
+            expect(global.fetch).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('only requests the definitions list once across concurrent callers', async () => {

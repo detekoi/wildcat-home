@@ -12,13 +12,13 @@ export class PronounManager {
     constructor() {
         // pronoun_id -> { subject, object, singular } (e.g. "hehim" -> { subject: "He", object: "Him", singular: false })
         this.definitions = new Map();
-        // pronoun_id -> display string for the primary pronoun alone (e.g. "hehim" -> "He/Him")
-        this.pronounsMap = new Map();
         // username -> { pronounId, altPronounId } | null
         this.userPronounsCache = new Map();
         this.pendingRequests = new Map(); // username -> Promise
         this.hasLoadedDefinitions = false;
         this.definitionsPromise = null;
+        this.definitionsFailedAt = 0;
+        this.DEFINITIONS_RETRY_MS = 30_000; // Back off after a failed /pronouns fetch
         this.BASE_URL = 'https://api.pronouns.alejo.io/v1';
         // Twitch usernames: alphanumeric + underscores, 1-25 characters
         this.VALID_USERNAME_RE = /^[a-zA-Z0-9_]{1,25}$/;
@@ -46,10 +46,13 @@ export class PronounManager {
     formatDisplay(pronounId, altPronounId = null) {
         if (!pronounId) return null;
         const primary = this.definitions.get(pronounId);
-        if (!primary) return pronounId; // Unknown ID: degrade to the raw value rather than nothing
+        // Unknown IDs degrade to the raw value rather than nothing, and never drop a chosen alternate
+        if (!primary) return altPronounId ? `${pronounId}/${altPronounId}` : pronounId;
 
-        const alt = altPronounId ? this.definitions.get(altPronounId) : null;
-        if (alt) return `${primary.subject}/${alt.subject}`;
+        if (altPronounId) {
+            const alt = this.definitions.get(altPronounId);
+            return `${primary.subject}/${alt ? alt.subject : altPronounId}`;
+        }
         if (primary.singular) return primary.subject;
         return `${primary.subject}/${primary.object}`;
     }
@@ -60,6 +63,7 @@ export class PronounManager {
     async loadDefinitions() {
         if (this.hasLoadedDefinitions) return;
         if (this.definitionsPromise) return this.definitionsPromise;
+        if (Date.now() - this.definitionsFailedAt < this.DEFINITIONS_RETRY_MS) return;
 
         this.definitionsPromise = (async () => {
             try {
@@ -77,13 +81,12 @@ export class PronounManager {
                             singular: Boolean(p.singular)
                         });
                     });
-                    this.definitions.forEach((_, id) => {
-                        this.pronounsMap.set(id, this.formatDisplay(id));
-                    });
                     this.hasLoadedDefinitions = this.definitions.size > 0;
                     console.log('[PronounManager] Loaded definitions:', this.definitions.size);
                 }
+                if (!this.hasLoadedDefinitions) this.definitionsFailedAt = Date.now();
             } catch (error) {
+                this.definitionsFailedAt = Date.now();
                 console.warn('[PronounManager] Error loading definitions:', error);
             } finally {
                 this.definitionsPromise = null;
@@ -94,9 +97,9 @@ export class PronounManager {
     }
 
     /**
-     * Get pronoun display string for a user
-     * Returns null if not found or not yet loaded
-     * Triggers fetch if not in cache
+     * Get pronoun display string for a user.
+     * Resolves to null if the user has no pronouns set. Fetches the user (and
+     * the definitions list, if not yet loaded) when the user is not cached.
      */
     async getUserPronoun(username) {
         if (!username) return null;
@@ -129,10 +132,12 @@ export class PronounManager {
                             pronounId: data.pronoun_id,
                             altPronounId: data.alt_pronoun_id || null
                         };
-                        this.userPronounsCache.set(lowerUser, entry);
+                        // Load definitions before caching so getPronounDisplay() never
+                        // sees an entry it can only render as a raw ID.
                         if (!this.hasLoadedDefinitions) {
                             await this.loadDefinitions();
                         }
+                        this.userPronounsCache.set(lowerUser, entry);
                         return this.formatDisplay(entry.pronounId, entry.altPronounId);
                     } else {
                         this.userPronounsCache.set(lowerUser, null);

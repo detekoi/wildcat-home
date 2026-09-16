@@ -17,7 +17,7 @@ describe('PronounManager - Live API Integration', () => {
         expect(manager.definitions.get('sheher')).toMatchObject({ subject: 'She', object: 'Her' });
         expect(manager.definitions.get('theythem')).toMatchObject({ subject: 'They', object: 'Them' });
 
-        expect(manager.pronounsMap.get('hehim')).toBe('He/Him');
+        expect(manager.formatDisplay('hehim')).toBe('He/Him');
         expect(manager.formatDisplay('sheher', 'theythem')).toBe('She/They');
     });
 
