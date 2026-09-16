@@ -44,7 +44,22 @@ describe('TwitchChatSource - Protocol Parsing', () => {
         });
     });
 
+    describe('parseIRCTags edge cases', () => {
+        it('preserves "=" characters inside tag values', () => {
+            const rawMessage = "@display-name=u;reply-parent-msg-body=see\\shttps://example.com/?id=123&x=y;system-msg=a=b PRIVMSG #chan :hi";
+            const tags = source.parseIRCTags(rawMessage);
+            expect(tags['reply-parent-msg-body']).toBe('see\\shttps://example.com/?id=123&x=y');
+            expect(tags['system-msg']).toBe('a=b');
+        });
+    });
+
     describe('handlePrivMsg', () => {
+        it('does not truncate a message containing "PRIVMSG #"', () => {
+            const rawMessage = "@display-name=testuser :testuser!testuser@testuser.tmi.twitch.tv PRIVMSG #channel :try PRIVMSG #chan :injected text";
+            source.handlePrivMsg(rawMessage, source.parseIRCTags(rawMessage));
+            expect(mockChatRenderer.addChatMessage.mock.calls[0][0].message).toBe('try PRIVMSG #chan :injected text');
+        });
+
         it('should parse and dispatch message blocks correctly to chat renderer', () => {
             const rawMessage = "@badge-info=;badges=;color=#FF0000;display-name=testuser;emotes=123:0-4 :testuser!testuser@testuser.tmi.twitch.tv PRIVMSG #channel :emote is cool";
             
@@ -141,6 +156,18 @@ describe('TwitchChatSource - handleUserNotice', () => {
         expect(data.text).toBe('parfaitfair has been a moderator for 6 months!');
         expect(data.userMessage).toBe("I'm celebrating my 6 month Mod Anniversary!");
         expect(data.color).toBe('#008080');
+    });
+
+    it('does not truncate a user message containing "USERNOTICE #"', () => {
+        const raw = "@display-name=U;login=u;msg-id=resub;msg-param-cumulative-months=3;system-msg=U\\ssubscribed. :tmi.twitch.tv USERNOTICE #chan :lol USERNOTICE #chan :fake";
+        source.handleUserNotice(raw, source.parseIRCTags(raw));
+        expect(mockChatRenderer.renderTwitchEvent.mock.calls[0][0].userMessage).toBe('lol USERNOTICE #chan :fake');
+    });
+
+    it('extracts no user message when the notice has no trailing parameter', () => {
+        const raw = "@display-name=U;login=u;msg-id=sub;msg-param-sub-plan=1000;system-msg=U\\ssubscribed. :tmi.twitch.tv USERNOTICE #chan";
+        source.handleUserNotice(raw, source.parseIRCTags(raw));
+        expect(mockChatRenderer.renderTwitchEvent.mock.calls[0][0].userMessage).toBe('');
     });
 
     it('leaves unknown events on the system-msg fallback', () => {

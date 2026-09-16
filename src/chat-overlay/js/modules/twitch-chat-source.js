@@ -209,9 +209,11 @@ export class TwitchChatSource extends ChatSource {
             try {
                 const tagPart = message.slice(1, message.indexOf(' '));
                 tagPart.split(';').forEach(tag => {
-                    if (tag?.includes('=')) {
-                        const [key, value] = tag.split('=');
-                        if (key) tags[key] = value || '';
+                    // Split on the first '=' only: IRCv3 tag values may contain '='
+                    const eqIdx = tag.indexOf('=');
+                    if (eqIdx !== -1) {
+                        const key = tag.slice(0, eqIdx);
+                        if (key) tags[key] = tag.slice(eqIdx + 1);
                     }
                 });
             } catch (err) {
@@ -265,16 +267,7 @@ export class TwitchChatSource extends ChatSource {
         let username = tags['display-name'] || message.match(/:(.*?)!/)?.[1] || 'Anonymous';
 
         // Extract message content
-        let messageContent = '';
-        try {
-            const msgParts = message.split('PRIVMSG #');
-            if (msgParts.length > 1) {
-                const colonIndex = msgParts[1].indexOf(' :');
-                if (colonIndex !== -1) messageContent = msgParts[1].substring(colonIndex + 2);
-            }
-        } catch (err) {
-            console.error('Error extracting message content:', err);
-        }
+        let messageContent = this.extractTrailingParam(message, 'PRIVMSG');
 
         // Parse emotes from tags
         const emotes = this.parseEmoteTags(tags.emotes);
@@ -323,6 +316,18 @@ export class TwitchChatSource extends ChatSource {
     }
 
     /**
+     * Extract the trailing parameter (the text after " :") of a channel command
+     * such as PRIVMSG or USERNOTICE. Anchors on the first occurrence of the
+     * command + channel so the same string appearing inside the user's text
+     * cannot truncate it.
+     * @returns {string} The trailing text, or '' if the line has none
+     */
+    extractTrailingParam(message, command) {
+        const re = new RegExp(`(?:^|\\s)${command}\\s+#\\S+\\s+:(.*)$`, 's');
+        return message.match(re)?.[1] ?? '';
+    }
+
+    /**
      * Handle USERNOTICE (sub, resub, gift sub, raid, announcement, etc.)
      * These events arrive via IRC when twitch.tv/commands capability is requested.
      */
@@ -334,16 +339,7 @@ export class TwitchChatSource extends ChatSource {
         const systemMsg = this.unescapeTagValue(tags['system-msg']);
 
         // Extract optional user message (e.g. resub share text)
-        let userMessage = '';
-        try {
-            const parts = message.split('USERNOTICE #');
-            if (parts.length > 1) {
-                const colonIndex = parts[1].indexOf(' :');
-                if (colonIndex !== -1) userMessage = parts[1].substring(colonIndex + 2);
-            }
-        } catch (err) {
-            // No user message attached
-        }
+        const userMessage = this.extractTrailingParam(message, 'USERNOTICE');
 
         // Parse emotes — always parse when present (needed for both userMessage and systemMsg fallback)
         const emotes = this.parseEmoteTags(tags.emotes);
