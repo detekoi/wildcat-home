@@ -466,6 +466,20 @@ export class TwitchChatSource extends ChatSource {
                 };
                 break;
 
+            case 'modiversary': {
+                // Twitch's system-msg for this event omits the username
+                // ("has been a moderator for 6 months!"), so build our own text.
+                const months = tags['msg-param-months'] || '?';
+                eventData = {
+                    eventType: 'modiversary',
+                    icon: 'shield',
+                    text: `${displayName} has been a moderator for ${months} months!`,
+                    userMessage, emotes, tags,
+                    color: tags.color || null
+                };
+                break;
+            }
+
             default:
                 // Unknown USERNOTICE type — render with system-msg fallback
                 if (systemMsg) {

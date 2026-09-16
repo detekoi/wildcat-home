@@ -112,6 +112,11 @@
     background: rgba(29, 184, 168, 0.08);
 }
 
+.twitch-event--modiversary {
+    --event-accent: #00ad03;
+    background: rgba(0, 173, 3, 0.08);
+}
+
 .twitch-event--unknown {
     --event-accent: #888;
     background: rgba(136, 136, 136, 0.06);
