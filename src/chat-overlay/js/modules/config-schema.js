@@ -8,7 +8,8 @@ export const RUNTIME_KEYS = new Set([
     'googleFontFamily',
     'lastTwitchChannel',
     'lastYouTubeTarget',
-    'preChromaKeyOpacity'
+    'preChromaKeyOpacity',
+    'preChromaKeyColor'
 ]);
 
 /**

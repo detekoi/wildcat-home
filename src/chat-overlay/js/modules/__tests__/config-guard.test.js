@@ -138,6 +138,23 @@ describe('sanitizeConfig', () => {
         vi.restoreAllMocks();
     });
 
+    it('clamps numbers to the ranges the controls allow', () => {
+        expect(sanitizeConfig({
+            fontSize: -20, chatWidth: 3, chatHeight: 500, bgColorOpacity: -0.5, bgImageOpacity: 100
+        }, defaults)).toEqual({
+            fontSize: 10, chatWidth: 3, chatHeight: 100, bgColorOpacity: 0, bgImageOpacity: 1
+        });
+        expect(sanitizeConfig({ fontSize: '-20px' }, defaults).fontSize).toBe(10);
+        expect(sanitizeConfig({ fontSize: 72 }, defaults).fontSize).toBe(72);
+    });
+
+    it('keeps a valid preChromaKeyColor and drops anything else', () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(sanitizeConfig({ preChromaKeyColor: '#123456' }).preChromaKeyColor).toBe('#123456');
+        expect(sanitizeConfig({ preChromaKeyColor: 'url(https://evil.example/x)' }).preChromaKeyColor).toBeNull();
+        vi.restoreAllMocks();
+    });
+
     it('converts legacy numeric strings and leaves absent keys absent', () => {
         expect(sanitizeConfig({ fontSize: '20px', chatWidth: '90%', bgImageOpacity: '0.4' }, defaults))
             .toEqual({ fontSize: 20, chatWidth: 90, bgImageOpacity: 0.4 });

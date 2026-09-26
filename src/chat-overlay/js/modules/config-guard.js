@@ -30,6 +30,8 @@ export const REMOVED_CONFIG_KEYS = Object.freeze([
     'cheermoteEndpointUrl'
 ]);
 
+// Must match the proxy's bucket (GCS_BUCKET_NAME in chat-theme-proxy, which is
+// documented as fixed to chat-themer-backgrounds for this reason).
 const BUCKET_PREFIX = 'https://storage.googleapis.com/chat-themer-backgrounds/';
 const OBJECT_PATH_REGEX = /^[A-Za-z0-9_-][A-Za-z0-9._-]*(\/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$/;
 const DATA_URL_REGEX = /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/i;
@@ -94,7 +96,17 @@ const CHAT_MODES = new Set(['window', 'popup']);
 const NUMERIC_STRING_REGEX = /^\s*-?\d+(\.\d+)?\s*(px|%)?\s*$/;
 
 const COLOR_KEYS = ['bgColor', 'borderColor', 'textColor', 'usernameColor', 'timestampColor'];
-const NUMBER_KEYS = ['fontSize', 'chatWidth', 'chatHeight', 'bgColorOpacity', 'bgImageOpacity'];
+// [min, max] for numeric settings: the widest range any control allows (the
+// overlay's sliders go further than the creator's). Out-of-range values are
+// clamped rather than reset, so an oversized font stays large.
+const NUMBER_RANGES = {
+    fontSize: [10, 100],
+    chatWidth: [3, 100],
+    chatHeight: [10, 100],
+    bgColorOpacity: [0, 1],
+    bgImageOpacity: [0, 1]
+};
+const NUMBER_KEYS = Object.keys(NUMBER_RANGES);
 
 const isString = (value, maxLength) => typeof value === 'string' && value.length > 0 && value.length <= maxLength;
 const isColor = (value) => isString(value, 64) && COLOR_REGEX.test(value.trim());
@@ -112,6 +124,7 @@ const VALIDATORS = {
 };
 for (const key of COLOR_KEYS) VALIDATORS[key] = isColor;
 for (const key of NUMBER_KEYS) VALIDATORS[key] = (v) => typeof v === 'number' && Number.isFinite(v);
+VALIDATORS.preChromaKeyColor = (v) => v === null || isColor(v);
 
 /**
  * Return a copy of `cfg` that is safe to apply. Only keys already present are
@@ -119,7 +132,8 @@ for (const key of NUMBER_KEYS) VALIDATORS[key] = (v) => typeof v === 'number' &&
  *   - removed endpoint keys are dropped
  *   - bgImage becomes an allowed image URL or null
  *   - a CSS-bound value that fails its check falls back to `defaults[key]`
- *     (numeric strings such as "20" or "20px" are converted to numbers first)
+ *     (numeric strings such as "20" or "20px" are converted to numbers first,
+ *     and numbers are clamped to NUMBER_RANGES)
  *
  * @param {Object} cfg
  * @param {Object} [defaults={}]
@@ -142,6 +156,10 @@ export function sanitizeConfig(cfg, defaults = {}) {
             value = parseFloat(value);
         }
         if (isValid(value)) {
+            if (NUMBER_RANGES[key]) {
+                const [min, max] = NUMBER_RANGES[key];
+                value = Math.min(max, Math.max(min, value));
+            }
             out[key] = value;
         } else {
             console.warn(`[ConfigGuard] Ignoring invalid ${key}:`, out[key]);
