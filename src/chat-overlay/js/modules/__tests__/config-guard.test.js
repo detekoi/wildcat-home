@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-    PINNED_ENDPOINTS,
-    resolveEndpoint,
+    ENDPOINTS,
+    REMOVED_CONFIG_KEYS,
     safeImageUrl,
     cssImageValue,
     sanitizeConfig
@@ -58,14 +58,17 @@ describe('safeImageUrl', () => {
 describe('sanitizeConfig', () => {
     const defaults = new ConfigManager().getDefaultConfig();
 
-    it('pins endpoint URLs whatever the config says', () => {
+    it('strips the removed endpoint keys', () => {
         const out = sanitizeConfig({
             badgeEndpointUrlGlobal: 'https://evil.example/g',
             badgeEndpointUrlChannel: 'https://evil.example/c',
-            cheermoteEndpointUrl: 'https://evil.example/ch'
+            cheermoteEndpointUrl: 'https://evil.example/ch',
+            showBadges: true
         }, defaults);
-        expect(out).toEqual({ ...PINNED_ENDPOINTS });
-        expect(resolveEndpoint('badgeEndpointUrlGlobal')).toBe(defaults.badgeEndpointUrlGlobal);
+        expect(out).toEqual({ showBadges: true });
+        for (const key of REMOVED_CONFIG_KEYS) {
+            expect(defaults).not.toHaveProperty(key);
+        }
     });
 
     it('drops external background images but leaves "no image" values untouched', () => {
@@ -166,7 +169,7 @@ describe('ConfigManager.applyConfiguration with an untrusted config', () => {
         expect(style.getPropertyValue('--popup-bg-image')).toBe('none');
         // Sanitized in place: callers holding cfg see the same object as manager.config
         expect(manager.config).toBe(cfg);
-        expect(cfg.badgeEndpointUrlGlobal).toBe(PINNED_ENDPOINTS.badgeEndpointUrlGlobal);
+        expect(cfg).not.toHaveProperty('badgeEndpointUrlGlobal');
     });
 
     it('still applies an image from our bucket', () => {
@@ -176,14 +179,14 @@ describe('ConfigManager.applyConfiguration with an untrusted config', () => {
     });
 });
 
-describe('BadgeManager endpoint pinning', () => {
+describe('BadgeManager endpoints', () => {
     beforeEach(() => {
         localStorage.clear();
         vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) })));
     });
     afterEach(() => vi.unstubAllGlobals());
 
-    it('fetches our own endpoints even when the config points elsewhere', async () => {
+    it('fetches our own endpoints even when a legacy config names others', async () => {
         const manager = new BadgeManager({
             showBadges: true,
             badgeEndpointUrlGlobal: 'https://evil.example/g',
@@ -194,8 +197,8 @@ describe('BadgeManager endpoint pinning', () => {
 
         const urls = fetch.mock.calls.map(([url]) => url);
         expect(urls).toEqual([
-            PINNED_ENDPOINTS.badgeEndpointUrlGlobal,
-            `${PINNED_ENDPOINTS.badgeEndpointUrlChannel}?broadcaster_id=123`
+            ENDPOINTS.globalBadges,
+            `${ENDPOINTS.channelBadges}?broadcaster_id=123`
         ]);
     });
 });

@@ -8,9 +8,9 @@ const PROXY_ALLOWED_CONFIG_KEYS = new Set([
   'fontSize', 'fontFamily', 'fontWeight', 'chatWidth', 'chatHeight', 'maxMessages',
   'showTimestamps', 'overrideUsernameColors', 'borderRadius', 'boxShadow', 'textShadow',
   'popup', 'theme', 'lastChannel', 'showBadges', 'showPronouns', 'timestampColor',
-  'pronounBadgeColor', 'badgeEndpointUrlGlobal', 'badgeEndpointUrlChannel',
+  'pronounBadgeColor',
   'badgeCacheGlobalTTL', 'badgeCacheChannelTTL', 'badgeFallbackHide',
-  'cheermoteEndpointUrl', 'cheermoteCacheTTL', 'thirdPartyEmotes',
+  'cheermoteCacheTTL', 'thirdPartyEmotes',
   'thirdPartyChannelEmotes', 'thirdPartyFilter7tvTwitchDisallowed',
   'thirdPartyFilter7tvSexual', 'thirdPartyFilter7tvEpilepsy', 'thirdPartyFilter7tvEdgy',
   'thirdPartyEmoteCacheGlobalTTL', 'thirdPartyEmoteCacheChannelTTL',
@@ -77,13 +77,12 @@ describe('Config Schema - theme item uses the theme carousel control', () => {
 describe('Config Schema - internal (non-user-facing) keys are hidden from the rendered form', () => {
     // chat-scene-creator.js's renderSchemaForm() builds each group's visible rows from
     // getVisibleSchemaItems(group.id) — the exact function under test here. This pins
-    // that plumbing (cache TTLs, hardcoded Cloud Function endpoints, schema bookkeeping)
+    // that plumbing (cache TTLs, schema bookkeeping)
     // never gets rendered as an end-user setting, matching the original chat.html config
     // panel, which never exposed these either.
     const INTERNAL_KEYS = [
         'badgeFallbackHide', 'badgeCacheGlobalTTL', 'badgeCacheChannelTTL', 'cheermoteCacheTTL',
         'thirdPartyEmoteCacheGlobalTTL', 'thirdPartyEmoteCacheChannelTTL',
-        'badgeEndpointUrlGlobal', 'badgeEndpointUrlChannel', 'cheermoteEndpointUrl',
         'lastChannel', 'configVersion'
     ];
     const schemaKeyMap = new Map(CONFIG_SCHEMA.map(item => [item.key, item]));
@@ -96,7 +95,7 @@ describe('Config Schema - internal (non-user-facing) keys are hidden from the re
         });
     });
 
-    it('each of the 11 known-internal keys is flagged internal:true and excluded from every group\'s visible items', () => {
+    it('each of the 8 known-internal keys is flagged internal:true and excluded from every group\'s visible items', () => {
         const allVisibleKeys = new Set(
             SCHEMA_GROUPS.flatMap(group => getVisibleSchemaItems(group.id).map(item => item.key))
         );

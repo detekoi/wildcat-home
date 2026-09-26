@@ -3,7 +3,7 @@
  * Handles fetching, caching, and management of Twitch badges (global and channel-specific)
  */
 
-import { resolveEndpoint } from './config-guard.js';
+import { ENDPOINTS } from './config-guard.js';
 
 export class BadgeManager {
     constructor(config) {
@@ -63,8 +63,7 @@ export class BadgeManager {
             return;
         }
         try {
-            // Always our own endpoint: badge image URLs from the response are loaded inside OBS.
-            const data = await this.fetchWithCache('twitchGlobalBadges', this.config.badgeCacheGlobalTTL, resolveEndpoint('badgeEndpointUrlGlobal'));
+            const data = await this.fetchWithCache('twitchGlobalBadges', this.config.badgeCacheGlobalTTL, ENDPOINTS.globalBadges);
             this.globalBadges = data ? { data, timestamp: Date.now() } : null; // Store in memory for faster access
             console.log('Global badges fetched/loaded from cache:', this.globalBadges);
             if (updatePreviewCallback) {
@@ -88,7 +87,7 @@ export class BadgeManager {
         }
 
         const cacheKey = `twitchChannelBadges_${broadcasterId}`;
-        const channelApiUrl = `${resolveEndpoint('badgeEndpointUrlChannel')}?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
+        const channelApiUrl = `${ENDPOINTS.channelBadges}?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
 
         if (this.badgeFetchPromises[broadcasterId]) {
             console.log(`Channel badge fetch already in progress for ${broadcasterId}. Awaiting existing promise.`);

@@ -3,7 +3,7 @@
  * Handles fetching, caching, and parsing of Twitch cheermotes (animated bit emotes)
  */
 
-import { resolveEndpoint } from './config-guard.js';
+import { ENDPOINTS } from './config-guard.js';
 
 export class CheermoteManager {
     constructor(config) {
@@ -59,8 +59,7 @@ export class CheermoteManager {
 
         // Fetch from proxy
         try {
-            // Always our own endpoint: cheermote image URLs from the response are loaded inside OBS.
-            let url = resolveEndpoint('cheermoteEndpointUrl');
+            let url = ENDPOINTS.cheermotes;
             if (broadcasterId) {
                 url += `?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
             }

@@ -412,8 +412,7 @@ export const CONFIG_SCHEMA = [
     },
 
     // --- Badges & Cheermotes ---
-    // NOTE: every item below is `internal: true` — cache TTLs, hardcoded Cloud Function
-    // endpoints, and other plumbing that isn't an end-user-facing setting (the original
+    // NOTE: every item below is `internal: true` — cache TTLs and other plumbing that isn't an end-user-facing setting (the original
     // chat.html config panel never exposed these either; badgeFallbackHide in particular
     // is hardcoded to `true` on save in settings-panel-manager.js, never a user choice).
     // They stay in CONFIG_SCHEMA (required for parity with ConfigManager.getDefaultConfig()
@@ -475,34 +474,8 @@ export const CONFIG_SCHEMA = [
     },
 
     // --- Cache & Endpoints ---
-    // Also all internal: true — see note above.
-    {
-        key: 'badgeEndpointUrlGlobal',
-        group: 'cache_endpoints',
-        label: 'Global Badges Endpoint',
-        control: 'text',
-        default: 'https://us-central1-chat-themer.cloudfunctions.net/getGlobalBadges',
-        advanced: true,
-        internal: true
-    },
-    {
-        key: 'badgeEndpointUrlChannel',
-        group: 'cache_endpoints',
-        label: 'Channel Badges Endpoint',
-        control: 'text',
-        default: 'https://us-central1-chat-themer.cloudfunctions.net/getChannelBadges',
-        advanced: true,
-        internal: true
-    },
-    {
-        key: 'cheermoteEndpointUrl',
-        group: 'cache_endpoints',
-        label: 'Cheermotes Endpoint',
-        control: 'text',
-        default: 'https://us-central1-chat-themer.cloudfunctions.net/getCheermotes',
-        advanced: true,
-        internal: true
-    },
+    // Also all internal: true — see note above. The badge/cheermote endpoint URLs
+    // are not config at all: they're fixed in config-guard.js.
     {
         key: 'lastChannel',
         group: 'cache_endpoints',

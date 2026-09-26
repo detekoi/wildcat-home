@@ -6,7 +6,7 @@
  * scene's ?sync= token. Everything here decides what an OBS Browser Source
  * fetches or renders, so values are checked before they reach the page:
  *
- *   - badge/cheermote endpoints are pinned to our own Cloud Functions
+ *   - badge/cheermote endpoints are fixed; configs no longer carry them
  *   - background images must be raster data URLs or objects in our own bucket
  *   - values bound to CSS custom properties must look like what the UI produces
  *
@@ -14,20 +14,21 @@
  * reach the overlay straight from Firestore or were saved before those rules.
  */
 
-export const PINNED_ENDPOINTS = Object.freeze({
-    badgeEndpointUrlGlobal: 'https://us-central1-chat-themer.cloudfunctions.net/getGlobalBadges',
-    badgeEndpointUrlChannel: 'https://us-central1-chat-themer.cloudfunctions.net/getChannelBadges',
-    cheermoteEndpointUrl: 'https://us-central1-chat-themer.cloudfunctions.net/getCheermotes'
+// The badge and cheermote responses carry image URLs that are loaded inside
+// OBS, so these are never read from a config.
+export const ENDPOINTS = Object.freeze({
+    globalBadges: 'https://us-central1-chat-themer.cloudfunctions.net/getGlobalBadges',
+    channelBadges: 'https://us-central1-chat-themer.cloudfunctions.net/getChannelBadges',
+    cheermotes: 'https://us-central1-chat-themer.cloudfunctions.net/getCheermotes'
 });
 
-/**
- * The endpoint the overlay may actually fetch for `key`, whatever the config says.
- * @param {string} key - One of the PINNED_ENDPOINTS keys.
- * @returns {string}
- */
-export function resolveEndpoint(key) {
-    return PINNED_ENDPOINTS[key];
-}
+// Config keys that used to hold those endpoints. Stripped from any config that
+// still carries them (older localStorage, older Firestore docs).
+export const REMOVED_CONFIG_KEYS = Object.freeze([
+    'badgeEndpointUrlGlobal',
+    'badgeEndpointUrlChannel',
+    'cheermoteEndpointUrl'
+]);
 
 const BUCKET_PREFIX = 'https://storage.googleapis.com/chat-themer-backgrounds/';
 const OBJECT_PATH_REGEX = /^[A-Za-z0-9_-][A-Za-z0-9._-]*(\/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$/;
@@ -115,7 +116,7 @@ for (const key of NUMBER_KEYS) VALIDATORS[key] = (v) => typeof v === 'number' &&
 /**
  * Return a copy of `cfg` that is safe to apply. Only keys already present are
  * touched, so a partial config stays partial:
- *   - endpoint keys are replaced with the pinned endpoints
+ *   - removed endpoint keys are dropped
  *   - bgImage becomes an allowed image URL or null
  *   - a CSS-bound value that fails its check falls back to `defaults[key]`
  *     (numeric strings such as "20" or "20px" are converted to numbers first)
@@ -128,8 +129,8 @@ export function sanitizeConfig(cfg, defaults = {}) {
     if (!cfg || typeof cfg !== 'object') return cfg;
     const out = { ...cfg };
 
-    for (const key of Object.keys(PINNED_ENDPOINTS)) {
-        if (key in out) out[key] = PINNED_ENDPOINTS[key];
+    for (const key of REMOVED_CONFIG_KEYS) {
+        delete out[key];
     }
 
     if ('bgImage' in out && !isNoImage(out.bgImage)) out.bgImage = safeImageUrl(out.bgImage);

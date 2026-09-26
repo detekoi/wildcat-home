@@ -112,12 +112,9 @@ export class ConfigManager {
             showPronouns: true,
             timestampColor: '#adadb8',
             pronounBadgeColor: '#adadb8',
-            badgeEndpointUrlGlobal: 'https://us-central1-chat-themer.cloudfunctions.net/getGlobalBadges',
-            badgeEndpointUrlChannel: 'https://us-central1-chat-themer.cloudfunctions.net/getChannelBadges',
             badgeCacheGlobalTTL: 12 * 60 * 60 * 1000,
             badgeCacheChannelTTL: 1 * 60 * 60 * 1000,
             badgeFallbackHide: true,
-            cheermoteEndpointUrl: 'https://us-central1-chat-themer.cloudfunctions.net/getCheermotes',
             cheermoteCacheTTL: 12 * 60 * 60 * 1000,
             thirdPartyEmotes: true,
             thirdPartyChannelEmotes: true,
@@ -148,7 +145,11 @@ export class ConfigManager {
         // Every config source ends up here (sync, proxy, postMessage preview,
         // localStorage). Sanitized in place so callers holding `cfg` keep the
         // same object that becomes this.config.
-        Object.assign(cfg, sanitizeConfig(cfg, this.getDefaultConfig()));
+        const sanitized = sanitizeConfig(cfg, this.getDefaultConfig());
+        for (const key of Object.keys(cfg)) {
+            if (!(key in sanitized)) delete cfg[key];
+        }
+        Object.assign(cfg, sanitized);
 
         if (cfg.theme) this.lastAppliedThemeValue = cfg.theme;
 

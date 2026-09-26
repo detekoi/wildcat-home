@@ -5,7 +5,7 @@ describe('BadgeManager - Display Engine', () => {
     let badgeManager;
 
     beforeEach(() => {
-        badgeManager = new BadgeManager({ showBadges: true, badgeEndpointUrlChannel: 'http://mock' });
+        badgeManager = new BadgeManager({ showBadges: true });
         vi.stubGlobal('fetch', vi.fn(() => 
             Promise.resolve({
                 ok: true,
