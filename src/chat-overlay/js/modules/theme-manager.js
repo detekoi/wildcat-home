@@ -4,6 +4,7 @@
  */
 
 import { UIHelpers } from './ui-helpers.js';
+import { cssImageValue } from './config-guard.js';
 import { mount, addTheme, getThemes, applyTheme, updateThemeDetails, highlightActiveCard, applyAndScrollToTheme, scrollToThemeCard, loadGoogleFont, availableFonts, availableThemes, currentThemeIndex } from '../theme-carousel.js';
 
 export class ThemeManager {
@@ -238,7 +239,7 @@ export class ThemeManager {
 
         // Update chat wrapper background image
         if (chatWrapper) {
-            const bgImageValue = bgImage === 'none' ? 'none' : (bgImage.startsWith('url') ? bgImage : `url("${bgImage}")`);
+            const bgImageValue = cssImageValue(bgImage);
             document.documentElement.style.setProperty('--chat-bg-image', bgImageValue);
             document.documentElement.style.setProperty('--popup-bg-image', bgImageValue);
         }
@@ -284,7 +285,7 @@ export class ThemeManager {
         previewStyle.setProperty('--preview-border-radius', borderRadius);
         previewStyle.setProperty('--preview-box-shadow', boxShadow);
         previewStyle.setProperty('--preview-text-shadow', textShadow);
-        previewStyle.setProperty('--preview-bg-image', bgImage === 'none' ? 'none' : `url("${bgImage}")`);
+        previewStyle.setProperty('--preview-bg-image', cssImageValue(bgImage));
 
         const fontSize = fontSizeSlider?.value || this._configManager.config?.fontSize || 14;
         previewStyle.fontSize = `${fontSize}px`;

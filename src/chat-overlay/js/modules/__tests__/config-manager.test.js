@@ -86,7 +86,8 @@ describe('ConfigManager - State Persistence', () => {
             
             // Customizations should be retained
             expect(configManager.config.theme).toBe('dracula');
-            expect(configManager.config.fontSize).toBe('20px');
+            // Legacy string sizes are normalised to numbers ("20px" used to render as "20pxpx")
+            expect(configManager.config.fontSize).toBe(20);
             expect(configManager.config.topFade).toBe(true);
 
             // Settings not in custom JSON should revert to safe hardcoded defaults

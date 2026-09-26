@@ -3,6 +3,8 @@
  * Handles fetching, caching, and parsing of Twitch cheermotes (animated bit emotes)
  */
 
+import { resolveEndpoint } from './config-guard.js';
+
 export class CheermoteManager {
     constructor(config) {
         this.config = config;
@@ -17,12 +19,6 @@ export class CheermoteManager {
      * @param {string} [broadcasterId] - Optional broadcaster ID for channel-specific cheermotes
      */
     async fetchCheermotes(broadcasterId) {
-        const endpointUrl = this.config.cheermoteEndpointUrl;
-        if (!endpointUrl || endpointUrl.includes('YOUR_') || endpointUrl.includes('PLACEHOLDER')) {
-            console.warn('Cheermote endpoint URL not configured.');
-            return;
-        }
-
         // Per-key dedup: global and channel fetches track independently
         const dedupKey = broadcasterId || '__global__';
         if (this.fetchPromises.has(dedupKey)) {
@@ -63,7 +59,8 @@ export class CheermoteManager {
 
         // Fetch from proxy
         try {
-            let url = this.config.cheermoteEndpointUrl;
+            // Always our own endpoint: cheermote image URLs from the response are loaded inside OBS.
+            let url = resolveEndpoint('cheermoteEndpointUrl');
             if (broadcasterId) {
                 url += `?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
             }

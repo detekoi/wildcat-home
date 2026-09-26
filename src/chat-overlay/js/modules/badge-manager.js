@@ -3,6 +3,8 @@
  * Handles fetching, caching, and management of Twitch badges (global and channel-specific)
  */
 
+import { resolveEndpoint } from './config-guard.js';
+
 export class BadgeManager {
     constructor(config) {
         this.config = config;
@@ -55,13 +57,14 @@ export class BadgeManager {
      * Fetch global badges
      */
     async fetchGlobalBadges(updatePreviewCallback = null) {
-        if (!this.config.showBadges || !this.config.badgeEndpointUrlGlobal || this.config.badgeEndpointUrlGlobal.includes('YOUR_GLOBAL_BADGE_PROXY_URL_HERE')) {
-            console.warn('Global badge fetching disabled or URL not configured.');
+        if (!this.config.showBadges) {
+            console.warn('Global badge fetching disabled.');
             this.globalBadges = null;
             return;
         }
         try {
-            const data = await this.fetchWithCache('twitchGlobalBadges', this.config.badgeCacheGlobalTTL, this.config.badgeEndpointUrlGlobal);
+            // Always our own endpoint: badge image URLs from the response are loaded inside OBS.
+            const data = await this.fetchWithCache('twitchGlobalBadges', this.config.badgeCacheGlobalTTL, resolveEndpoint('badgeEndpointUrlGlobal'));
             this.globalBadges = data ? { data, timestamp: Date.now() } : null; // Store in memory for faster access
             console.log('Global badges fetched/loaded from cache:', this.globalBadges);
             if (updatePreviewCallback) {
@@ -78,14 +81,14 @@ export class BadgeManager {
      * Fetch channel-specific badges
      */
     async fetchChannelBadges(broadcasterId) {
-        if (!this.config.showBadges || !broadcasterId || !this.config.badgeEndpointUrlChannel || this.config.badgeEndpointUrlChannel.includes('YOUR_CHANNEL_BADGE_PROXY_URL_HERE')) {
-            console.warn('Channel badge fetching disabled, no broadcaster ID, or URL not configured.');
+        if (!this.config.showBadges || !broadcasterId) {
+            console.warn('Channel badge fetching disabled or no broadcaster ID.');
             this.channelBadges[broadcasterId] = null;
             return;
         }
 
         const cacheKey = `twitchChannelBadges_${broadcasterId}`;
-        const channelApiUrl = `${this.config.badgeEndpointUrlChannel}?broadcaster_id=${broadcasterId}`;
+        const channelApiUrl = `${resolveEndpoint('badgeEndpointUrlChannel')}?broadcaster_id=${encodeURIComponent(broadcasterId)}`;
 
         if (this.badgeFetchPromises[broadcasterId]) {
             console.log(`Channel badge fetch already in progress for ${broadcasterId}. Awaiting existing promise.`);

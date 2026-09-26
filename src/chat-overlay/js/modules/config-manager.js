@@ -5,6 +5,7 @@
 
 import { UIHelpers } from './ui-helpers.js';
 import { loadGoogleFont } from './google-font-loader.js';
+import { sanitizeConfig, cssImageValue } from './config-guard.js';
 
 // Bumped whenever a default changes in a way that would visibly alter an existing overlay.
 // Stored configs without a version predate third-party emote support.
@@ -34,7 +35,7 @@ export function migrateConfig(loadedConfig, defaultConfig = null) {
         merged.configVersion = CONFIG_VERSION;
     }
 
-    return { config: merged };
+    return { config: sanitizeConfig(merged, defaultConfig || {}) };
 }
 
 /**
@@ -144,6 +145,11 @@ export class ConfigManager {
             return;
         }
 
+        // Every config source ends up here (sync, proxy, postMessage preview,
+        // localStorage). Sanitized in place so callers holding `cfg` keep the
+        // same object that becomes this.config.
+        Object.assign(cfg, sanitizeConfig(cfg, this.getDefaultConfig()));
+
         if (cfg.theme) this.lastAppliedThemeValue = cfg.theme;
 
         const baseBgColor = cfg.bgColor || '#121212';
@@ -181,7 +187,7 @@ export class ConfigManager {
         rootStyle.setProperty('--chat-box-shadow', UIHelpers.getBoxShadowValue(cfg.boxShadow || 'none'));
         rootStyle.setProperty('--chat-text-shadow', UIHelpers.getTextShadowValue(cfg.textShadow || 'none'));
 
-        const bgImageURL = cfg.bgImage && cfg.bgImage !== 'none' ? `url("${cfg.bgImage}")` : 'none';
+        const bgImageURL = cssImageValue(cfg.bgImage);
         rootStyle.setProperty('--chat-bg-image', bgImageURL);
         rootStyle.setProperty('--chat-bg-image-opacity', cfg.bgImageOpacity ?? 0.55);
 

@@ -12,6 +12,7 @@ import * as themeLibraryClient from './modules/theme-library-client.js';
 import { loadGoogleFont } from './modules/google-font-loader.js';
 import { ModalA11y } from './modules/modal-a11y.js';
 import { UIHelpers } from './modules/ui-helpers.js';
+import { cssImageValue } from './modules/config-guard.js';
 
 /**
  * Theme Carousel implementation for Twitch Chat Overlay
@@ -697,13 +698,9 @@ import { UIHelpers } from './modules/ui-helpers.js';
             }
         }
 
-        if (theme.backgroundImage) {
-            document.documentElement.style.setProperty('--chat-bg-image', `url("${theme.backgroundImage}")`);
-            document.documentElement.style.setProperty('--popup-bg-image', `url("${theme.backgroundImage}")`);
-        } else {
-            document.documentElement.style.setProperty('--chat-bg-image', 'none');
-            document.documentElement.style.setProperty('--popup-bg-image', 'none');
-        }
+        const bgImageValue = cssImageValue(theme.backgroundImage);
+        document.documentElement.style.setProperty('--chat-bg-image', bgImageValue);
+        document.documentElement.style.setProperty('--popup-bg-image', bgImageValue);
 
         if (theme.borderRadius || theme.borderRadiusValue) {
             if (typeof window.applyBorderRadius === 'function') {
