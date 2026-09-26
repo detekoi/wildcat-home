@@ -52,6 +52,8 @@ describe('BadgeManager - Display Engine', () => {
         expect(img.getAttribute('src')).toBe('http://mod_2x');
         img.onerror();
         expect(img.getAttribute('src')).toBe('http://mod_1x');
+        // Last step must unbind, or a failing 1x URL retries forever
+        expect(img.onerror).toBeNull();
     });
 
     it('should return null when no badges resolve or badges are disabled', () => {
