@@ -20,7 +20,7 @@ describe('BadgeManager - Display Engine', () => {
         vi.restoreAllMocks();
     });
 
-    it('should correctly format and render cached badges to HTML img nodes', () => {
+    it('should build badge img nodes from cached badge data', () => {
         // Manually inject cache
         badgeManager.globalBadges = {
             data: { 'broadcaster': { '1': { imageUrl: 'http://broadcaster_url' } } }
@@ -30,14 +30,37 @@ describe('BadgeManager - Display Engine', () => {
         };
 
         const tagString = 'broadcaster/1,subscriber/12,unknown/4';
-        
-        // Simulating the ID param, though in normal code it checks the caches directly
-        const resultHTML = badgeManager.generateBadgeHTML(tagString, '123456');
 
-        expect(resultHTML).toContain('src="http://broadcaster_url"');
-        expect(resultHTML).toContain('src="http://subscriber_url"');
-        // Unknown badge set shouldn't break the HTML or render invalid image tags
-        expect(resultHTML).not.toContain('unknown/4');
+        const el = badgeManager.createBadgeElement(tagString, '123456');
+
+        expect(el).toBeInstanceOf(HTMLElement);
+        expect(el.className).toBe('badges');
+        const imgs = el.querySelectorAll('img.chat-badge');
+        // Unknown badge set is skipped rather than rendered as a broken image
+        expect(Array.from(imgs, img => img.getAttribute('src'))).toEqual(['http://broadcaster_url', 'http://subscriber_url']);
+    });
+
+    it('should keep the resolution fallback handler on each badge image', () => {
+        badgeManager.globalBadges = {
+            data: { 'moderator': { '1': { imageUrl: 'http://mod_1x', imageUrl2x: 'http://mod_2x', imageUrl4x: 'http://mod_4x' } } }
+        };
+
+        const img = badgeManager.createBadgeElement('moderator/1', null).querySelector('img');
+
+        expect(img.getAttribute('src')).toBe('http://mod_4x');
+        img.onerror();
+        expect(img.getAttribute('src')).toBe('http://mod_2x');
+        img.onerror();
+        expect(img.getAttribute('src')).toBe('http://mod_1x');
+    });
+
+    it('should return null when no badges resolve or badges are disabled', () => {
+        expect(badgeManager.createBadgeElement('unknown/4', null)).toBeNull();
+        expect(badgeManager.createBadgeElement('', null)).toBeNull();
+
+        badgeManager.config.showBadges = false;
+        badgeManager.globalBadges = { data: { 'broadcaster': { '1': { imageUrl: 'http://broadcaster_url' } } } };
+        expect(badgeManager.createBadgeElement('broadcaster/1', null)).toBeNull();
     });
 
     it('should load channel badges asynchronously caching valid endpoints', async () => {

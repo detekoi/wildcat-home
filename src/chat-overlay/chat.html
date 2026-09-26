@@ -4,6 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        Content-Security-Policy. This page runs as an OBS Browser Source, which is
+        Chromium with its sandbox disabled, so any script that runs here can reach the
+        streamer's machine through a renderer exploit. Scripts are limited to this
+        origin, Rybbit analytics, and the pinned Firebase SDK; no inline scripts or
+        inline event handlers. Images stay open (emotes/badges come from many CDNs).
+        Add any new API host to connect-src.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://app.rybbit.io https://www.gstatic.com/firebasejs/10.12.0/;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' data: https://fonts.gstatic.com;
+        img-src 'self' data: blob: https:;
+        connect-src 'self'
+            https://theme-proxy-361545143046.us-central1.run.app
+            https://us-central1-chat-themer.cloudfunctions.net
+            https://firestore.googleapis.com
+            https://api.pronouns.alejo.io
+            https://api.betterttv.net https://api.frankerfacez.com https://7tv.io
+            https://app.rybbit.io
+            wss://irc-ws.chat.twitch.tv wss://ytchat.wildcat.chat
+            http://localhost:8091 ws://localhost:8092;
+        worker-src 'self' blob:;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self'">
     <title>Chat Overlay for Twitch & YouTube</title>
     <meta name="description"
         content="Twitch & YouTube chat overlay with support for multiple chat scenes via URL parameters (e.g., ?scene=gaming)">
@@ -20,8 +47,8 @@
     <link rel="stylesheet" href="css/config-panel.css">
     <link rel="stylesheet" href="css/theme-carousel.css">
 
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Icons: lucide 1.48.0, vendored from npm so no CDN can change code on this page -->
+    <script src="js/vendor/lucide-1.48.0.min.js"></script>
 
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
 </head>
@@ -483,8 +510,7 @@
         </div>
         <div class="config-row window-only-setting">
             <label for="top-fade-toggle" style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" id="top-fade-toggle"
-                    onchange="document.body.classList.toggle('top-fade', this.checked)">
+                <input type="checkbox" id="top-fade-toggle">
                 Top Fade Effect
             </label>
             <div class="help-text" style="margin-left: 20px; font-size: 0.8em; opacity: 0.7;">Fades out messages at the top border</div>
@@ -503,7 +529,7 @@
     <script type="module" src="js/chat.js"></script>
     <script type="module" src="js/theme-generator.js"></script>
     <script src="js/bg-opacity-handler.js"></script>
-    <script>lucide.createIcons();</script>
+    <script src="js/page-init.js"></script>
 </body>
 
 </html>

@@ -20,7 +20,7 @@ describe('ChatRenderer - Security Mitigations', () => {
             stickToBottomSoon: vi.fn()
         };
         mockBadgeManager = {
-            generateBadgeHTML: vi.fn(() => '')
+            createBadgeElement: vi.fn(() => null)
         };
 
         const config = {
@@ -493,7 +493,7 @@ describe('ChatRenderer - Command filtering', () => {
             stickToBottomSoon: vi.fn()
         };
         mockBadgeManager = {
-            generateBadgeHTML: vi.fn(() => '')
+            createBadgeElement: vi.fn(() => null)
         };
     });
 

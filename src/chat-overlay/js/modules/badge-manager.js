@@ -126,10 +126,14 @@ export class BadgeManager {
     }
 
     /**
-     * Generate badge HTML for a message
+     * Build the badge element for a message.
+     * Returns a DOM node rather than an HTML string so nothing is re-parsed through
+     * innerHTML, and so the img onerror resolution fallbacks survive (they are JS
+     * properties and would be dropped by serialization).
+     * @returns {HTMLElement|null} A span.badges element, or null if there are no badges to show
      */
-    generateBadgeHTML(badgeString, broadcasterId) {
-        if (!this.config.showBadges || !badgeString) return '';
+    createBadgeElement(badgeString, broadcasterId) {
+        if (!this.config.showBadges || !badgeString) return null;
 
         const badgesContainer = document.createElement('span');
         badgesContainer.className = 'badges';
@@ -158,9 +162,6 @@ export class BadgeManager {
             }
         });
 
-        if (badgesContainer.hasChildNodes()) {
-            return `<span class="badges">${badgesContainer.innerHTML}</span>`;
-        }
-        return '';
+        return badgesContainer.hasChildNodes() ? badgesContainer : null;
     }
 }
