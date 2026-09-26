@@ -153,7 +153,12 @@ export class BadgeManager {
                 const fallback1x = badgeInfo.imageUrl;
                 badgeImg.src = badgeInfo.imageUrl4x || badgeInfo.imageUrl2x || badgeInfo.imageUrl;
                 badgeImg.onerror = function () {
-                    this.onerror = function () { this.src = fallback1x; };
+                    // Unbind on the last step: if 1x also fails, re-setting src would
+                    // re-fire onerror and retry the same URL in a tight loop
+                    this.onerror = function () {
+                        this.onerror = null;
+                        this.src = fallback1x;
+                    };
                     this.src = fallback2x;
                 };
                 badgeImg.alt = badgeInfo.title || setId;
