@@ -472,6 +472,45 @@ describe('ChatRenderer - Security Mitigations', () => {
             const frag = renderer.buildMessageContentDOM('catJAM cvHazmat', null, false, 'twitch');
             expect(renderer.checkSingleEmoteNodes(frag)).toBe(true);
         });
+
+        it('steps third-party and zero-width emotes 3x -> 2x -> 1x, then stops retrying', () => {
+            mockThirdPartyEmoteManager.parseThirdPartyEmotes = vi.fn(() => [
+                { start: 0, end: 5, code: 'catJAM', imageUrl: 'https://cdn.betterttv.net/emote/a/3x.webp', zeroWidth: false },
+                { start: 7, end: 14, code: 'cvHazmat', imageUrl: 'https://cdn.betterttv.net/emote/b/3x.webp', zeroWidth: true }
+            ]);
+
+            const config = { thirdPartyEmotes: true };
+            renderer = new ChatRenderer(config, mockScrollManager, mockBadgeManager, null, null, mockThirdPartyEmoteManager);
+
+            const frag = renderer.buildMessageContentDOM('catJAM cvHazmat', null, false, 'twitch');
+            const [base, overlay] = frag.querySelectorAll('img');
+
+            for (const [img, id] of [[base, 'a'], [overlay, 'b']]) {
+                img.onerror();
+                expect(img.getAttribute('src')).toBe(`https://cdn.betterttv.net/emote/${id}/2x.webp`);
+                img.onerror();
+                expect(img.getAttribute('src')).toBe(`https://cdn.betterttv.net/emote/${id}/1x.webp`);
+                // Last step must unbind, or a failing 1x URL retries forever
+                expect(img.onerror).toBeNull();
+            }
+        });
+    });
+
+    describe('native emote resolution fallback', () => {
+        it('steps Twitch emotes 3.0 -> 2.0 -> 1.0, then stops retrying', () => {
+            renderer = new ChatRenderer({}, mockScrollManager, mockBadgeManager, null);
+
+            const frag = renderer.buildMessageContentDOM('Kappa', { '25': ['0-4'] }, false, 'twitch');
+            const img = frag.querySelector('img.emote');
+            const base = 'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark';
+
+            expect(img.getAttribute('src')).toBe(`${base}/3.0`);
+            img.onerror();
+            expect(img.getAttribute('src')).toBe(`${base}/2.0`);
+            img.onerror();
+            expect(img.getAttribute('src')).toBe(`${base}/1.0`);
+            expect(img.onerror).toBeNull();
+        });
     });
 });
 

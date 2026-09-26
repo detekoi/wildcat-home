@@ -14,6 +14,26 @@ function motionDisabled(el) {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * On load error, step an image through lower-resolution fallback URLs in order.
+ * The handler unbinds before the last attempt: otherwise a failing final URL
+ * re-fires onerror, which re-sets the same src and retries it in a tight loop.
+ */
+function setFallbackSrcs(img, fallbacks) {
+    const queue = [...fallbacks];
+    img.onerror = function () {
+        const next = queue.shift();
+        if (queue.length === 0) this.onerror = null;
+        if (next) this.src = next;
+    };
+}
+
+/** 3x -> 2x -> 1x fallbacks for BTTV/FFZ/7TV emote URLs; none if the URL isn't a 3x variant */
+function thirdPartyFallbacks(url) {
+    if (!url.includes('3x.webp')) return [];
+    return [url.replace('3x.webp', '2x.webp'), url.replace('3x.webp', '1x.webp')];
+}
+
 export class ChatRenderer {
     constructor(config, scrollManager, badgeManager, pronounManager, cheermoteManager, thirdPartyEmoteManager = null) {
         this.config = config;
@@ -414,12 +434,7 @@ export class ChatRenderer {
                     overlayImg.src = pos.imageUrl;
                     overlayImg.alt = pos.code;
                     overlayImg.title = pos.code;
-                    if (pos.imageUrl.includes('3x.webp')) {
-                        overlayImg.onerror = function () {
-                            this.onerror = function () { this.src = this.src.replace('2x.webp', '1x.webp'); };
-                            this.src = this.src.replace('3x.webp', '2x.webp');
-                        };
-                    }
+                    setFallbackSrcs(overlayImg, thirdPartyFallbacks(pos.imageUrl));
                     stackNode.appendChild(overlayImg);
 
                     lastEmote = { node: stackNode, end: pos.end };
@@ -462,12 +477,7 @@ export class ChatRenderer {
                     img.src = pos.imageUrl;
                     img.alt = pos.code;
                     img.title = pos.code;
-                    if (pos.imageUrl.includes('3x.webp')) {
-                        img.onerror = function () {
-                            this.onerror = function () { this.src = this.src.replace('2x.webp', '1x.webp'); };
-                            this.src = this.src.replace('3x.webp', '2x.webp');
-                        };
-                    }
+                    setFallbackSrcs(img, thirdPartyFallbacks(pos.imageUrl));
                     frag.appendChild(img);
                     lastEmote = { node: img, end: pos.end };
                     lastIndex = pos.end + 1;
@@ -502,10 +512,7 @@ export class ChatRenderer {
                     } else if (!pos.id.startsWith('http')) {
                         const baseUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${encodeURIComponent(pos.id)}/default/dark`;
                         img.src = `${baseUrl}/3.0`;
-                        img.onerror = function () {
-                            this.onerror = function () { this.src = `${baseUrl}/1.0`; };
-                            this.src = `${baseUrl}/2.0`;
-                        };
+                        setFallbackSrcs(img, [`${baseUrl}/2.0`, `${baseUrl}/1.0`]);
                         img.alt = emoteCode;
                         img.title = emoteCode;
                         frag.appendChild(img);
