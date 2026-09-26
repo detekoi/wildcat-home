@@ -210,15 +210,10 @@ export class ChatRenderer {
                 messageElement.appendChild(pBadge);
             }
 
-            const badgesHtml = data.tags?.badges
-                ? this.badgeManager.generateBadgeHTML(data.tags.badges, this.currentBroadcasterId)
-                : '';
-
-            if (badgesHtml) {
-                const bWrapper = document.createElement('span');
-                bWrapper.innerHTML = badgesHtml;
-                while (bWrapper.firstChild) messageElement.appendChild(bWrapper.firstChild);
-            }
+            const badgesEl = data.tags?.badges
+                ? this.badgeManager.createBadgeElement(data.tags.badges, this.currentBroadcasterId)
+                : null;
+            if (badgesEl) messageElement.appendChild(badgesEl);
 
             if (this.config.showPronouns !== false) {
                 const cachedPronoun = this.pronounManager?.getPronounDisplay(data.username);
