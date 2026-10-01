@@ -116,6 +116,17 @@ describe('SceneSyncManager', () => {
         expect(pushSpy).toHaveBeenCalledWith(mockConfigManager.config);
     });
 
+    it('should not claim the token from a cache-only missing snapshot while offline', () => {
+        // Firestore emits exists() === false from an empty cache when the backend
+        // is unreachable; claiming would overwrite the real scene with defaults.
+        const pushSpy = vi.spyOn(syncManager, 'pushConfig').mockImplementation(() => Promise.resolve({ success: true }));
+        syncManager._configManager = mockConfigManager;
+        syncManager._token = 'test-token-uuid';
+
+        syncManager.handleSnapshot({ exists: () => false, metadata: { fromCache: true } });
+        expect(pushSpy).not.toHaveBeenCalled();
+    });
+
     it('should still wire up dependencies when there is no sync URL param, so a later auto-provisioned token can subscribe', async () => {
         // Regression: start() used to assign _configManager/_sceneName/etc.
         // AFTER its early "no ?sync= param" return, so a fresh visitor who
@@ -241,6 +252,26 @@ describe('SceneSyncManager', () => {
         expect(config).toBeDefined();
         expect(config.theme).toBe('neon');
         expect(setItemSpy).toHaveBeenCalledWith('chatConfig_sync_rest-fallback-token', expect.stringContaining('neon'));
+    });
+
+    it('should connect to the synced channels when config arrives over the REST fallback', async () => {
+        // A fresh browser profile (TikTok Live Studio, a new OBS install) has no
+        // local channels; when Firestore is unreachable, REST is the only source.
+        syncManager._configManager = mockConfigManager;
+        syncManager._chatConnection = mockChatConnection;
+        syncManager._token = 'rest-fallback-token';
+
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                config: { lastTwitchChannel: 'parfaitfair', lastYouTubeTarget: '@parfaitfair' }
+            })
+        });
+
+        await syncManager.fetchConfigFromProxy('rest-fallback-token');
+        expect(mockChatConnection.connectTwitch).toHaveBeenCalledWith('parfaitfair');
+        expect(mockChatConnection.connectYouTube).toHaveBeenCalledWith('@parfaitfair');
     });
 
     it('should not cache a data-URL bgImage after pushConfig, since the server rewrites it', async () => {

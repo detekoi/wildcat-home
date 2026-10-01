@@ -20,6 +20,8 @@ export function getProxyBaseUrl() {
     return 'https://theme-proxy-361545143046.us-central1.run.app/api';
 }
 
+const FIRST_SNAPSHOT_TIMEOUT_MS = 8000;
+
 export class SceneSyncManager {
     constructor() {
         this.myClientId = UIHelpers.generateSecureId('session');
@@ -29,6 +31,7 @@ export class SceneSyncManager {
         this._db = null;
         this._isSyncing = false;
         this._restFallbackToken = null;
+        this._firstSnapshotTimer = null;
         this._suppressRemoteUpdates = false;
         
         this._configManager = null;
@@ -111,9 +114,24 @@ export class SceneSyncManager {
 
             const docRef = firebaseFirestore.doc(this._db, 'sceneConfigs', this._token);
 
+            // Some embedded browsers load the SDK but never get a response over
+            // Firestore's streaming channel, and no error fires either. If nothing
+            // arrives in time, read the config over plain REST instead.
+            const subscribedToken = this._token;
+            clearTimeout(this._firstSnapshotTimer);
+            this._firstSnapshotTimer = setTimeout(() => {
+                if (this._token === subscribedToken && this._restFallbackToken !== subscribedToken) {
+                    console.warn('[SceneSyncManager] No Firestore snapshot yet; falling back to REST.');
+                    this._restFallbackToken = subscribedToken;
+                    this.fetchConfigFromProxy(subscribedToken);
+                }
+            }, FIRST_SNAPSHOT_TIMEOUT_MS);
+
             this._unsubscribe = firebaseFirestore.onSnapshot(docRef, (docSnap) => {
+                clearTimeout(this._firstSnapshotTimer);
                 this.handleSnapshot(docSnap);
             }, (error) => {
+                clearTimeout(this._firstSnapshotTimer);
                 console.warn('[SceneSyncManager] Firestore snapshot error:', error);
                 // The SDK loaded but the listener can't deliver (permission denied,
                 // long-polling blocked by a restrictive network). Nothing was thrown,
@@ -180,18 +198,7 @@ export class SceneSyncManager {
             if (!response.ok) return null;
             const data = await response.json();
             if (data && data.config && this._configManager) {
-                const defaults = this._configManager.getDefaultConfig();
-                const { config: mergedConfig } = migrateConfig(data.config, defaults);
-                this._configManager.applyConfiguration(mergedConfig);
-                this._configManager.saveConfig(this._sceneName);
-                try {
-                    localStorage.setItem(`chatConfig_sync_${token}`, JSON.stringify(mergedConfig));
-                } catch (e) {}
-                if (this._badgeManager) this._badgeManager.config = mergedConfig;
-                if (this._chatRenderer) this._chatRenderer.config = mergedConfig;
-                if (this._thirdPartyEmoteManager) this._thirdPartyEmoteManager.config = mergedConfig;
-                if (this._settingsPanel) this._settingsPanel.updateConfigPanelFromConfig();
-                return mergedConfig;
+                return this._applyRemoteConfig(data.config, token);
             }
         } catch (err) {
             console.warn('[SceneSyncManager] Failed to fetch scene config from proxy:', err);
@@ -204,6 +211,10 @@ export class SceneSyncManager {
      */
     handleSnapshot(docSnap) {
         if (!docSnap || !docSnap.exists()) {
+            // An offline client gets a "missing" snapshot from its empty local cache.
+            // That says nothing about the server, and claiming here would overwrite
+            // the real scene with this browser's (possibly default) config.
+            if (docSnap && docSnap.metadata && docSnap.metadata.fromCache) return;
             // Doc missing path (Rule #2: Token claim) -> upload current local config
             if (this._configManager && this._configManager.config) {
                 console.log('[SceneSyncManager] Token doc missing in Firestore. Claiming token with local config...');
@@ -224,8 +235,19 @@ export class SceneSyncManager {
 
         if (!this._configManager) return;
 
+        this._applyRemoteConfig(data.config, this._token);
+    }
+
+    /**
+     * Apply a config received from the backend (Firestore snapshot or REST GET),
+     * cache it, and connect to its channels if they differ from the current ones.
+     * Both delivery paths go through here so a browser that can't reach Firestore
+     * (e.g. TikTok Live Studio's embedded browser) still auto-connects: a fresh
+     * profile has no local channels, so this is the only place they come from.
+     */
+    _applyRemoteConfig(rawConfig, token) {
         const defaults = this._configManager.getDefaultConfig();
-        const { config: mergedConfig } = migrateConfig(data.config, defaults);
+        const { config: mergedConfig } = migrateConfig(rawConfig, defaults);
 
         // Capture previous channel settings to check channel reconnection guard
         const oldTwitch = this._configManager.config.lastTwitchChannel || this._configManager.config.lastChannel;
@@ -234,9 +256,9 @@ export class SceneSyncManager {
         // Apply configuration live
         this._configManager.applyConfiguration(mergedConfig);
         this._configManager.saveConfig(this._sceneName);
-        if (this._token) {
+        if (token) {
             try {
-                localStorage.setItem(`chatConfig_sync_${this._token}`, JSON.stringify(mergedConfig));
+                localStorage.setItem(`chatConfig_sync_${token}`, JSON.stringify(mergedConfig));
             } catch (e) {}
         }
 
@@ -260,6 +282,8 @@ export class SceneSyncManager {
                 this._chatConnection.connectYouTube(newYouTube);
             }
         }
+
+        return mergedConfig;
     }
 
     /**
@@ -339,6 +363,7 @@ export class SceneSyncManager {
      * Unsubscribe from Firestore snapshot listener
      */
     stop() {
+        clearTimeout(this._firstSnapshotTimer);
         if (this._unsubscribe) {
             this._unsubscribe();
             this._unsubscribe = null;
