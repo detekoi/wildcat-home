@@ -309,4 +309,77 @@ describe('SceneSyncManager', () => {
         syncManager.handleSnapshot(mockSnap);
         expect(applyConfigSpy).not.toHaveBeenCalled();
     });
+
+    describe('first-snapshot REST fallback', () => {
+        const TOKEN = '11111111-2222-4333-8444-555555555555';
+        const serverSnap = (config) => ({
+            exists: () => true,
+            metadata: { fromCache: false },
+            data: () => ({ config, updatedBy: 'remote-session' })
+        });
+        const cacheMissSnap = { exists: () => false, metadata: { fromCache: true } };
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            syncManager._configManager = mockConfigManager;
+            syncManager._chatConnection = mockChatConnection;
+            syncManager._token = TOKEN;
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should still fall back to REST when the only snapshot is an offline cache miss', () => {
+            const fetchSpy = vi.spyOn(syncManager, 'fetchConfigFromProxy').mockResolvedValue(null);
+            syncManager._armFirstSnapshotTimer(TOKEN);
+
+            syncManager._onSnapshotEvent(cacheMissSnap);
+            vi.advanceTimersByTime(8000);
+
+            expect(fetchSpy).toHaveBeenCalledTimes(1);
+            expect(fetchSpy).toHaveBeenCalledWith(TOKEN);
+        });
+
+        it('should cancel the REST fallback once a server snapshot arrives', () => {
+            const fetchSpy = vi.spyOn(syncManager, 'fetchConfigFromProxy').mockResolvedValue(null);
+            syncManager._armFirstSnapshotTimer(TOKEN);
+
+            syncManager._onSnapshotEvent(serverSnap({ theme: 'neon' }));
+            vi.advanceTimersByTime(8000);
+
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should drop a REST response when a live snapshot landed while it was in flight', async () => {
+            let resolveFetch;
+            global.fetch = vi.fn(() => new Promise(r => { resolveFetch = r; }));
+            const pending = syncManager.fetchConfigFromProxy(TOKEN);
+
+            syncManager._onSnapshotEvent(serverSnap({ lastTwitchChannel: 'fresh_channel' }));
+            resolveFetch({ ok: true, json: async () => ({ config: { lastTwitchChannel: 'stale_channel' } }) });
+
+            expect(await pending).toBeNull();
+            expect(mockConfigManager.config.lastTwitchChannel).toBe('fresh_channel');
+            expect(mockChatConnection.connectTwitch).not.toHaveBeenCalledWith('stale_channel');
+        });
+
+        it('should drop a REST response for a token that is no longer active', async () => {
+            let resolveFetch;
+            global.fetch = vi.fn(() => new Promise(r => { resolveFetch = r; }));
+            const pending = syncManager.fetchConfigFromProxy(TOKEN);
+
+            syncManager._token = '66666666-7777-4888-8999-000000000000';
+            resolveFetch({ ok: true, json: async () => ({ config: { lastTwitchChannel: 'old_scene_channel' } }) });
+
+            expect(await pending).toBeNull();
+            expect(mockChatConnection.connectTwitch).not.toHaveBeenCalled();
+        });
+
+        it('should allow a fresh REST fallback for the same token after stop()', () => {
+            syncManager._restFallbackToken = TOKEN;
+            syncManager.stop();
+            expect(syncManager._restFallbackToken).toBeNull();
+        });
+    });
 });

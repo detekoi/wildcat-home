@@ -32,6 +32,7 @@ export class SceneSyncManager {
         this._isSyncing = false;
         this._restFallbackToken = null;
         this._firstSnapshotTimer = null;
+        this._serverSnapshotCount = 0;
         this._suppressRemoteUpdates = false;
         
         this._configManager = null;
@@ -71,6 +72,7 @@ export class SceneSyncManager {
         const normalized = UIHelpers.normalizeSyncToken(newToken);
         if (this._token === normalized) return;
         this._token = normalized;
+        this._clearFirstSnapshotTimer();
         if (this._unsubscribe) {
             this._unsubscribe();
             this._unsubscribe = null;
@@ -82,8 +84,9 @@ export class SceneSyncManager {
 
     /**
      * Initialize Firebase (if not already done) and subscribe to snapshot updates
-     * for the current `_token`. Shared by `start()` and `setSyncToken()`. Any
-     * failure degrades silently — the caller keeps using local config.
+     * for the current `_token`. Shared by `start()` and `setSyncToken()`. If the
+     * SDK fails to load, the listener errors, or no server snapshot arrives in
+     * time, the config is read once over REST instead.
      * @returns {Promise<boolean>} whether the subscription was established
      */
     async _ensureSubscribed() {
@@ -114,24 +117,12 @@ export class SceneSyncManager {
 
             const docRef = firebaseFirestore.doc(this._db, 'sceneConfigs', this._token);
 
-            // Some embedded browsers load the SDK but never get a response over
-            // Firestore's streaming channel, and no error fires either. If nothing
-            // arrives in time, read the config over plain REST instead.
-            const subscribedToken = this._token;
-            clearTimeout(this._firstSnapshotTimer);
-            this._firstSnapshotTimer = setTimeout(() => {
-                if (this._token === subscribedToken && this._restFallbackToken !== subscribedToken) {
-                    console.warn('[SceneSyncManager] No Firestore snapshot yet; falling back to REST.');
-                    this._restFallbackToken = subscribedToken;
-                    this.fetchConfigFromProxy(subscribedToken);
-                }
-            }, FIRST_SNAPSHOT_TIMEOUT_MS);
+            this._armFirstSnapshotTimer(this._token);
 
             this._unsubscribe = firebaseFirestore.onSnapshot(docRef, (docSnap) => {
-                clearTimeout(this._firstSnapshotTimer);
-                this.handleSnapshot(docSnap);
+                this._onSnapshotEvent(docSnap);
             }, (error) => {
-                clearTimeout(this._firstSnapshotTimer);
+                this._clearFirstSnapshotTimer();
                 console.warn('[SceneSyncManager] Firestore snapshot error:', error);
                 // The SDK loaded but the listener can't deliver (permission denied,
                 // long-polling blocked by a restrictive network). Nothing was thrown,
@@ -147,10 +138,49 @@ export class SceneSyncManager {
             return true;
         } catch (err) {
             console.warn('[SceneSyncManager] Failed to initialize Firebase SDK or subscription:', err);
-            // Rule #3: Network / SDK failure -> fallback gracefully to REST GET if token active
+            // Rule #3: Network / SDK failure -> fallback gracefully to REST GET if token active.
+            // Mark the token so a timer armed before a synchronous onSnapshot throw
+            // can't fire a second fetch.
+            this._clearFirstSnapshotTimer();
+            this._restFallbackToken = this._token;
             this.fetchConfigFromProxy(this._token);
             return false;
         }
+    }
+
+    /**
+     * Some embedded browsers load the SDK but never get a response over
+     * Firestore's streaming channel, and no error fires either. If no server
+     * snapshot arrives in time, read the config over plain REST instead.
+     */
+    _armFirstSnapshotTimer(token) {
+        this._clearFirstSnapshotTimer();
+        this._firstSnapshotTimer = setTimeout(() => {
+            this._firstSnapshotTimer = null;
+            if (this._token === token && this._restFallbackToken !== token) {
+                console.warn('[SceneSyncManager] No Firestore snapshot yet; falling back to REST.');
+                this._restFallbackToken = token;
+                this.fetchConfigFromProxy(token);
+            }
+        }, FIRST_SNAPSHOT_TIMEOUT_MS);
+    }
+
+    _clearFirstSnapshotTimer() {
+        clearTimeout(this._firstSnapshotTimer);
+        this._firstSnapshotTimer = null;
+    }
+
+    /**
+     * onSnapshot success callback. A cache-only snapshot (an offline client's
+     * empty local cache) says nothing about the server, so it must not cancel
+     * the REST fallback timer or the browser stays unconfigured forever.
+     */
+    _onSnapshotEvent(docSnap) {
+        if (!(docSnap && docSnap.metadata && docSnap.metadata.fromCache)) {
+            this._clearFirstSnapshotTimer();
+            this._serverSnapshotCount++;
+        }
+        this.handleSnapshot(docSnap);
     }
 
     /**
@@ -194,9 +224,14 @@ export class SceneSyncManager {
         if (!token || this._suppressRemoteUpdates) return null;
         try {
             const baseUrl = getProxyBaseUrl();
+            const serverSnapshotsBefore = this._serverSnapshotCount;
             const response = await fetch(`${baseUrl}/scene-config/${token}`);
             if (!response.ok) return null;
             const data = await response.json();
+            // Drop the response if the token changed mid-flight, or if a live
+            // snapshot landed meanwhile: REST is browser-cached for up to 60s and
+            // would roll the scene back.
+            if (this._token !== token || this._serverSnapshotCount !== serverSnapshotsBefore) return null;
             if (data && data.config && this._configManager) {
                 return this._applyRemoteConfig(data.config, token);
             }
@@ -363,7 +398,8 @@ export class SceneSyncManager {
      * Unsubscribe from Firestore snapshot listener
      */
     stop() {
-        clearTimeout(this._firstSnapshotTimer);
+        this._clearFirstSnapshotTimer();
+        this._restFallbackToken = null;
         if (this._unsubscribe) {
             this._unsubscribe();
             this._unsubscribe = null;
