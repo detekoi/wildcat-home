@@ -149,4 +149,4 @@ Work through these in order. The first three cover most cases.
 4. Check the mode. In Command Only, regular chat is meant to be silent. In Bits/Points Only, so are cheers below the minimum.
 5. If you regenerated the browser source URL at some point, OBS still has the old one.
 
-The [full documentation](https://docs.wildcat.chat/wildcatttsdocs.html) has every command and setting, and the [troubleshooting section](https://docs.wildcat.chat/wildcatttsdocs.html#troubleshooting) covers the rarer cases. If you're stuck, [get in touch](https://parfaitfair.com/#contact).
+The [full documentation](https://docs.wildcat.chat/wildcatttsdocs.html) has every command and setting, and the [troubleshooting section](https://docs.wildcat.chat/tts-troubleshooting.html#troubleshooting) covers the rarer cases. If you're stuck, [get in touch](https://parfaitfair.com/#contact).

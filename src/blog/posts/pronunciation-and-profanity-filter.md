@@ -82,4 +82,4 @@ If your Language Boost is set to Automatic, the filter uses English. There's no 
 
 [Banned Words](https://wildcat.chat/blog/posts/banned-words/) drops the whole message. The profanity filter reads the message, just cleaned up. They stack, so a word on both lists still means the message is skipped entirely.
 
-Full details are in the [WildcatTTS documentation](https://docs.wildcat.chat/wildcatttsdocs.html#pronunciation).
+Full details are in the [WildcatTTS documentation](https://docs.wildcat.chat/tts-filtering.html#pronunciation).

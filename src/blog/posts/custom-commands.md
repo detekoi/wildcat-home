@@ -29,7 +29,7 @@ Make your commands come alive with variables that fill in automatically:
 - `$(random X-Y)` — A random number in a range.
 
 Full variable docs & examples:  
-[https://docs.wildcat.chat/botcommands.html#response-variables](https://docs.wildcat.chat/botcommands.html#response-variables)
+[https://docs.wildcat.chat/sage-custom-commands.html#response-variables](https://docs.wildcat.chat/sage-custom-commands.html#response-variables)
 
 ## Web Dashboard
 

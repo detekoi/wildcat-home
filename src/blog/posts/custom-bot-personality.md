@@ -57,4 +57,4 @@ The same screening now runs on AI custom command prompts, AI timers, and check-i
 
 Plain text commands and timers are untouched. They're posted word for word and never go near the model, so there's nothing to screen.
 
-Full details are in the [Bot Personality documentation](https://docs.wildcat.chat/botcommands.html#bot-personality). If you have questions or feedback, [get in touch](https://parfaitfair.com/#contact).
+Full details are in the [Bot Personality documentation](https://docs.wildcat.chat/sage-personality.html#bot-personality). If you have questions or feedback, [get in touch](https://parfaitfair.com/#contact).

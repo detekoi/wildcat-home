@@ -132,4 +132,4 @@ Everything the bot thinks up rather than looks up. Where it can write that direc
 
 This website is English only for now.
 
-Full details are in the [WildcatSage documentation](https://docs.wildcat.chat/botcommands.html#bot-language).
+Full details are in the [WildcatSage documentation](https://docs.wildcat.chat/sage-language.html#bot-language).

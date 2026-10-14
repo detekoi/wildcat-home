@@ -104,4 +104,4 @@ Voice names are provider identifiers and stay as they are. The voice preview phr
 
 Emoji labels are missing for 18 of the 40 languages, and slur replacements in the profanity filter are English only for now.
 
-Full details are in the [WildcatTTS documentation](https://docs.wildcat.chat/wildcatttsdocs.html#language-boost).
+Full details are in the [WildcatTTS documentation](https://docs.wildcat.chat/tts-voices.html#language-boost).

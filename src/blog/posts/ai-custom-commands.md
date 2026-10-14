@@ -25,7 +25,7 @@ A completely different answer every time.
 - **!fortune** — *AI Prompt:* `Give $(user) a short fortune cookie message.`
 - **!roast** — *AI Prompt:* `Give $(user) a lighthearted roast in one sentence.`
 
-All the same [response variables](https://docs.wildcat.chat/botcommands.html#response-variables) you already know — `$(user)`, `$(args)`, `$(1)`, `$(game)`, etc. — work inside AI prompts too.
+All the same [response variables](https://docs.wildcat.chat/sage-custom-commands.html#response-variables) you already know — `$(user)`, `$(args)`, `$(1)`, `$(game)`, etc. — work inside AI prompts too.
 
 ## Switch Existing Commands
 
@@ -36,4 +36,4 @@ Have a text command you want to make dynamic? Edit it in the dashboard and flip 
 You can also create AI commands directly in chat with `!command addai <name> <prompt>` if you prefer.
 
 Full docs & examples:  
-[https://docs.wildcat.chat/botcommands.html#custom-commands](https://docs.wildcat.chat/botcommands.html#custom-commands)
+[https://docs.wildcat.chat/sage-commands.html#custom-commands](https://docs.wildcat.chat/sage-commands.html#custom-commands)
