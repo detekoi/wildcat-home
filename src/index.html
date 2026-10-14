@@ -74,6 +74,8 @@ resources:
     </div>
 </header>
 
+<main id="main-content" tabindex="-1">
+
 <section class="wch-hero" aria-labelledby="wch-hero-title">
     <div class="wch-hero-static" aria-hidden="true">
         <video class="wch-hero-video" autoplay loop muted playsinline>
@@ -104,7 +106,7 @@ resources:
     </div>
 </section>
 
-<main id="main-content" class="wch-main" tabindex="-1">
+<div class="wch-main">
 
     <dl class="wc-stats">
         {%- for s in stats %}
@@ -174,11 +176,13 @@ resources:
         </div>
     </section>
 
-    <footer class="wch-footer">
-        <span class="wc-readout">wildcat.chat</span>
-        <span class="wc-readout">Made by parfaitfair</span>
-    </footer>
+</div>
 </main>
+
+<footer class="wch-footer">
+    <span class="wc-readout">wildcat.chat</span>
+    <span class="wc-readout">Made by parfaitfair</span>
+</footer>
 
 <!-- Floating Support Widget -->
 <aside class="floating-support" aria-label="Support">

@@ -211,13 +211,13 @@ a.wc-chipbtn:hover {
 .wch-main {
     max-width: 1120px;
     margin: 0 auto;
-    padding: 36px 24px 120px;
+    padding: 36px 24px 0;
     display: flex;
     flex-direction: column;
     gap: 64px;
 }
 
-.wch-main:focus { outline: none; }
+.wc-stat dd.is-accent { color: var(--wc-accent); }
 
 .wch-main .wc-card > .card-header {
     display: flex;
@@ -245,6 +245,12 @@ a.wc-chipbtn:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
     gap: 44px 40px;
+}
+
+/* design-system.css pads every free-form block in a section card with
+   :root .wc-card > .card-body > *:not(...)x3 — (0,7,0). Match that selector so
+   the grid's tighter top padding wins by source order. */
+:root .wc-card > .card-body > .wch-tools-grid:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows) {
     padding-top: 10px;
 }
 
@@ -312,17 +318,11 @@ a.wc-chipbtn:hover {
     max-width: 64ch;
 }
 
-.list-group.wch-resources { border: 0; }
-
-.wch-resources .list-group-item {
-    display: flex;
-    align-items: center;
+/* The design system already lays rows out as hairline-ruled flex rows
+   (:root .wc-card .list-group-item); only the spacing differs here. */
+:root .wc-card .wch-resources .list-group-item {
     justify-content: space-between;
     gap: 16px;
-    background: transparent;
-    border-inline: 0;
-    border-bottom: 0;
-    border-top: 1px solid var(--wc-hairline);
 }
 
 .wch-resource-text {
@@ -332,13 +332,7 @@ a.wc-chipbtn:hover {
     min-width: 0;
 }
 
-.wch-resources .wc-row-label {
-    font-size: 13.5px;
-    font-weight: 600;
-}
-
 .wch-resource-host {
-    font-size: 11px;
     color: var(--wc-text-3);
 }
 
@@ -359,11 +353,18 @@ a.wc-chipbtn:hover {
 }
 
 /* ---- Footer ---- */
+/* <main> takes focus from the skip link; it is not a control, so no ring. */
+main#main-content:focus { outline: none; }
+
+/* The footer sits after <main> as the page's contentinfo landmark, but lines
+   up with the main column above it. */
 .wch-footer {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 12px;
-    padding-top: 16px;
+    width: min(100% - 48px, 1072px);
+    margin: 64px auto 0;
+    padding: 16px 0 120px;
     border-top: 1px solid var(--wc-hairline);
 }
