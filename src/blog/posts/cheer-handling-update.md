@@ -2,6 +2,7 @@
 title: "Update: Better cheer handling & controls"
 date: 2025-12-29
 description: "I've improved how the bot handles Cheer events to squash some bugs and give you more control, including smarter cheer reading and a new 'Announce Cheers' toggle."
+tags: [tts]
 ---
 
 I've improved how the bot handles Cheer events to squash some bugs and give you more control.

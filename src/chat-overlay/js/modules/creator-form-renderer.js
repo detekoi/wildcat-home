@@ -37,73 +37,90 @@ export class CreatorFormRenderer {
 
         container.innerHTML = '';
 
+        // Design-system section markup: each group is a titled section card
+        // (.card.wc-card > .card-header > h2.wc-card-title + .card-body) whose
+        // rows are .list-group-items. The advanced groups share one "Advanced"
+        // section, each as a disclosure row that opens onto its own rows.
+        let advancedBody = null;
+
         SCHEMA_GROUPS.forEach(group => {
             const groupItems = getVisibleSchemaItems(group.id);
             if (groupItems.length === 0) return;
 
-            const sectionEl = document.createElement(group.advanced ? 'details' : 'div');
-            sectionEl.className = `settings-section ${group.advanced ? 'advanced-section' : ''}`;
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'list-group settings-group';
+            groupDiv.id = `group-${group.id}`;
 
+            let sectionEl;
             if (group.advanced) {
+                if (!advancedBody) {
+                    const advancedSection = this.createSectionCard('Advanced', 'advanced');
+                    advancedSection.classList.add('wch-advanced');
+                    advancedBody = advancedSection.querySelector('.card-body');
+                    container.appendChild(advancedSection);
+                }
+                sectionEl = document.createElement('details');
+                sectionEl.className = 'settings-section advanced-section';
                 const summary = document.createElement('summary');
                 summary.className = 'advanced-summary';
-                summary.style.cursor = 'pointer';
-                summary.style.padding = '8px 0';
-                summary.style.fontWeight = '600';
-                summary.style.userSelect = 'none';
-                summary.innerHTML = `<span style="font-size: 15px; font-weight: 600;">${group.label}</span> <span class="badge-count" style="font-size: 12px; opacity: 0.6; margin-left: 6px;">(${groupItems.length})</span>`;
+                summary.innerHTML = `<span class="advanced-summary-label">${group.label} <span class="badge-count">(${groupItems.length})</span></span><i data-lucide="chevron-down" class="advanced-summary-icon" aria-hidden="true"></i>`;
                 sectionEl.appendChild(summary);
+                sectionEl.appendChild(groupDiv);
+                advancedBody.appendChild(sectionEl);
             } else {
-                const h3 = document.createElement('h3');
-                h3.textContent = group.label;
-                sectionEl.appendChild(h3);
+                sectionEl = this.createSectionCard(group.label, group.id);
+                sectionEl.classList.add('settings-section');
+                sectionEl.querySelector('.card-body').appendChild(groupDiv);
+                container.appendChild(sectionEl);
             }
-
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'settings-group';
-            groupDiv.id = `group-${group.id}`;
-            if (group.advanced) groupDiv.style.marginTop = '12px';
 
             groupItems.forEach(item => {
                 if (item.subheading) {
                     const subHead = document.createElement('div');
-                    subHead.className = 'config-sublabel';
+                    subHead.className = 'config-sublabel wc-readout';
                     subHead.textContent = item.subheading;
-                    subHead.style.fontSize = '0.9em';
-                    subHead.style.fontWeight = '600';
-                    subHead.style.opacity = '0.85';
-                    subHead.style.marginTop = '10px';
-                    subHead.style.marginBottom = '6px';
                     if (item.indent) {
                         const subIndent = item.indent > 1 ? 20 : (item.indent * 20);
-                        subHead.style.marginLeft = `${subIndent}px`;
+                        subHead.style.setProperty('--row-indent', `${subIndent}px`);
                     }
                     groupDiv.appendChild(subHead);
                 }
 
+                // A row is label (+ help) on the left, its control on the right.
+                // applyChatModeVisibility() re-shows rows with display:flex, which
+                // is the layout .list-group-item already has.
                 const row = document.createElement('div');
-                row.className = 'settings-row';
+                row.className = 'list-group-item settings-row';
                 row.id = `schema-row-${item.key}`;
 
                 if (item.indent) {
                     const indentPx = item.indent === 1 ? 20 : 35;
-                    row.style.marginLeft = `${indentPx}px`;
-                    row.style.width = `calc(100% - ${indentPx}px)`;
+                    row.style.setProperty('--row-indent', `${indentPx}px`);
+                    row.classList.add('settings-row--indent');
                 }
 
-                const label = document.createElement('label');
-                label.htmlFor = `schema-input-${item.key}`;
+                const textCol = document.createElement('div');
+                textCol.className = 'wch-row-text';
+                // Presets (a button group) and the theme carousel (a hidden input
+                // plus cards) have no labelable control, so they get a plain text
+                // label that names the group through aria-labelledby instead.
+                const groupLabelled = item.control === 'presets' || item.control === 'themeCarousel';
+                const label = document.createElement(groupLabelled ? 'span' : 'label');
+                label.className = 'wc-row-label';
+                label.id = `schema-label-${item.key}`;
+                if (!groupLabelled) label.htmlFor = `schema-input-${item.key}`;
                 label.textContent = item.label;
-                if (item.indent) {
-                    label.style.fontSize = '0.95em';
-                }
-                row.appendChild(label);
+                textCol.appendChild(label);
+                row.appendChild(textCol);
+
+                const controlCol = document.createElement('div');
+                controlCol.className = `wch-row-control wch-row-control--${item.control}`;
+                row.appendChild(controlCol);
 
                 if (item.control === 'font') {
                     const fontMount = document.createElement('div');
                     fontMount.id = 'fontPickerMount';
-                    fontMount.style.flex = '1';
-                    row.appendChild(fontMount);
+                    controlCol.appendChild(fontMount);
                     groupDiv.appendChild(row);
                     return;
                 }
@@ -112,6 +129,8 @@ export class CreatorFormRenderer {
                     const presetGroup = document.createElement('div');
                     presetGroup.className = 'preset-group';
                     presetGroup.id = `schema-presets-${item.key}`;
+                    presetGroup.setAttribute('role', 'group');
+                    presetGroup.setAttribute('aria-labelledby', label.id);
 
                     item.options.forEach(opt => {
                         const btn = document.createElement('button');
@@ -167,7 +186,7 @@ export class CreatorFormRenderer {
                         presetGroup.appendChild(btn);
                     });
 
-                    row.appendChild(presetGroup);
+                    controlCol.appendChild(presetGroup);
                     groupDiv.appendChild(row);
                     return;
                 }
@@ -176,6 +195,8 @@ export class CreatorFormRenderer {
                     const mountDiv = document.createElement('div');
                     mountDiv.id = `schema-themecarousel-${item.key}`;
                     mountDiv.className = 'theme-carousel-mount';
+                    mountDiv.setAttribute('role', 'group');
+                    mountDiv.setAttribute('aria-labelledby', label.id);
 
                     // Hidden input holds the selected theme's value so the generic
                     // read/populate loops in readFormConfig()/populateForm() keep
@@ -184,8 +205,10 @@ export class CreatorFormRenderer {
                     hiddenInput.type = 'hidden';
                     hiddenInput.id = `schema-input-${item.key}`;
                     hiddenInput.value = item.default;
-                    row.appendChild(hiddenInput);
-                    row.appendChild(mountDiv);
+                    // The carousel needs the row's full width, so this row stacks.
+                    row.classList.add('settings-row--stacked');
+                    controlCol.appendChild(hiddenInput);
+                    controlCol.appendChild(mountDiv);
                     groupDiv.appendChild(row);
 
                     // Saving the current form as a preset is the counterpart to
@@ -195,8 +218,8 @@ export class CreatorFormRenderer {
                     const presetActions = document.createElement('div');
                     presetActions.className = 'theme-preset-actions';
                     presetActions.innerHTML = `
-                        <button type="button" class="btn btn-secondary" id="creatorSavePresetBtn">
-                            <i data-lucide="bookmark-plus" class="lucide-inline"></i> Save Current Settings as Preset
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="creatorSavePresetBtn">
+                            <i data-lucide="bookmark-plus" class="lucide-inline"></i> Save current settings as preset
                         </button>
                         <span id="creatorPresetStatus"></span>
                     `;
@@ -228,8 +251,7 @@ export class CreatorFormRenderer {
                 if (item.control === 'popup_group') {
                     const popupContainer = document.createElement('div');
                     popupContainer.id = 'popupModeBlock';
-                    popupContainer.className = 'creator-subcard';
-                    popupContainer.style.marginTop = '8px';
+                    popupContainer.className = 'wch-subrows';
 
                     const directionSubfield = item.subFields?.find(sf => sf.key === 'direction');
                     const optionsHtml = directionSubfield?.options ?
@@ -242,19 +264,25 @@ export class CreatorFormRenderer {
                         `;
 
                     popupContainer.innerHTML = `
-                        <div class="settings-row" style="margin-bottom: 8px;">
-                            <label for="schema-popup-direction">Animation Direction</label>
-                            <select id="schema-popup-direction" class="form-control">
-                                ${optionsHtml}
-                            </select>
+                        <div class="list-group-item settings-row">
+                            <div class="wch-row-text"><label class="wc-row-label" for="schema-popup-direction">Animation direction</label></div>
+                            <div class="wch-row-control wch-row-control--select">
+                                <select id="schema-popup-direction" class="form-select">
+                                    ${optionsHtml}
+                                </select>
+                            </div>
                         </div>
-                        <div class="settings-row" style="margin-bottom: 8px;">
-                            <label for="schema-popup-duration">Message Duration (seconds)</label>
-                            <input type="number" id="schema-popup-duration" min="2" max="60" value="5" class="form-control">
+                        <div class="list-group-item settings-row">
+                            <div class="wch-row-text"><label class="wc-row-label" for="schema-popup-duration">Message duration (seconds)</label></div>
+                            <div class="wch-row-control wch-row-control--number">
+                                <input type="number" id="schema-popup-duration" min="2" max="60" value="5" class="form-control wc-field--number">
+                            </div>
                         </div>
-                        <div class="settings-row">
-                            <label for="schema-popup-maxMessages">Max Popup Messages</label>
-                            <input type="number" id="schema-popup-maxMessages" min="1" max="10" value="3" class="form-control">
+                        <div class="list-group-item settings-row">
+                            <div class="wch-row-text"><label class="wc-row-label" for="schema-popup-maxMessages">Max popup messages</label></div>
+                            <div class="wch-row-control wch-row-control--number">
+                                <input type="number" id="schema-popup-maxMessages" min="1" max="10" value="3" class="form-control wc-field--number">
+                            </div>
                         </div>
                     `;
                     groupDiv.appendChild(popupContainer);
@@ -262,10 +290,11 @@ export class CreatorFormRenderer {
                 }
 
                 let input;
+                let valDisplay = null;
                 if (item.control === 'select') {
                     input = document.createElement('select');
                     input.id = `schema-input-${item.key}`;
-                    input.className = 'form-control';
+                    input.className = 'form-select';
                     item.options.forEach(opt => {
                         const option = document.createElement('option');
                         option.value = opt.value;
@@ -276,6 +305,8 @@ export class CreatorFormRenderer {
                     input = document.createElement('input');
                     input.type = 'checkbox';
                     input.id = `schema-input-${item.key}`;
+                    input.className = 'form-check-input';
+                    input.setAttribute('role', 'switch');
                 } else if (item.control === 'color') {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'color-control-wrapper';
@@ -319,9 +350,12 @@ export class CreatorFormRenderer {
                     hexInput.addEventListener('input', syncHexToSwatch);
                     hexInput.addEventListener('change', syncHexToSwatch);
 
-                    wrapper.appendChild(input);
+                    // Hex readout first, then the swatch, as the design lays the row out.
+                    // The hex stays editable; it reads as a quiet readout until focused.
+                    hexInput.setAttribute('aria-label', `${item.label} hex value`);
                     wrapper.appendChild(hexInput);
-                    row.appendChild(wrapper);
+                    wrapper.appendChild(input);
+                    controlCol.appendChild(wrapper);
                     groupDiv.appendChild(row);
                     if (item.key === 'bgColor') groupDiv.appendChild(this.bgImageHandler.createBgImageBox());
                     return;
@@ -333,81 +367,77 @@ export class CreatorFormRenderer {
                     input.max = item.max;
                     input.step = item.step;
                     input.value = item.default;
-                    input.className = 'form-control';
+                    input.className = 'form-range';
 
-                    const valDisplay = document.createElement('span');
+                    valDisplay = document.createElement('span');
                     valDisplay.id = `schema-val-${item.key}`;
-                    valDisplay.className = 'range-val-display';
-                    valDisplay.style.minWidth = '38px';
-                    valDisplay.style.textAlign = 'right';
-                    valDisplay.style.marginRight = '12px';
-                    valDisplay.style.fontSize = '13px';
-                    valDisplay.style.fontVariantNumeric = 'tabular-nums';
-                    valDisplay.style.opacity = '0.9';
+                    valDisplay.className = 'range-val-display wc-slider-value';
                     valDisplay.textContent = item.scale ? `${Math.round(item.default * item.scale)}%` : item.default;
-                    row.appendChild(valDisplay);
                 } else {
                     input = document.createElement('input');
                     input.type = item.control === 'number' ? 'number' : 'text';
                     input.id = `schema-input-${item.key}`;
-                    input.className = 'form-control';
+                    input.className = item.control === 'number' ? 'form-control wc-field--number' : 'form-control';
                     if (item.min !== undefined) input.min = item.min;
                     if (item.max !== undefined) input.max = item.max;
                 }
 
-                row.appendChild(input);
+                if (item.control === 'checkbox') {
+                    const sw = document.createElement('div');
+                    sw.className = 'form-check form-switch';
+                    sw.appendChild(input);
+                    controlCol.appendChild(sw);
+                } else if (item.control === 'range') {
+                    // Slider first, then its readout, as the design system's Slider lays them out.
+                    const slider = document.createElement('span');
+                    slider.className = 'wch-slider';
+                    slider.appendChild(input);
+                    slider.appendChild(valDisplay);
+                    controlCol.appendChild(slider);
+                } else {
+                    controlCol.appendChild(input);
+                }
 
                 groupDiv.appendChild(row);
 
                 if (item.helpText || item.helpUrl) {
                     const helpDiv = document.createElement('div');
-                    helpDiv.className = 'help-text';
-                    // Help text is a sibling of the row, not a child, so anything that
-                    // hides a row (applyChatModeVisibility) has to hide this by id too.
+                    helpDiv.className = 'help-text wch-row-desc';
+                    // Help text sits under the label, inside the row, so hiding the row
+                    // hides it too.
                     helpDiv.id = `schema-help-${item.key}`;
                     // Point the control at its own help text, so it's announced with
                     // the field rather than being visual-only.
                     input.setAttribute('aria-describedby', helpDiv.id);
-                    if (item.indent) {
-                        const indentPx = item.indent === 1 ? 20 : 35;
-                        // Set as a custom property, not margin-left: an inline margin
-                        // would beat .help-text's own rule and knock the text out of
-                        // alignment with the control column it belongs to.
-                        helpDiv.style.setProperty('--help-indent', `${indentPx}px`);
-                    }
                     if (item.helpUrl) {
                         const linkText = item.helpLinkText || item.helpUrl;
-                        helpDiv.innerHTML = `${item.helpText ? item.helpText + ' ' : ''}<a href="${item.helpUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-light, #a970ff); text-decoration: underline;">${linkText}</a>`;
+                        helpDiv.innerHTML = `${item.helpText ? item.helpText + ' ' : ''}<a class="wc-link wc-link--underline" href="${item.helpUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
                     } else {
                         helpDiv.textContent = item.helpText;
                     }
-                    groupDiv.appendChild(helpDiv);
+                    textCol.appendChild(helpDiv);
                 }
             });
 
             if (group.id === 'theme_colors') {
                 const aiCard = document.createElement('div');
                 aiCard.className = 'ai-theme-card creator-subcard';
-                aiCard.style.marginTop = '16px';
-                aiCard.style.border = '1px dashed var(--primary-color, #9147ff)';
                 aiCard.innerHTML = `
-                    <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--primary-light, #a970ff);">AI Theme Generator</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Describe a style, for example, 'Cyberpunk Neon Matrix'..." style="flex: 1 1 10rem; min-width: 0;">
-                        <button type="button" class="btn btn-secondary" id="creatorAiGenerateBtn"><i data-lucide="sparkles" class="lucide-inline"></i> Generate</button>
+                    <label class="wc-note-label" for="creatorAiPrompt">Generate a theme from a description</label>
+                    <div class="input-group">
+                        <input type="text" id="creatorAiPrompt" class="form-control" placeholder="Example: cyberpunk neon matrix">
+                        <button type="button" class="btn btn-secondary" id="creatorAiGenerateBtn"><i data-lucide="wand" class="lucide-inline"></i> Generate</button>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <label style="font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="checkbox" id="creatorAiIncludeBg" checked> Include AI Background Image
+                    <div class="creator-subcard-foot">
+                        <label class="creator-check">
+                            <input type="checkbox" id="creatorAiIncludeBg" checked> Include a background image
                         </label>
-                        <span id="creatorAiStatus" style="font-size: 12px; opacity: 0.7;"></span>
+                        <span id="creatorAiStatus" class="wc-readout" aria-live="polite"></span>
                     </div>
                 `;
                 groupDiv.appendChild(aiCard);
             }
 
-            sectionEl.appendChild(groupDiv);
-            container.appendChild(sectionEl);
         });
 
         const fontMount = document.getElementById('fontPickerMount');
@@ -420,6 +450,11 @@ export class CreatorFormRenderer {
                     if (this.onFormChange) this.onFormChange();
                 }
             });
+            // createFontPicker (shared with chat.html) gives its input no id. Give
+            // it the row's control id so the "Font family" label names it. Font
+            // values are read and written through this.fontPicker, never by id.
+            const fontInput = fontMount.querySelector('.font-picker-input');
+            if (fontInput) fontInput.id = 'schema-input-fontFamily';
         }
 
         if (window.lucide) window.lucide.createIcons();
@@ -427,6 +462,31 @@ export class CreatorFormRenderer {
         this.bgImageHandler.setupListeners();
         this.themeController.setupAiListeners();
         this.themeController.setupPresetListeners();
+    }
+
+    /**
+     * A design-system section card: caps title over one rule, rows in the body.
+     * @param {string} title
+     * @param {string} id  used for the heading id the section is labelled by
+     * @returns {HTMLElement}
+     */
+    createSectionCard(title, id) {
+        const section = document.createElement('section');
+        section.className = 'card wc-card';
+        const headingId = `schema-section-${id}`;
+        section.setAttribute('aria-labelledby', headingId);
+        const header = document.createElement('div');
+        header.className = 'card-header';
+        const h2 = document.createElement('h2');
+        h2.className = 'wc-card-title';
+        h2.id = headingId;
+        h2.textContent = title;
+        header.appendChild(h2);
+        const body = document.createElement('div');
+        body.className = 'card-body';
+        section.appendChild(header);
+        section.appendChild(body);
+        return section;
     }
 
     setupFormLivePreview() {
@@ -474,9 +534,8 @@ export class CreatorFormRenderer {
 
     /**
      * Show/hide the controls that only apply to one chat mode. Popup mode replaces
-     * the window-mode sizing/history settings with the popup block, so those rows —
-     * and their help text, which renders as a sibling of the row rather than inside
-     * it — have to be hidden together or the blurb is left stranded on its own.
+     * the window-mode sizing/history settings with the popup block. Each row holds
+     * its own help text, so hiding the row hides both.
      * @param {boolean} isPopup
      */
     applyChatModeVisibility(isPopup) {
@@ -486,8 +545,6 @@ export class CreatorFormRenderer {
         ['chatHeight', 'maxMessages', 'topFade'].forEach(key => {
             const row = document.getElementById(`schema-row-${key}`);
             if (row) row.style.display = isPopup ? 'none' : 'flex';
-            const help = document.getElementById(`schema-help-${key}`);
-            if (help) help.style.display = isPopup ? 'none' : '';
         });
     }
 

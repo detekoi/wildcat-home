@@ -1,418 +1,308 @@
 ---
-layout: base.njk
+layout: app.njk
 permalink: /chat-overlay/chat-scene-creator.html
 title: Chat Scene Creator – Wildcat Chat Overlay
 description: Wildcat Chat Scene Creator – create and manage named chat overlay scenes for use in OBS browser sources.
+pageLabel: "Scene Creator"
+activeTool: "overlay"
+docsHref: "https://docs.wildcat.chat/chatoverlay.html"
 extraStyles:
-  - /chat-overlay/css/styles.css
-  - /chat-overlay/css/scene-creator.css
   - /chat-overlay/css/theme-carousel.css
-  - /chat-overlay/css/wildcat-theme.css
+  - /chat-overlay/css/scene-creator.css
 extraScripts:
   - /chat-overlay/js/chat-scene-creator.js
 ---
-    <div class="container" id="page-content">
-        <header>
-            <h1>Chat Scene Creator</h1>
-            <p>Create and manage chat scenes for your stream.</p>
-            <p style="margin-top: 10px; font-size: 14px;">
-                <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank">Docs</a>
-                <span style="margin: 0 8px; opacity: 0.4;">•</span>
-                <a href="/chat-overlay/">← Back to Overlay Hub</a>
-                <span style="margin: 0 8px; opacity: 0.4;">•</span>
-                <a href="chat.html">Skip to Chat →</a>
-            </p>
-        </header>
-        
-        <div class="app-layout">
-            <!-- Chat Scene List Panel -->
-            <div class="instances-panel">
-                <div class="instances-header">
-                    <h2>Chat Scenes</h2>
-                </div>
+<main id="main-content" class="wch-creator" tabindex="-1">
+    <div class="wc-page-head wch-creator-head">
+        <h1>Chat Scene Creator</h1>
+        <p>Create and manage chat scenes for your stream.</p>
+        <div class="wch-creator-links">
+            <a class="wc-link wc-link--muted" href="/chat-overlay/">Overlay hub</a>
+            <a class="wc-link wc-link--muted" href="chat.html">Open chat without a scene</a>
+        </div>
+    </div>
 
-                <!-- Twitch mark: Simple Icons (CC0). Lucide dropped brand glyphs, so it is inlined. -->
-                <div class="account-plate" id="accountPlate">
-                    <p class="account-eyebrow">Scene list stored in</p>
-                    <p class="account-value">This browser only</p>
-                    <button type="button" class="btn btn-secondary account-signin" id="twitchLoginBtn"><svg class="lucide-inline" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg> Sign in with Twitch</button>
-                    <p class="account-hint">Optional. Keeps your scenes on every computer you use.</p>
-                </div>
+    <div class="wch-creator-grid">
 
+        <!-- Chat scene list -->
+        <aside class="wch-scenes" aria-label="Chat scenes">
+            <section class="card wc-card" aria-labelledby="wch-scenes-title">
+                <div class="card-header"><h2 class="wc-card-title" id="wch-scenes-title">Chat Scenes</h2></div>
                 <div class="instance-list" id="instanceList">
                     <!-- Chat Scene items will be dynamically generated here -->
                 </div>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="createInstanceBtn"><i data-lucide="plus" class="lucide-inline"></i> New Chat Scene</button>
-                    <button class="btn btn-secondary" id="importSceneBtn"><i data-lucide="link" class="lucide-inline"></i> Link Scene</button>
-                    <button class="btn btn-secondary" id="importBtn"><i data-lucide="upload" class="lucide-inline"></i> Import</button>
-                    <button class="btn btn-secondary" id="exportAllBtn"><i data-lucide="download" class="lucide-inline"></i> Export All</button>
+            </section>
+
+            <div class="wch-scene-actions">
+                <button type="button" class="wc-btn wc-btn--ghost wc-btn--inline" id="createInstanceBtn"><i data-lucide="plus"></i>New Chat Scene</button>
+                <div class="wch-chips">
+                    <button type="button" class="wc-chipbtn" id="importSceneBtn"><i data-lucide="link"></i>Link</button>
+                    <button type="button" class="wc-chipbtn" id="importBtn"><i data-lucide="upload"></i>Import</button>
+                    <button type="button" class="wc-chipbtn" id="exportAllBtn"><i data-lucide="download"></i>Export all</button>
                 </div>
             </div>
-            
-            <!-- Main Workspace Panel -->
-            <div class="workspace-panel">
-                <div class="workspace-header">
-                    <h2 class="workspace-title" id="workspaceTitle">Select or Create a Chat Scene</h2>
-                    <div class="workspace-actions" id="workspaceActions" style="display: none;">
-                        <button class="btn btn-secondary" id="duplicateBtn"><i data-lucide="copy" class="lucide-inline"></i> Duplicate</button>
-                        <button class="btn btn-danger" id="deleteBtn"><i data-lucide="trash-2" class="lucide-inline"></i> Delete</button>
-                        <button class="btn btn-secondary" id="exportBtn"><i data-lucide="download" class="lucide-inline"></i> Export</button>
-                    </div>
+
+            <!-- Re-rendered by renderAccountUI(); this is the signed-out state it starts from.
+                 Twitch mark: Simple Icons (CC0). Lucide dropped brand glyphs, so it is inlined. -->
+            <div class="wc-note account-plate" id="accountPlate">
+                <span class="wc-note-label account-eyebrow">Scene list stored in this browser</span>
+                <p class="account-hint">Sign in with Twitch to keep your scenes on every computer you use. Signing in is optional.</p>
+                <div class="account-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm account-signin" id="twitchLoginBtn"><svg class="lucide-inline" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg> Sign in with Twitch</button>
                 </div>
-                
-                <div class="config-layout" id="configLayout" style="display: none;">
-                    <!-- Settings Column -->
-                    <div class="settings-container">
-                        <!-- Basic Information -->
-                        <div class="settings-section">
-                            <h3>Basic Information</h3>
-                            <div class="settings-group">
-                                <div class="settings-row">
-                                    <label for="instanceName">Scene Name</label>
-                                    <div class="input-group">
-                                        <input type="text" id="instanceName" class="form-control" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="Example: Gaming">
-                                    </div>
+            </div>
+        </aside>
+
+        <!-- Selected scene: title and actions -->
+        <div class="wch-workspace-head">
+            <div class="wch-workspace-title-row">
+                <h2 class="wc-title wch-workspace-title" id="workspaceTitle">Select or Create a Chat Scene</h2>
+                <div class="wch-chips" id="workspaceActions" style="display: none;">
+                    <button type="button" class="wc-chipbtn" id="duplicateBtn"><i data-lucide="copy"></i>Duplicate</button>
+                    <button type="button" class="wc-chipbtn" id="exportBtn"><i data-lucide="download"></i>Export</button>
+                    <button type="button" class="wc-chipbtn wc-chipbtn--danger" id="deleteBtn"><i data-lucide="trash-2"></i>Delete</button>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="wch-empty">
+                <p>No chat scene is selected. Create a chat scene, or select one from the list.</p>
+                <div class="wch-empty-actions">
+                    <button type="button" class="wc-btn wc-btn--inline" id="emptyStateCreateBtn"><i data-lucide="plus"></i>Create First Chat Scene</button>
+                    <a class="wc-link wc-link--muted" href="chat.html" target="_blank" rel="noopener">Skip the Chat Scene Creator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings and the OBS URL / preview column. Hidden until a scene is selected. -->
+        <div class="config-layout" id="configLayout" style="display: none;">
+            <div class="settings-container wch-settings">
+                <section class="card wc-card" aria-labelledby="wch-basic-title">
+                    <div class="card-header"><h2 class="wc-card-title" id="wch-basic-title">Basic Information</h2></div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <div class="list-group-item wch-row">
+                                <div class="wch-row-text">
+                                    <label class="wc-row-label" for="instanceName">Scene name</label>
+                                    <p class="wch-row-desc">Name this scene so you can find it in OBS.</p>
                                 </div>
-                                <div class="settings-row">
-                                    <label for="syncTokenDisplay">Sync Token</label>
-                                    <div class="input-group url-display" style="margin-top: 0;">
-                                        <input type="text" id="syncTokenDisplay" class="url-text" readonly style="font-size: 13px;" tabindex="0">
-                                        <button type="button" class="btn btn-primary copy-btn" id="copySyncTokenBtn" title="Copy Sync Token"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
+                                <div class="wch-row-control">
+                                    <input type="text" id="instanceName" class="form-control" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="Example: Gaming">
+                                </div>
+                            </div>
+                            <div class="list-group-item wch-row">
+                                <div class="wch-row-text">
+                                    <label class="wc-row-label" for="syncTokenDisplay">Sync token</label>
+                                    <p class="wch-row-desc">Paste this token with Link to edit the scene on another computer.</p>
+                                </div>
+                                <div class="wch-row-control wch-row-control--wide">
+                                    <div class="input-group">
+                                        <input type="text" id="syncTokenDisplay" class="form-control wch-mono-field" readonly tabindex="0">
+                                        <button type="button" class="btn btn-secondary" id="copySyncTokenBtn" title="Copy Sync Token">Copy</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <!-- Channel Settings -->
-                        <div class="settings-section">
-                            <h3>Channel Connection</h3>
-                            <div class="settings-group">
-                                <div class="settings-row">
-                                    <label for="creatorTwitchChannel">Twitch Channel</label>
+                <section class="card wc-card" aria-labelledby="wch-channel-title">
+                    <div class="card-header"><h2 class="wc-card-title" id="wch-channel-title">Channel Connection</h2></div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <div class="list-group-item wch-row">
+                                <div class="wch-row-text">
+                                    <label class="wc-row-label" for="creatorTwitchChannel">Twitch channel</label>
+                                </div>
+                                <div class="wch-row-control">
                                     <input type="text" id="creatorTwitchChannel" class="form-control" placeholder="Example: shroud" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
-                                <div class="settings-row">
-                                    <label for="creatorYoutubeTarget">YouTube Channel ID or Handle</label>
+                            </div>
+                            <div class="list-group-item wch-row">
+                                <div class="wch-row-text">
+                                    <label class="wc-row-label" for="creatorYoutubeTarget">YouTube channel ID or handle</label>
+                                    <p class="wch-row-desc">For an unlisted stream, paste the full video URL.</p>
+                                </div>
+                                <div class="wch-row-control">
                                     <input type="text" id="creatorYoutubeTarget" class="form-control" placeholder="Example: @LofiGirl" autocomplete="off" spellcheck="false" enterkeyhint="done">
                                 </div>
-                                <div style="margin-top: 10px; text-align: right;">
-                                    <button class="btn btn-secondary" id="applyChannelBtn"><i data-lucide="radio" class="lucide-inline"></i> Apply Channel</button>
-                                </div>
                             </div>
-                        </div>
-
-                        <!-- Dynamic Schema-Driven Form Container -->
-                        <div id="generatedSchemaForm"></div>
-
-                        <div style="margin-top: 20px;">
-                            <button class="btn btn-primary" id="saveSettingsBtn" style="width: 100%; font-size: 16px; padding: 12px;"><i data-lucide="save" class="lucide-inline"></i> Save & Sync Settings</button>
                         </div>
                     </div>
-                    
-                    <!-- URL and Preview Panel -->
-                    <div class="preview-panel">
-                        <div class="url-generator">
-                            <h3>Chat Scene OBS URL</h3>
-                            <p>Paste this URL into your OBS Browser Source:</p>
-                            <div class="url-display">
-                                <div class="url-text" id="instanceUrlConfig" tabindex="0">chat.html?scene=example</div>
-                                <button type="button" class="btn btn-primary copy-btn" id="copyUrlBtnConfig"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
-                            </div>
-                        </div>
+                    <div class="wc-card-actions wch-card-actions">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="applyChannelBtn"><i data-lucide="radio" class="lucide-inline"></i> Apply channel</button>
+                    </div>
+                </section>
 
-                        <!-- Live Preview Frame -->
-                        <div class="live-preview-box" style="margin-top: 20px;">
-                            <div class="preview-header">
-                                <h3>Live Preview</h3>
-                                <div class="preview-bg-picker" id="previewBgPicker">
-                                    <span class="preview-bg-label">Background:</span>
-                                    <div class="preview-bg-options">
-                                        <button type="button" class="preview-bg-btn" data-bg-type="dark" title="Dark Background">
-                                            <span class="bg-swatch dark-swatch"></span> Dark
+                <!-- Dynamic Schema-Driven Form Container -->
+                <div id="generatedSchemaForm" class="wch-schema-form"></div>
+
+                <div class="wc-action wch-save">
+                    <button type="button" class="wc-btn" id="saveSettingsBtn"><i data-lucide="save" class="lucide-inline"></i> Save &amp; Sync Settings</button>
+                    <span class="wc-help">Saving updates the OBS browser source without a refresh</span>
+                </div>
+            </div>
+
+            <aside class="preview-panel wch-preview" aria-label="OBS URL and preview">
+                <div class="wch-sticky">
+                    <section class="card wc-card url-generator" aria-labelledby="wch-url-title">
+                        <div class="card-header"><h2 class="wc-card-title" id="wch-url-title">OBS Browser Source URL</h2></div>
+                        <div class="card-body wch-stack">
+                            <div class="wc-code">
+                                <span class="wc-code-label">Paste into OBS</span>
+                                <span class="wc-code-value url-text" id="instanceUrlConfig" tabindex="0">chat.html?scene=example</span>
+                            </div>
+                            <div class="wch-chips">
+                                <button type="button" class="wc-chipbtn" id="copyUrlBtnConfig"><i data-lucide="clipboard"></i>Copy</button>
+                                <button type="button" class="wc-chipbtn" id="toggleObsSetupBtn" aria-expanded="false" aria-controls="obsSetup"><i data-lucide="monitor" class="lucide-inline"></i> OBS setup steps</button>
+                            </div>
+
+                            <!-- OBS setup: shown by #toggleObsSetupBtn, which checks the inline display. -->
+                            <div class="obs-setup wch-obs-setup" id="obsSetup" style="display: none;">
+                                <ol class="wch-steps">
+                                    <li>In OBS Studio, right-click the Sources list and select <strong>Add</strong> → <strong>Browser</strong>.</li>
+                                    <li>Enter a name for the source, for example "Twitch Chat - Gaming".</li>
+                                    <li>Paste the URL into the <strong>URL</strong> field. If you can't paste, clear the <strong>Local file</strong> checkbox.</li>
+                                    <li>Set <strong>Width</strong> to 320 and <strong>Height</strong> to 600, then select <strong>OK</strong>.</li>
+                                    <li>Move and resize the chat overlay in your scene.</li>
+                                    <li>For live sync, leave "Shutdown source when not visible" and "Refresh browser when scene becomes active" cleared.</li>
+                                </ol>
+
+                                <div class="wch-obs-sub">
+                                    <h3 class="wch-obs-heading">Configure the overlay in OBS</h3>
+                                    <ol class="wch-steps">
+                                        <li>To open the configuration controls, right-click the Browser Source in OBS and select <strong>Interact</strong>.</li>
+                                        <li>In the interaction window, enter your channel name and select <strong>Connect</strong>. Then move your pointer over the chat and select the settings gear (<i data-lucide="settings" class="lucide-inline"></i>) in the top-right corner to change themes, colors, fonts and display modes.</li>
+                                        <li>OBS saves these settings automatically for this browser source.</li>
+                                    </ol>
+                                </div>
+
+                                <div class="accordion">
+                                    <h3>
+                                        <button type="button" class="accordion-header" aria-expanded="false" aria-controls="troubleshooting-content">
+                                            Troubleshooting tips
+                                            <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
                                         </button>
-                                        <button type="button" class="preview-bg-btn" data-bg-type="light" title="Light Background">
-                                            <span class="bg-swatch light-swatch"></span> Light
+                                    </h3>
+                                    <div id="troubleshooting-content" class="accordion-content">
+                                        <ul>
+                                            <li><strong>Chat does not connect:</strong> In the OBS Interact window, verify the channel name and make sure that your computer is connected to the internet.</li>
+                                            <li><strong>Settings do not save:</strong> OBS saves settings in the browser cache. Make sure that OBS has permission to write cache files. If you clear the OBS cache, OBS resets your settings.</li>
+                                            <li><strong>Text size is incorrect:</strong> Change the font size in the overlay settings in the Interact window, or scale the Browser Source in OBS.</li>
+                                            <li><strong>Overlay is empty:</strong> Right-click the Browser Source in OBS, select <strong>Interact</strong>, and enter your channel name to connect.</li>
+                                            <li><strong>Chat does not update:</strong> Right-click the Browser Source in OBS and select <strong>Refresh</strong>. If the problem continues, delete and create the source again.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="accordion">
+                                    <h3>
+                                        <button type="button" class="accordion-header" aria-expanded="false" aria-controls="advanced-obs-content">
+                                            Advanced OBS settings
+                                            <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
                                         </button>
-                                        <button type="button" class="preview-bg-btn active" data-bg-type="checkerboard" title="Checkerboard Grid (Transparent)">
-                                            <span class="bg-swatch checkerboard-swatch"></span> Grid
+                                    </h3>
+                                    <div id="advanced-obs-content" class="accordion-content">
+                                        <p>To optimize performance, configure these settings in your OBS Browser Source:</p>
+                                        <ul>
+                                            <li>To reduce system load, select <strong>Shutdown source when not visible</strong>. This stops live sync while the source is hidden.</li>
+                                            <li>To load recent messages when scenes switch, select <strong>Refresh browser when scene becomes active</strong>.</li>
+                                            <li>To hide scrollbars, add this code to <strong>Custom CSS</strong>: <code>body { overflow: hidden; }</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="accordion">
+                                    <h3>
+                                        <button type="button" class="accordion-header" aria-expanded="false" aria-controls="customization-tips-content">
+                                            Customization tips
+                                            <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
                                         </button>
-                                        <button type="button" class="preview-bg-btn" data-bg-type="custom" title="Custom Background Color">
-                                            <span class="bg-swatch custom-swatch" id="previewCustomSwatch"></span> Custom
-                                            <input type="color" id="previewBgColorInput" value="#121212" class="preview-color-input" aria-label="Custom background color">
-                                        </button>
+                                    </h3>
+                                    <div id="customization-tips-content" class="accordion-content">
+                                        <ul>
+                                            <li><strong>Overlay on gameplay:</strong> Select the <strong>Transparent</strong> theme, or set the border to <strong>None</strong> and reduce the background opacity.</li>
+                                            <li><strong>Font size:</strong> Use a font size of 12px or larger for readability.</li>
+                                            <li><strong>Positioning:</strong> Place chat where it does not cover game elements, or use popup mode to show messages temporarily.</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
-                            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Changes in this form update the preview in real time.</p>
-                            <div id="previewIframeContainer" class="preview-iframe-container bg-checkerboard" style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 500px; transition: background 0.2s ease;">
+                        </div>
+                    </section>
+
+                    <section class="card wc-card live-preview-box" aria-labelledby="wch-preview-title">
+                        <div class="card-header"><h2 class="wc-card-title" id="wch-preview-title">Live Preview</h2></div>
+                        <div class="card-body wch-stack">
+                            <div class="preview-bg-picker wch-chips" id="previewBgPicker" role="group" aria-label="Preview background">
+                                <button type="button" class="wc-chipbtn preview-bg-btn" data-bg-type="dark">Dark</button>
+                                <button type="button" class="wc-chipbtn preview-bg-btn" data-bg-type="light">Light</button>
+                                <button type="button" class="wc-chipbtn preview-bg-btn active" data-bg-type="checkerboard">Grid</button>
+                                <button type="button" class="wc-chipbtn preview-bg-btn" data-bg-type="custom">
+                                    <span class="bg-swatch custom-swatch" id="previewCustomSwatch"></span>Custom
+                                    <input type="color" id="previewBgColorInput" value="#121212" class="preview-color-input" aria-label="Custom background color">
+                                </button>
+                            </div>
+                            <div id="previewIframeContainer" class="preview-iframe-container bg-checkerboard">
                                 <!-- No default src: chat-scene-creator.js sets this to the selected
                                      scene's URL (chat.html?demo=1&scene=...) as soon as a scene is
                                      selected, so the preview never briefly loads the default scene's
                                      localStorage config. -->
-                                <iframe id="previewIframe" title="Live Preview of Chat Scene Overlay" loading="lazy" style="width: 100%; height: 100%; border: none;"></iframe>
+                                <iframe id="previewIframe" title="Live Preview of Chat Scene Overlay" loading="lazy"></iframe>
                             </div>
+                            <span class="wc-help">The preview updates as you change settings</span>
                         </div>
-                    </div>
+                    </section>
                 </div>
-                
-                <!-- Empty State -->
-                <div id="emptyState" class="empty-state" style="text-align: center; padding: 40px 0;">
-                    <p style="margin-bottom: 20px;">No chat scene is selected. Create a new chat scene or select one from the list.</p>
-                    <button class="btn btn-primary" id="emptyStateCreateBtn"><i data-lucide="plus" class="lucide-inline"></i> Create First Chat Scene</button>
-                    <p style="margin-top: 10px; font-size: 14px;">
-                        <a href="chat.html" target="_blank" style="color: var(--link-color); text-decoration: none;">
-                            Skip the Chat Scene Creator →
-                        </a>
-                    </p>
-                </div>
-                
-                <!-- Show OBS Setup Button -->
-                <div style="margin: 20px 0; text-align: center;">
-                    <button id="toggleObsSetupBtn" class="btn btn-secondary"><i data-lucide="monitor" class="lucide-inline"></i> Detailed OBS Setup Instructions</button>
-                </div>
-                
-                <!-- OBS Setup Section -->
-                <div class="obs-setup" id="obsSetup" style="display: none;">
-                    <h2>OBS Setup and Configuration</h2>
-                    
-                    <div class="obs-tip-banner">
-                        <i data-lucide="lightbulb" class="lucide-inline obs-tip-icon"></i>
-                        <span><strong>OBS Tip:</strong> For background live sync, do not select <em>"Shutdown source when not visible"</em> and <em>"Refresh browser when scene becomes active"</em> in the OBS Browser Source properties.</span>
-                    </div>
-
-                    <div class="url-generator">
-                        <h3>Chat Scene URL</h3>
-                        <p>Copy this URL to use in your OBS Browser Source:</p>
-                        <div class="url-display">
-                            <div class="url-text" id="instanceUrlSetup">file:///path/to/chat.html?scene=example</div>
-                            <button type="button" class="btn btn-primary copy-btn" id="copyUrlBtnSetup"><i data-lucide="clipboard" class="lucide-inline"></i> Copy</button>
-                        </div>
-                    </div>
-                    
-                    <div class="setup-steps">
-                        <h3>Steps to Add in OBS</h3>
-                        <ol>
-                            <li>In OBS Studio, right-click the Sources list and select <strong>Add</strong> → <strong>Browser</strong>.</li>
-                            <li>Enter a name for your source (Example: "Twitch Chat - Gaming").</li>
-                            <li>Paste the copied URL into the <strong>URL</strong> field.</li>
-                            <li><strong>If you cannot paste:</strong> Clear the <strong>Local file</strong> checkbox.</li>
-                            <li>If you run the overlay locally, change the URL path to the saved file location on your computer.</li>
-                            <li>Set <strong>Width</strong> to 320 and <strong>Height</strong> to 600. Adjust these values if necessary.</li>
-                            <li>Select <strong>OK</strong> to add the browser source.</li>
-                            <li>Move and resize the chat overlay in your scene.</li>
-                            <li><i data-lucide="lightbulb" class="lucide-inline" style="color: #eab308; margin-right: 4px;"></i> <strong>For background live sync:</strong> Do not select "Shutdown source when not visible" and "Refresh browser when scene becomes active" in Browser Source properties.</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="setup-steps">
-                        <h3>Configure Your Chat Overlay in OBS</h3>
-                        <ol>
-                            <li>To open the configuration controls, right-click the Browser Source in OBS and select <strong>Interact</strong>.</li>
-                            <li>In the interaction window:
-                                <ul>
-                                    <li>Enter your channel name and select <strong>Connect</strong>.</li>
-                                    <li>Move your pointer over the chat area and select the settings gear icon (<i data-lucide="settings" class="lucide-inline"></i>) in the top-right corner.</li>
-                                    <li>Use the settings panel to select themes, change colors, choose fonts, and set display modes.</li>
-                                </ul>
-                            </li>
-                            <li>OBS saves these settings automatically for this browser source.</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="accordion">
-                        <h3>
-                            <button class="accordion-header" aria-expanded="false" aria-controls="troubleshooting-content">
-                                Troubleshooting Tips
-                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
-                            </button>
-                        </h3>
-                        <div id="troubleshooting-content" class="accordion-content">
-                            <ul>
-                                <li><strong>Chat does not connect:</strong> In the OBS Interact window, verify the channel name and make sure that your computer is connected to the internet.</li>
-                                <li><strong>Settings do not save:</strong> OBS saves settings in the browser cache. Make sure that OBS has permission to write cache files. If you clear the OBS cache, OBS resets your settings.</li>
-                                <li><strong>Text size is incorrect:</strong> Change the font size in the overlay settings in the Interact window, or scale the Browser Source in OBS.</li>
-                                <li><strong>Overlay is empty:</strong> Right-click the Browser Source in OBS, select <strong>Interact</strong>, and enter your channel name to connect.</li>
-                                <li><strong>Chat does not update:</strong> Right-click the Browser Source in OBS and select <strong>Refresh</strong>. If the problem continues, delete and create the source again.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion">
-                        <h3>
-                            <button class="accordion-header" aria-expanded="false" aria-controls="advanced-obs-content">
-                                Advanced OBS Settings
-                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
-                            </button>
-                        </h3>
-                        <div id="advanced-obs-content" class="accordion-content">
-                            <p>To optimize performance, configure these settings in your OBS Browser Source:</p>
-                            <ul>
-                                <li>To reduce system load, select <strong>Shutdown source when not visible</strong>.</li>
-                                <li>To load recent messages when scenes switch, select <strong>Refresh browser when scene becomes active</strong>.</li>
-                                <li>To hide scrollbars, add this code to <strong>Custom CSS</strong>:<br>
-                                <code>body { overflow: hidden; }</code></li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion">
-                        <h3>
-                            <button class="accordion-header" aria-expanded="false" aria-controls="customization-tips-content">
-                                Customization Tips
-                                <span class="accordion-icon"><i data-lucide="chevron-down" aria-hidden="true"></i></span>
-                            </button>
-                        </h3>
-                        <div id="customization-tips-content" class="accordion-content">
-                            <ul>
-                                <li><strong>Overlay on gameplay:</strong> Select the <strong>Transparent</strong> theme, or set the border to <strong>None</strong> and reduce the background opacity.</li>
-                                <li><strong>Font size:</strong> Use a font size of 12px or larger for readability.</li>
-                                <li><strong>Positioning:</strong> Place chat where it does not cover game elements, or use popup mode to show messages temporarily.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </aside>
         </div>
     </div>
+</main>
 
-    <!-- Modal for creating/editing chat scenes -->
-    <div id="instanceModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-content">
-            <h2 id="modalTitle">Create New Chat Scene</h2>
-            <div style="margin: 20px 0;">
-                <div>
-                    <label for="modalInstanceName" class="modal-label">Scene Name:</label>
-                    <input type="text" id="modalInstanceName" enterkeyhint="done" style="width: 100%;" placeholder="Example: Gaming, Just Chatting, Intro Screen">
-                    <p class="modal-description">Enter a name to identify this chat overlay scene.</p>
-                </div>
-            </div>
-            <p class="modal-description">
-                Or <a href="chat.html">open a chat overlay without creating a scene</a>.
-            </p>
-            <div class="modal-actions">
-                <button type="button" id="modalCreateBtn" class="btn btn-primary"><i data-lucide="plus" class="lucide-inline"></i> Create</button>
-                <button type="button" id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
-            </div>
+<!-- Modal for creating/editing chat scenes -->
+<div id="instanceModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+        <h2 id="modalTitle" class="modal-title">Create New Chat Scene</h2>
+        <div class="modal-body">
+            <label for="modalInstanceName" class="modal-label">Scene name</label>
+            <input type="text" id="modalInstanceName" class="form-control" enterkeyhint="done" placeholder="Example: Gaming, Just Chatting, Intro Screen">
+            <p class="modal-description">Enter a name to identify this chat overlay scene.</p>
+            <p class="modal-description">Or <a class="wc-link wc-link--underline" href="chat.html">open a chat overlay without creating a scene</a>.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="modalCancelBtn" class="wc-btn wc-btn--ghost wc-btn--inline">Cancel</button>
+            <button type="button" id="modalCreateBtn" class="wc-btn wc-btn--inline"><i data-lucide="plus"></i>Create</button>
         </div>
     </div>
+</div>
 
-    <!-- Modal for linking an existing chat scene by sync token -->
-    <div id="importSceneModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="importSceneModalTitle">
-        <div class="modal-content">
-            <h2 id="importSceneModalTitle">Link Existing Scene</h2>
-            <div style="margin: 20px 0;">
-                <div>
-                    <label for="importSceneToken" class="modal-label">Sync Token or OBS URL:</label>
-                    <input type="text" id="importSceneToken" enterkeyhint="done" style="width: 100%;" placeholder="Example: 3f2a9c81-... or full OBS URL">
-                    <p class="modal-description">Paste the Sync Token or the full OBS URL from another scene to link and edit that scene in this browser.</p>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="importModalConfirmBtn" class="btn btn-primary"><i data-lucide="link" class="lucide-inline"></i> Link</button>
-                <button type="button" id="importModalCancelBtn" class="btn btn-secondary">Cancel</button>
-            </div>
+<!-- Modal for linking an existing chat scene by sync token -->
+<div id="importSceneModal" class="modal-container" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="importSceneModalTitle">
+    <div class="modal-content">
+        <h2 id="importSceneModalTitle" class="modal-title">Link Existing Scene</h2>
+        <div class="modal-body">
+            <label for="importSceneToken" class="modal-label">Sync token or OBS URL</label>
+            <input type="text" id="importSceneToken" class="form-control" enterkeyhint="done" placeholder="Example: 3f2a9c81-... or full OBS URL">
+            <p class="modal-description">Paste the sync token or the full OBS URL from another scene to link and edit that scene in this browser.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="importModalCancelBtn" class="wc-btn wc-btn--ghost wc-btn--inline">Cancel</button>
+            <button type="button" id="importModalConfirmBtn" class="wc-btn wc-btn--inline"><i data-lucide="link"></i>Link</button>
         </div>
     </div>
+</div>
 
-    <!-- Modal for unsaved changes confirmation -->
-    <div id="unsavedChangesModal" class="modal-container" tabindex="-1" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="unsavedModalTitle" aria-describedby="unsavedModalMessage">
-        <div class="modal-content">
-            <h2 id="unsavedModalTitle">Unsaved Changes</h2>
-            <div style="margin: 20px 0;">
-                <p id="unsavedModalMessage" class="modal-description">This scene has unsaved changes. Choose an action before continuing:</p>
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="unsavedSaveBtn" class="btn btn-primary"><i data-lucide="save" class="lucide-inline"></i> Save & Proceed</button>
-                <button type="button" id="unsavedDiscardBtn" class="btn btn-danger">Discard Changes</button>
-                <button type="button" id="unsavedCancelBtn" class="btn btn-secondary">Cancel</button>
-            </div>
+<!-- Modal for unsaved changes confirmation -->
+<div id="unsavedChangesModal" class="modal-container" tabindex="-1" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="unsavedModalTitle" aria-describedby="unsavedModalMessage">
+    <div class="modal-content">
+        <h2 id="unsavedModalTitle" class="modal-title">Unsaved Changes</h2>
+        <div class="modal-body">
+            <p id="unsavedModalMessage" class="modal-description">This scene has unsaved changes. Choose an action before continuing:</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="unsavedCancelBtn" class="wc-btn wc-btn--ghost wc-btn--inline">Cancel</button>
+            <button type="button" id="unsavedDiscardBtn" class="wc-btn wc-btn--danger wc-btn--inline">Discard Changes</button>
+            <button type="button" id="unsavedSaveBtn" class="wc-btn wc-btn--inline"><i data-lucide="save"></i>Save &amp; Proceed</button>
         </div>
     </div>
-
-    <!-- Floating Support Widget -->
-    <aside class="floating-support" aria-label="Support">
-        <button type="button" id="kofi-open" class="floating-support__btn" aria-haspopup="dialog">
-            <span class="floating-support__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.797-.679.797s-.108 8.053.487 11.225c.605 3.22 3.197 3.518 3.197 3.518h7.986c5.77 0 6.64-5.26 6.64-5.26 1.83.003 3.633-.948 4.673-2.613 1.258-2.016 1.238-4.538.854-5.074zm-2.812 4.385c-.605.968-1.571 1.48-2.584 1.48v-6.38h2.083c.789 0 1.693.308 2.054 1.2.378.932.11 2.732-1.553 3.7zm-6.286-3.844c-.752.887-2.146 2.45-3.084 3.32-.234.218-.553.336-.87.336-.316 0-.636-.118-.87-.336-.938-.87-2.332-2.433-3.084-3.32-1.125-1.328-1.12-3.13.01-4.303 1.13-1.17 2.973-1.168 4.093.005l.006.006.006-.006c1.12-1.173 2.963-1.175 4.093-.005 1.13 1.173 1.135 3.175.01 4.303z"/>
-                </svg>
-            </span>
-            <span class="floating-support__text">Support me</span>
-        </button>
-    </aside>
-
-    <!-- Ko-fi Donation Modal Dialog -->
-    <dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title">
-        <div class="kofi-sheet__header">
-            <h2 id="kofi-title" class="kofi-sheet__title">Support parfaitfair</h2>
-            <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog">
-                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <div class="kofi-sheet__body">
-            <div id="kofi-embed-container" class="kofi-embed-container">
-                <!-- Loaded on-demand when modal opens -->
-            </div>
-            <div class="kofi-fallback">
-                <a href="https://ko-fi.com/parfaitfair" target="_blank" rel="noopener noreferrer" class="kofi-direct-link">Open in new tab on Ko-fi.com</a>
-            </div>
-        </div>
-    </dialog>
-
-    <script>
-        (function () {
-            const dialog = document.getElementById('kofi-modal');
-            const openBtn = document.getElementById('kofi-open');
-            const closeBtn = document.getElementById('kofi-close');
-            const embedContainer = document.getElementById('kofi-embed-container');
-            if (!dialog) return;
-
-            function open() {
-                if (typeof dialog.showModal === 'function') {
-                    if (!dialog.open) dialog.showModal();
-                } else {
-                    dialog.setAttribute('open', '');
-                }
-                if (embedContainer && !embedContainer.querySelector('iframe')) {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = 'https://ko-fi.com/parfaitfair/?hidefeed=true&widget=true&embed=true';
-                    iframe.title = 'Support parfaitfair on Ko-fi';
-                    iframe.className = 'kofi-iframe';
-                    embedContainer.appendChild(iframe);
-                }
-            }
-
-            function close() {
-                if (typeof dialog.close === 'function') {
-                    if (dialog.open) dialog.close();
-                } else {
-                    dialog.removeAttribute('open');
-                }
-            }
-
-            openBtn?.addEventListener('click', function (e) {
-                e.preventDefault();
-                open();
-            });
-
-            closeBtn?.addEventListener('click', function (e) {
-                e.preventDefault();
-                close();
-            });
-
-            dialog.addEventListener('click', function (e) {
-                if (e.target !== dialog) return;
-                const rect = dialog.getBoundingClientRect();
-                const isInside =
-                    e.clientX >= rect.left &&
-                    e.clientX <= rect.right &&
-                    e.clientY >= rect.top &&
-                    e.clientY <= rect.bottom;
-                if (!isInside) close();
-            });
-        })();
-    </script>
-
-
+</div>

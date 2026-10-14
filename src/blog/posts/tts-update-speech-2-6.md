@@ -2,6 +2,7 @@
 title: "TTS Update: Speech 2.6 Turbo"
 date: 2025-11-26
 description: "I've migrated the ChatVibes Text-to-Speech engine to Speech 2.6 Turbo (MiniMax via 302.ai). This model succeeds Speech-02 and provides improvements in latency, prosody, and multilingual handling."
+tags: [tts]
 ---
 
 I've migrated the ChatVibes Text-to-Speech engine to **Speech 2.6 Turbo** (MiniMax via 302.ai). This model succeeds Speech-02 and provides improvements in latency, prosody, and multilingual handling.

@@ -1,107 +1,7 @@
 /* =====================================================
-   home.css - App layer for the wildcat.chat homepage.
-   Loads after design-system.css (vendored from wildcat-design-system;
-   never edit that copy). Rules here cover only markup the homepage has.
+   home.css - Homepage layer. Loads after design-system.css and site.css.
+   Rules here cover only markup the homepage has.
    ===================================================== */
-
-/* ---- Reset (the web UIs ship their own; the homepage needs the basics) ---- */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-html {
-    -webkit-text-size-adjust: 100%;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    background: var(--wc-bg);
-    color: var(--wc-text-1);
-    font-family: var(--wc-font-body);
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    border-style: none;
-}
-
-button {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin: 0;
-}
-
-a { color: var(--wc-accent); }
-
-/* ---- App bar: brand, tool switcher, resources, theme ---- */
-.wc-appbar {
-    flex-wrap: wrap;
-    row-gap: 12px;
-}
-
-.wch-brand {
-    color: inherit;
-    text-decoration: none;
-}
-
-.wch-brand .wc-lockup { color: var(--wc-text-1); }
-
-.wch-brand-icon {
-    display: block;
-    align-self: center;
-    margin-inline-end: -4px;
-    image-rendering: pixelated;
-    border-radius: 2px;
-}
-
-.wch-tools {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-inline-start: auto;
-}
-
-a.wc-chipbtn,
-a.wc-chipbtn:hover {
-    text-decoration: none;
-}
-
-.wch-actions { gap: 20px; }
-
-.wch-rule {
-    width: 1px;
-    height: 13px;
-    flex: none;
-    background: var(--wc-border-strong);
-}
-
-.wch-links {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    font-size: 12.5px;
-}
-
-/* Two rows on phones: brand + theme on top, the three tools as equal buttons below.
-   Docs, Blog and GitHub stay reachable from the Resources section. */
-@media (max-width: 720px) {
-    .wch-desk { display: none !important; }
-
-    .wch-tools {
-        order: 3;
-        width: 100%;
-        margin-inline-start: 0;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .wch-tools .wc-chipbtn { justify-content: center; }
-}
 
 /* ---- Hero ---- */
 .wch-hero {
@@ -336,26 +236,9 @@ a.wc-chipbtn:hover {
     color: var(--wc-text-3);
 }
 
-/* Outline action button. The apps get the base .btn from their theme layer;
-   the homepage has none, so the pieces it needs are set here. */
-.wch-resources .btn {
-    flex: none;
-    border: 2px solid var(--wc-border-strong);
-    background: transparent;
-    color: var(--wc-text-1);
-    font-weight: 600;
-    line-height: 1.5;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
-}
+.wch-resources .btn { flex: none; }
 
 /* ---- Footer ---- */
-/* <main> takes focus from the skip link; it is not a control, so no ring. */
-main#main-content:focus { outline: none; }
-
 /* The footer sits after <main> as the page's contentinfo landmark, but lines
    up with the main column above it. */
 .wch-footer {

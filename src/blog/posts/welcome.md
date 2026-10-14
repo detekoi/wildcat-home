@@ -2,6 +2,7 @@
 title: "Welcome to the Wildcat Blog"
 date: 2026-02-13
 description: "Introducing the Wildcat.chat blog — a place for platform updates, feature announcements, and development notes."
+tags: [platform]
 ---
 
 I'm excited to launch the Wildcat blog! This is where I'll share updates about the platform, announce new features, and write about the development process behind my Twitch tools.

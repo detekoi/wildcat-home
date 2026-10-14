@@ -2,6 +2,7 @@
 title: "New: WildcatSage in 8 Languages"
 date: 2026-08-28
 description: "Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command, and you can pick one on the dashboard now too."
+tags: [sage]
 ---
 
 Game messages, command replies, and the whole dashboard now come pre-translated in eight languages. Channels that already declare a language on Twitch get it without typing a command, and you can pick one on the dashboard now too.

@@ -2,6 +2,7 @@
 title: "New WildcatTTS Features: Pronunciation Dictionary & Profanity Filter"
 date: 2026-08-14
 description: "WildcatTTS now reads common chat acronyms as words instead of spelling them out, and a new opt-in profanity filter swaps rude words for milder ones before they reach the audio."
+tags: [tts]
 ---
 
 WildcatTTS now reads common chat acronyms as words instead of spelling them out, and a new opt-in profanity filter swaps rude words for milder ones before they reach the audio.

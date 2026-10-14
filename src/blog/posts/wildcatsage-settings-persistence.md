@@ -2,6 +2,7 @@
 title: "Bug Fix: WildcatSage Settings Persistence"
 date: 2026-01-24
 description: "Fixed issues causing dashboard settings to reset unexpectedly, specifically affecting ad break notifications and auto-chat/ad notification conflicts."
+tags: [sage]
 ---
 
 Fixed issues causing dashboard settings to reset unexpectedly:

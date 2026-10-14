@@ -2,6 +2,7 @@
 title: "New Feature: Voice Volume & Calibration"
 date: 2025-12-26
 description: "I’ve rolled out an update to the ChatVibes Dashboard that gives you direct control over voice volume and per-voice volume calibration."
+tags: [tts]
 ---
 
 I’ve rolled out an update to the [**ChatVibes Dashboard**](https://tts.wildcat.chat/) that gives you direct control over voice volume and per-voice volume calibration.

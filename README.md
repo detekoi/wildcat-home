@@ -21,7 +21,15 @@ npm run sync:design-system   # copy ../wildcat-design-system/design-system.css i
 npm run check:design-system  # fail if the copy has drifted
 ```
 
-The blog and the chat overlay pages still use the older site styles (`base.njk`, `unified.css`).
+Every page except the OBS browser source (`src/chat-overlay/chat.html`, which has its own
+styles and must keep its URL and look) uses the shared layout `src/_includes/app.njk`:
+
+- `src/styles/site.css`: reset, app bar and buttons shared by every page.
+- `src/styles/home.css`, `blog.css`, `overlay.css`, `src/chat-overlay/css/scene-creator.css`:
+  each page's own layer.
+
+Blog posts need a product tag in their front matter (`tags: [sage]`, `[tts]`, `[overlay]` or
+`[platform]`). The filter tabs at `/blog/<tag>/` are built from those tags.
 
 ## Chat Overlay
 

@@ -2,6 +2,7 @@
 title: "Big news: ChatVibes is now WildcatTTS"
 date: 2026-01-20
 description: "ChatVibes has officially rebranded to WildcatTTS. This update gives the TTS service a clearer identity and a cleaner dashboard."
+tags: [tts]
 ---
 
 ChatVibes has officially rebranded to **WildcatTTS**.  

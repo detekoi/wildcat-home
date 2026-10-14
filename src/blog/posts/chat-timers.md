@@ -2,6 +2,7 @@
 title: "New: Automated Chat Timers with AI Support"
 date: 2026-07-08
 description: "Keep your chat engaged with automated timed messages. Broadcast standard announcements, or use AI prompts to generate fresh, unique messages on an interval."
+tags: [sage]
 ---
 
 I'm excited to introduce **Chat Timers** for WildcatSage! Whether you want to remind viewers to drop a follow, promote your Discord, or just add some random fun to the stream, Timers make it effortless to keep your chat active and engaged.

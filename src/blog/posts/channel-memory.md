@@ -2,6 +2,7 @@
 title: "New: Channel Memory"
 date: 2026-09-22
 description: "WildcatSage now remembers your channel's running jokes, in-jokes, and regulars from one stream to the next. It learns from chat and from mods, and viewers can ask it to forget them."
+tags: [sage]
 ---
 
 A viewer recently asked WildcatSage whether it remembered what "ball knowledge" was. It was a joke the channel had been running for days. The bot gave the dictionary answer about knowing sports, and the viewer's next message was "he doesn't remember."

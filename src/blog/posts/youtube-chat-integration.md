@@ -2,6 +2,7 @@
 title: "New: Native YouTube Chat Integration"
 date: 2026-04-17
 description: "The Chat Overlay now natively supports YouTube Live — combine Twitch and YouTube chat into a single unified widget, with support for Unlisted streams."
+tags: [overlay]
 ---
 
 The Chat Overlay has been fully upgraded to support **native YouTube Live chat support** alongside Twitch! Whether you are exclusively streaming on YouTube or multistreaming to both platforms simultaneously, the overlay handles it seamlessly.

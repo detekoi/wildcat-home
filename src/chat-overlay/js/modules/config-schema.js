@@ -39,21 +39,21 @@ export const CONFIG_SCHEMA = [
     {
         key: 'theme',
         group: 'theme_colors',
-        label: 'Theme Preset',
+        label: 'Theme preset',
         control: 'themeCarousel',
         default: 'default'
     },
     {
         key: 'bgColor',
         group: 'theme_colors',
-        label: 'Background Color',
+        label: 'Background color',
         control: 'color',
         default: '#121212'
     },
     {
         key: 'bgColorOpacity',
         group: 'theme_colors',
-        label: 'Background Opacity',
+        label: 'Background opacity',
         control: 'range',
         min: 0,
         max: 1,
@@ -64,7 +64,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'bgImageOpacity',
         group: 'theme_colors',
-        label: 'Background Image Opacity',
+        label: 'Background image opacity',
         control: 'range',
         min: 0,
         max: 1,
@@ -75,49 +75,49 @@ export const CONFIG_SCHEMA = [
     {
         key: 'chromaKey',
         group: 'theme_colors',
-        label: 'Chroma Key Mode',
+        label: 'Chroma key mode',
         control: 'checkbox',
         default: false
     },
     {
         key: 'borderColor',
         group: 'theme_colors',
-        label: 'Border Color',
+        label: 'Border color',
         control: 'color',
         default: '#9147ff'
     },
     {
         key: 'textColor',
         group: 'theme_colors',
-        label: 'Text Color',
+        label: 'Text color',
         control: 'color',
         default: '#efeff1'
     },
     {
         key: 'usernameColor',
         group: 'theme_colors',
-        label: 'Username Color',
+        label: 'Username color',
         control: 'color',
         default: '#9147ff'
     },
     {
         key: 'timestampColor',
         group: 'theme_colors',
-        label: 'Timestamp Color',
+        label: 'Timestamp color',
         control: 'color',
         default: '#adadb8'
     },
     {
         key: 'pronounBadgeColor',
         group: 'theme_colors',
-        label: 'Pronoun Badge Color',
+        label: 'Pronoun badge color',
         control: 'color',
         default: '#adadb8'
     },
     {
         key: 'overrideUsernameColors',
         group: 'theme_colors',
-        label: 'Override User Colors',
+        label: 'Override user colors',
         control: 'checkbox',
         default: false
     },
@@ -126,14 +126,14 @@ export const CONFIG_SCHEMA = [
     {
         key: 'fontFamily',
         group: 'typography_layout',
-        label: 'Font Family',
+        label: 'Font family',
         control: 'font',
         default: "'Inter', 'Helvetica Neue', Arial, sans-serif"
     },
     {
         key: 'fontSize',
         group: 'typography_layout',
-        label: 'Font Size (px)',
+        label: 'Font size (px)',
         control: 'range',
         min: 10,
         max: 40,
@@ -143,22 +143,22 @@ export const CONFIG_SCHEMA = [
     {
         key: 'fontWeight',
         group: 'typography_layout',
-        label: 'Font Weight',
+        label: 'Font weight',
         control: 'select',
         options: [
             { label: 'Normal', value: 'normal' },
             { label: 'Bold', value: 'bold' },
             { label: 'Medium (500)', value: '500' },
-            { label: 'Semi-Bold (600)', value: '600' },
+            { label: 'Semi-bold (600)', value: '600' },
             { label: 'Bold (700)', value: '700' },
-            { label: 'Extra Bold (800)', value: '800' }
+            { label: 'Extra bold (800)', value: '800' }
         ],
         default: 'normal'
     },
     {
         key: 'borderRadius',
         group: 'typography_layout',
-        label: 'Border Radius',
+        label: 'Border radius',
         control: 'presets',
         options: [
             { label: '0px', value: '0px' },
@@ -171,7 +171,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'boxShadow',
         group: 'typography_layout',
-        label: 'Box Shadow',
+        label: 'Box shadow',
         control: 'presets',
         options: [
             { label: 'None', value: 'none' },
@@ -185,7 +185,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'textShadow',
         group: 'typography_layout',
-        label: 'Text Shadow',
+        label: 'Text shadow',
         control: 'presets',
         options: [
             { label: 'None', value: 'none' },
@@ -200,7 +200,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'chatWidth',
         group: 'typography_layout',
-        label: 'Chat Width (%)',
+        label: 'Chat width (%)',
         control: 'range',
         min: 20,
         max: 100,
@@ -210,7 +210,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'chatHeight',
         group: 'typography_layout',
-        label: 'Chat Height (%)',
+        label: 'Chat height (%)',
         control: 'range',
         min: 20,
         max: 100,
@@ -224,7 +224,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'showPlatformBadges',
         group: 'message_elements',
-        label: 'Show Platform Badges',
+        label: 'Show platform badges',
         control: 'checkbox',
         default: true
     },
@@ -238,21 +238,21 @@ export const CONFIG_SCHEMA = [
     {
         key: 'showMembershipEvents',
         group: 'message_elements',
-        label: 'Show Membership Events',
+        label: 'Show membership events',
         control: 'checkbox',
         default: true
     },
     {
         key: 'showBadges',
         group: 'message_elements',
-        label: 'Show User Badges',
+        label: 'Show user badges',
         control: 'checkbox',
         default: true
     },
     {
         key: 'showPronouns',
         group: 'message_elements',
-        label: 'Show User Pronouns',
+        label: 'Show user pronouns',
         control: 'checkbox',
         default: true,
         helpText: 'Users can set pronouns at',
@@ -262,21 +262,21 @@ export const CONFIG_SCHEMA = [
     {
         key: 'showTimestamps',
         group: 'message_elements',
-        label: 'Show Timestamps',
+        label: 'Show timestamps',
         control: 'checkbox',
         default: true
     },
     {
         key: 'enlargeSingleEmotes',
         group: 'message_elements',
-        label: 'Enlarge Single Emotes',
+        label: 'Enlarge single emotes',
         control: 'checkbox',
         default: false
     },
     {
         key: 'topFade',
         group: 'message_elements',
-        label: 'Top Gradient Fade',
+        label: 'Top gradient fade',
         control: 'checkbox',
         default: false,
         helpText: 'Fades messages at the top border'
@@ -284,7 +284,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'hideCommands',
         group: 'message_elements',
-        label: 'Hide Commands',
+        label: 'Hide commands',
         control: 'checkbox',
         default: false,
         helpText: 'Skips chat messages that start with !'
@@ -294,18 +294,18 @@ export const CONFIG_SCHEMA = [
     {
         key: 'chatMode',
         group: 'display_mode',
-        label: 'Chat Mode',
+        label: 'Chat mode',
         control: 'select',
         options: [
-            { label: 'Window (Continuous)', value: 'window' },
-            { label: 'Popup (Transient)', value: 'popup' }
+            { label: 'Window (continuous)', value: 'window' },
+            { label: 'Popup (transient)', value: 'popup' }
         ],
         default: 'window'
     },
     {
         key: 'maxMessages',
         group: 'display_mode',
-        label: 'Max Messages (Window Mode)',
+        label: 'Max messages (window mode)',
         control: 'number',
         min: 1,
         max: 200,
@@ -315,7 +315,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'popup',
         group: 'display_mode',
-        label: 'Popup Mode Configuration',
+        label: 'Popup mode configuration',
         control: 'popup_group',
         default: {
             direction: 'from-bottom',
@@ -325,19 +325,19 @@ export const CONFIG_SCHEMA = [
         subFields: [
             {
                 key: 'direction',
-                label: 'Popup Animation Direction',
+                label: 'Popup animation direction',
                 control: 'select',
                 options: [
-                    { label: 'From Bottom', value: 'from-bottom' },
-                    { label: 'From Top', value: 'from-top' },
-                    { label: 'From Left', value: 'from-left' },
-                    { label: 'From Right', value: 'from-right' }
+                    { label: 'From bottom', value: 'from-bottom' },
+                    { label: 'From top', value: 'from-top' },
+                    { label: 'From left', value: 'from-left' },
+                    { label: 'From right', value: 'from-right' }
                 ],
                 default: 'from-bottom'
             },
             {
                 key: 'duration',
-                label: 'Message Duration (seconds)',
+                label: 'Message duration (seconds)',
                 control: 'number',
                 min: 2,
                 max: 60,
@@ -346,7 +346,7 @@ export const CONFIG_SCHEMA = [
             },
             {
                 key: 'maxMessages',
-                label: 'Max Popup Messages',
+                label: 'Max popup messages',
                 control: 'number',
                 min: 1,
                 max: 10,
@@ -360,7 +360,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyEmotes',
         group: 'third_party_emotes',
-        label: 'Third-Party Emotes (BTTV, FFZ, 7TV)',
+        label: 'Third-party emotes (BTTV, FFZ, 7TV)',
         control: 'checkbox',
         default: true,
         advanced: true
@@ -368,7 +368,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyChannelEmotes',
         group: 'third_party_emotes',
-        label: 'Show Channel Emotes',
+        label: 'Show channel emotes',
         control: 'checkbox',
         default: true,
         advanced: true,
@@ -377,7 +377,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyFilter7tvTwitchDisallowed',
         group: 'third_party_emotes',
-        label: 'Filter Twitch Disallowed',
+        label: 'Filter Twitch disallowed',
         control: 'checkbox',
         default: true,
         advanced: true,
@@ -387,7 +387,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyFilter7tvSexual',
         group: 'third_party_emotes',
-        label: 'Filter Sexual Content',
+        label: 'Filter sexual content',
         control: 'checkbox',
         default: false,
         advanced: true,
@@ -396,7 +396,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyFilter7tvEpilepsy',
         group: 'third_party_emotes',
-        label: 'Filter Epilepsy / Flashing',
+        label: 'Filter epilepsy / flashing',
         control: 'checkbox',
         default: true,
         advanced: true,
@@ -405,7 +405,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyFilter7tvEdgy',
         group: 'third_party_emotes',
-        label: 'Filter Edgy / Offensive',
+        label: 'Filter edgy / offensive',
         control: 'checkbox',
         default: false,
         advanced: true,
@@ -422,7 +422,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'badgeFallbackHide',
         group: 'badges_cheermotes',
-        label: 'Hide Missing Badges',
+        label: 'Hide missing badges',
         control: 'checkbox',
         default: true,
         advanced: true,
@@ -431,7 +431,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'badgeCacheGlobalTTL',
         group: 'badges_cheermotes',
-        label: 'Global Badge Cache TTL (ms)',
+        label: 'Global badge cache TTL (ms)',
         control: 'number',
         default: 43200000,
         advanced: true,
@@ -440,7 +440,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'badgeCacheChannelTTL',
         group: 'badges_cheermotes',
-        label: 'Channel Badge Cache TTL (ms)',
+        label: 'Channel badge cache TTL (ms)',
         control: 'number',
         default: 3600000,
         advanced: true,
@@ -449,7 +449,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'cheermoteCacheTTL',
         group: 'badges_cheermotes',
-        label: 'Cheermote Cache TTL (ms)',
+        label: 'Cheermote cache TTL (ms)',
         control: 'number',
         default: 43200000,
         advanced: true,
@@ -458,7 +458,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyEmoteCacheGlobalTTL',
         group: 'badges_cheermotes',
-        label: '3rd-Party Emote Global Cache TTL (ms)',
+        label: '3rd-party emote global cache TTL (ms)',
         control: 'number',
         default: 43200000,
         advanced: true,
@@ -467,7 +467,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'thirdPartyEmoteCacheChannelTTL',
         group: 'badges_cheermotes',
-        label: '3rd-Party Emote Channel Cache TTL (ms)',
+        label: '3rd-party emote channel cache TTL (ms)',
         control: 'number',
         default: 3600000,
         advanced: true,
@@ -480,7 +480,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'lastChannel',
         group: 'cache_endpoints',
-        label: 'Last Joined Channel',
+        label: 'Last joined channel',
         control: 'text',
         default: '',
         advanced: true,
@@ -489,7 +489,7 @@ export const CONFIG_SCHEMA = [
     {
         key: 'configVersion',
         group: 'cache_endpoints',
-        label: 'Config Schema Version',
+        label: 'Config schema version',
         control: 'number',
         default: 2,
         advanced: true,

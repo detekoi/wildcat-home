@@ -2,6 +2,7 @@
 title: "New: AI-Powered Custom Commands"
 date: 2026-02-26
 description: "Custom commands can now use AI to generate a unique response every time. Create fun, dynamic interactions with a single prompt."
+tags: [sage]
 ---
 
 Custom commands just got a major upgrade — they can now be powered by AI. Instead of a fixed response, you write a **prompt**, and the bot generates a unique reply every time someone uses the command.

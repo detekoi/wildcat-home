@@ -2,6 +2,7 @@
 title: "More news: Sage rebranding update"
 date: 2026-01-20
 description: "My knowledge bot has a new name. ChatSageBot is now WildcatSage."
+tags: [sage]
 ---
 
 My knowledge bot has a new name.

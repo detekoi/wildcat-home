@@ -2,6 +2,7 @@
 title: "New WildcatTTS Feature: Emote Descriptions"
 date: 2026-02-07
 description: "WildcatTTS can now describe what emotes look like instead of reading out the emote name. This makes emote-heavy messages much more accessible and natural to listen to."
+tags: [tts]
 ---
 
 WildcatTTS can now describe what emotes look like instead of reading out the emote name. This makes emote-heavy messages much more accessible and natural to listen to.

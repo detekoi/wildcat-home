@@ -4,6 +4,7 @@ date: 2026-08-28
 description: "Announcements, chat replies, and the dashboard now come in all 40 languages the voice engine supports. Most channels get it without changing a setting."
 # ICU plural samples below contain `{#`, which Nunjucks parses as a comment opener.
 templateEngineOverride: md
+tags: [tts]
 ---
 
 Announcements, chat replies, and the dashboard now come in all 40 languages the voice engine supports. Most channels get it without changing a setting.

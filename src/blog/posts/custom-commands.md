@@ -2,6 +2,7 @@
 title: "New WildcatSage Feature: Custom Commands"
 date: 2026-02-11
 description: "WildcatSage now supports custom commands. Create your own `!commands` with dynamic responses."
+tags: [sage]
 ---
 
 WildcatSage now supports custom commands. Create your own `!commands` with dynamic responses.

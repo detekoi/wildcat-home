@@ -2,6 +2,7 @@
 title: "New: Custom Bot Personality"
 date: 2026-08-16
 description: "Rewrite how WildcatSage talks in your channel. Edit the personality from the dashboard, keep the safety rules that always apply, and every save gets screened before it goes live."
+tags: [sage]
 ---
 
 WildcatSage has sounded the same in every channel since it launched. You can now rewrite that personality for your own channel from the dashboard.

@@ -2,6 +2,7 @@
 title: "Third-Party Emote Support: BTTV, FFZ, & 7TV in the Chat Overlay"
 date: 2026-07-25
 description: "The Chat Overlay now natively renders BetterTTV, FrankerFaceZ, and 7TV emotes, including full zero-width emote stacking and animated emotes."
+tags: [overlay]
 ---
 
 The Wildcat Chat Overlay just received a major upgrade for Twitch streamers and viewers: native support for **BetterTTV (BTTV)**, **FrankerFaceZ (FFZ)**, and **7TV** emotes!
