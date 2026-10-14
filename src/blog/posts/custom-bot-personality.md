@@ -9,7 +9,7 @@ WildcatSage has sounded the same in every channel since it launched. You can now
 
 ## How It Works
 
-Open the [dashboard](https://app.wildcat.chat/) and scroll to **Bot Personality**. The box comes pre-filled with the personality the bot uses today, so you're editing text that already works instead of starting from an empty field. Change what you want and press **Save**. There's a 2000 character limit and a counter under the box.
+Open the [dashboard](https://bot.wildcat.chat/) and scroll to **Bot Personality**. The box comes pre-filled with the personality the bot uses today, so you're editing text that already works instead of starting from an empty field. Change what you want and press **Save**. There's a 2000 character limit and a counter under the box.
 
 Changes take effect right away. No restart, no waiting for the next stream.
 

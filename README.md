@@ -97,7 +97,7 @@ npm run build
 
 ## Related Projects
 
-- **Wildcat Sage:** AI-powered Twitch chatbot · [app.wildcat.chat](https://app.wildcat.chat)
+- **Wildcat Sage:** AI-powered Twitch chatbot · [bot.wildcat.chat](https://bot.wildcat.chat)
 - **WildcatTTS:** Text-to-speech bot for Twitch · [tts.wildcat.chat](https://tts.wildcat.chat)
 - **Documentation:** Platform guides · [docs.wildcat.chat](https://docs.wildcat.chat)
 

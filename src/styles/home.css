@@ -71,13 +71,22 @@
     max-width: 46ch;
 }
 
+/* One column per tool, all as wide as the longest label; stacked on phones. */
 .wch-hero-ctas {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(180px, 1fr);
     gap: 16px;
 }
 
-.wch-hero-ctas .wc-btn { width: 200px; }
+.wch-hero-ctas .wc-btn { white-space: nowrap; }
+
+@media (max-width: 640px) {
+    .wch-hero-ctas {
+        grid-auto-flow: row;
+        grid-template-columns: minmax(0, 260px);
+    }
+}
 
 /* Scrolling feature ticker. Two identical runs; the track slides by one run. */
 .wch-marquee {
