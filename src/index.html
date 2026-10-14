@@ -1,155 +1,188 @@
 ---
-layout: base.njk
+layout: home.njk
 title: "Wildcat.chat - Interactive Tools for Twitch Streamers"
-description: "Wildcat.chat - Customizable Twitch & YouTube bot platform featuring WildcatSage chatbot, WildcatTTS, and
-custom chat overlays for streamers."
+description: "Wildcat.chat - Customizable Twitch & YouTube bot platform featuring WildcatSage chatbot, WildcatTTS, and custom chat overlays for streamers."
+ticker: "AI chatbot • 300+ natural voices • custom chat overlays • web search • trivia • geo-guess • channel points • bits • multi-language • auto-chat • "
+stats:
+  - { label: "Tools", value: "3" }
+  - { label: "TTS voices", value: "300+" }
+  - { label: "Platforms", value: "Twitch • YouTube" }
+  - { label: "Access", value: "Invite-only beta", tone: "accent" }
+tools:
+  - name: "Sage"
+    href: "https://app.wildcat.chat"
+    cta: "Open Sage"
+    img: "/assets/images/ai-command.png"
+    alt: "WildcatSage custom command editor"
+    desc: "A chatbot for your Twitch chat. Sage answers viewer questions, searches the web, runs trivia, and translates messages."
+    features:
+      - "Replies that follow the conversation in chat"
+      - "Your chat is not used to train the models"
+      - "Live web search"
+      - "Auto-chat and translation"
+  - name: "TTS"
+    href: "https://tts.wildcat.chat"
+    cta: "Open TTS"
+    img: "/assets/images/tts-dashboard.png"
+    alt: "WildcatTTS dashboard"
+    desc: "Give your chat a voice. WildcatTTS reads chat messages and alerts aloud as they arrive, in natural voices."
+    features:
+      - "300+ voices"
+      - "Channel Points and Bits support"
+      - "Web dashboard for settings"
+      - "Voice preferences for each viewer"
+  - name: "Overlay"
+    href: "/chat-overlay/"
+    cta: "Open Overlay"
+    img: "/assets/images/twitch-youtube-chat-overlay.png"
+    alt: "Wildcat chat overlay showing Twitch and YouTube chat"
+    desc: "A Twitch and YouTube chat overlay for OBS. Describe a look, and the overlay generates a matching theme and background."
+    features:
+      - "Themes generated from a description"
+      - "Visual editor for colors, fonts, and layout"
+      - "Several display modes"
+      - "Add to OBS with a URL"
+resources:
+  - { label: "Documentation", host: "docs.wildcat.chat", href: "https://docs.wildcat.chat", cta: "Read docs", external: true }
+  - { label: "Blog and release notes", host: "wildcat.chat/blog", href: "/blog/", cta: "Blog" }
+  - { label: "Contact and access requests", host: "parfaitfair.com", href: "https://parfaitfair.com/#contact", cta: "Contact", external: true }
+  - { label: "Source code", host: "github.com/detekoi", href: "https://github.com/detekoi", cta: "GitHub", external: true }
 ---
-<link rel="stylesheet" href="/styles/home.css">
-
-<!-- Hero Section -->
-<section class="hero-section">
-    <video class="hero-grain" autoplay loop muted playsinline aria-hidden="true">
-        <source src="/assets/video/Pixelated_static_pattern_web_balanced.mp4" type="video/mp4">
-    </video>
-    <div class="hero-vignette" aria-hidden="true"></div>
-
-    <div class="hero-meta-top meta-strip">
-        <span>↳ wildcat.chat / live</span>
-        <span>broadcast desk / 2026</span>
+<header class="wc-appbar">
+    <a class="wc-appbar-brand wch-brand" href="/">
+        <img class="wch-brand-icon" src="/logo192.png" alt="" width="22" height="22">
+        <span class="wc-lockup">Wildcat</span>
+        <span class="wc-sep" aria-hidden="true"></span>
+        <span class="wc-appbar-page">Home</span>
+    </a>
+    <nav class="wch-tools" aria-label="Open a Wildcat tool">
+        <a class="wc-chipbtn" href="https://app.wildcat.chat"><i data-lucide="bot"></i>Sage</a>
+        <a class="wc-chipbtn" href="https://tts.wildcat.chat"><i data-lucide="mic"></i>TTS</a>
+        <a class="wc-chipbtn" href="/chat-overlay/"><i data-lucide="message-square"></i>Overlay</a>
+    </nav>
+    <div class="wc-appbar-actions wch-actions">
+        <span class="wch-rule wch-desk" aria-hidden="true"></span>
+        <nav class="wch-links wch-desk" aria-label="Resources">
+            <a class="wc-link wc-link--muted" href="/blog/">Blog</a>
+            <a class="wc-link wc-link--muted" href="https://docs.wildcat.chat">Docs</a>
+            <a class="wc-link wc-link--muted" href="https://github.com/detekoi">GitHub</a>
+        </nav>
+        <div class="wc-themeswitch" role="group" aria-label="Color theme">
+            <button type="button" data-theme-value="light" aria-pressed="false">Light</button>
+            <button type="button" data-theme-value="dark" aria-pressed="false">Dark</button>
+        </div>
     </div>
+</header>
 
-    <div class="hero-wordmark-wrap">
-        <h1 class="hero-wordmark">Wildcat</h1>
-        <div class="hero-subtitle">A Twitch &amp; YouTube bot platform</div>
+<main id="main-content" tabindex="-1">
+
+<section class="wch-hero" aria-labelledby="wch-hero-title">
+    <div class="wch-hero-static" aria-hidden="true">
+        <video class="wch-hero-video" autoplay loop muted playsinline>
+            <source src="/assets/video/Pixelated_static_pattern_web_balanced.mp4" type="video/mp4">
+        </video>
     </div>
+    <div class="wch-hero-dim" aria-hidden="true"></div>
 
-    <div class="hero-marquee-wrap" aria-hidden="true">
-        <div class="hero-marquee">
-            <span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · multi-language · auto-chat · </span><span>★ Gemini chatbot · 300+ natural voices · custom chat overlays · web search · trivia · geo-guess · channel points · bits · multi-language · auto-chat · </span>
+    <div class="wch-hero-inner">
+        <div class="wch-hero-meta">
+            <span class="wc-readout wc-readout--accent"><span class="wc-dot"></span>Invite-only beta</span>
+        </div>
+        <h1 class="wc-title wch-hero-title" id="wch-hero-title">
+            <span class="wc-title-brand">Wildcat</span>
+            <span class="wc-title-line">A Twitch &amp; YouTube bot platform</span>
+        </h1>
+        <div class="wch-hero-bottom">
+            <p class="wc-lede wch-hero-lede">A chatbot that answers questions, natural-sounding TTS, and custom chat overlays, all from one platform. Wildcat is in invite-only beta.</p>
+            <div class="wch-hero-ctas">
+                <a class="wc-btn" href="https://app.wildcat.chat"><i data-lucide="bot"></i>Launch Sage</a>
+                <a class="wc-btn wc-btn--ghost" href="https://tts.wildcat.chat"><i data-lucide="mic"></i>Launch TTS</a>
+            </div>
         </div>
     </div>
 
-    <div class="hero-bottom">
-        <p class="hero-tagline">
-            Knowledgeable chatbots, realistic TTS, and custom chat overlays —
-            all in one platform. Invite-only beta.
-        </p>
-        <div class="hero-cta-buttons">
-            <a href="https://app.wildcat.chat" class="twitch-button">Launch Sage</a>
-            <a href="https://tts.wildcat.chat" class="twitch-button secondary">Launch TTS</a>
+    <div class="wch-marquee" aria-hidden="true">
+        <div class="wch-marquee-track wc-readout"><span>{{ ticker }}</span><span>{{ ticker }}</span></div>
+    </div>
+</section>
+
+<div class="wch-main">
+
+    <dl class="wc-stats">
+        {%- for s in stats %}
+        <div class="wc-stat">
+            <dt>{{ s.label }}</dt>
+            <dd{% if s.tone %} class="is-{{ s.tone }}"{% endif %}>{{ s.value }}</dd>
         </div>
-    </div>
+        {%- endfor %}
+    </dl>
 
-
-</section>
-
-<!-- Platform Overview -->
-<section class="platform-overview">
-    <div class="meta-strip">
-        <span>§02 — the platform</span>
-        <span>01 / 04</span>
-    </div>
-    <div class="platform-grid">
-        <p>
-            Wildcat is a suite of Twitch &amp; YouTube bot tools designed to elevate
-            your stream's interactivity. From answering chat questions intelligently
-            to reading messages aloud with natural TTS and generating on-brand chat
-            overlays, Wildcat brings advanced interactivity and customization to your channel with minimal setup.
-        </p>
-        <p>
-            All tools are seamlessly integrated and maintained under the Wildcat
-            platform, making it one cohesive ecosystem for your streaming needs.
-            Currently in invite-only beta — <a href="https://parfaitfair.com/#contact">request access</a>.
-        </p>
-    </div>
-</section>
-
-<!-- Features Section -->
-<section class="features-section">
-    <div class="features-header">
-        <h2>Explore Wildcat Tools</h2>
-        <span class="meta-strip-label">§03 — three tools</span>
-    </div>
-    <div class="features-grid">
-        <!-- Sage Card -->
-        <article class="feature-card">
-            <span class="product-code">W—01</span>
-            <h3>Wildcat Sage</h3>
-            <p>
-                A Google Gemini-powered chatbot that lives in your Twitch chat. Sage answers viewer questions,
-                fetches information from the web, runs trivia, and translates.
-            </p>
-            <ul class="feature-list">
-                <li>Contextual responses powered by Gemini</li>
-                <li>Real-time web search integration</li>
-                <li>Trivia, geo-guessing, riddles</li>
-                <li>Auto-chat &amp; multi-language translation</li>
-            </ul>
-            <div class="feature-card-actions">
-                <a href="https://app.wildcat.chat" class="twitch-button">Open Sage →</a>
-            </div>
-        </article>
-
-        <!-- WildcatTTS Card -->
-        <article class="feature-card">
-            <span class="product-code">W—02</span>
-            <h3>Wildcat TTS</h3>
-            <p>
-                Give your chat a voice. WildcatTTS reads chat messages and alerts aloud in real time using natural TTS
-                voices.
-            </p>
-            <ul class="feature-list">
-                <li>300+ high-quality voices</li>
-                <li>Channel Points &amp; Bits integration</li>
-                <li>Web dashboard for config</li>
-                <li>Per-viewer voice preferences</li>
-            </ul>
-            <div class="feature-card-actions">
-                <a href="https://tts.wildcat.chat" class="twitch-button">Open TTS →</a>
-            </div>
-        </article>
-
-        <!-- Chat Overlay Card -->
-        <article class="feature-card">
-            <span class="product-code">W—03</span>
-            <h3>Wildcat Overlay</h3>
-            <p>
-                A customizable Twitch &amp; YouTube chat overlay with dynamic themes. Describe any aesthetic and
-                generate a matching background.
-            </p>
-            <ul class="feature-list">
-                <li>Theme generation by description</li>
-                <li>Visual editor (colors, fonts, layout)</li>
-                <li>Multiple display modes</li>
-                <li>OBS plug-and-play via URL</li>
-            </ul>
-            <div class="feature-card-actions">
-                <a href="/chat-overlay/" class="twitch-button">Open Overlay →</a>
-            </div>
-        </article>
-    </div>
-</section>
-
-<!-- Resources Section -->
-<section class="resources-section">
-    <div class="meta-strip">
-        <span>§04 — resources</span>
-        <span>end</span>
-    </div>
-    <div class="resources-card">
-        <h2>Resources &amp; Support</h2>
-        <p>
-            Want to dive deeper? Check the docs for full command lists, setup
-            guides, and advanced tips. Need help or want to request access? We're
-            here to help.
-        </p>
-        <div class="resources-links">
-            <a href="https://docs.wildcat.chat" class="twitch-button">Documentation →</a>
-            <a href="https://parfaitfair.com/#contact" class="twitch-button secondary">Contact &amp; Request →</a>
-            <a href="https://github.com/detekoi" class="twitch-button secondary">GitHub →</a>
+    <section class="card wc-card" aria-labelledby="wch-platform-title">
+        <div class="card-header">
+            <h2 class="wc-card-title" id="wch-platform-title">The platform</h2>
         </div>
-    </div>
-</section>
+        <div class="card-body">
+            <div class="wch-platform-grid">
+                <p>Wildcat is a set of bot tools for Twitch and YouTube streams. Sage answers questions in chat, WildcatTTS reads messages aloud in natural voices, and the chat overlay generates a theme that matches your stream. Each tool needs little setup.</p>
+                <p>The three tools are built and maintained together as one platform. Wildcat is in invite-only beta. To join, <a class="wc-link wc-link--underline" href="https://parfaitfair.com/#contact">request access</a>.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card wc-card" aria-labelledby="wch-tools-title">
+        <div class="card-header">
+            <h2 class="wc-card-title" id="wch-tools-title">Explore Wildcat Tools</h2>
+        </div>
+        <div class="card-body">
+            <div class="wch-tools-grid">
+                {%- for tool in tools %}
+                <article class="wch-tool">
+                    <div class="wch-tool-shot">
+                        <img src="{{ tool.img }}" alt="{{ tool.alt }}" loading="lazy" decoding="async">
+                    </div>
+                    <h3 class="wc-lockup wch-tool-name">Wildcat<b>{{ tool.name }}</b></h3>
+                    <p class="wch-tool-desc">{{ tool.desc }}</p>
+                    <ul class="wch-tool-features">
+                        {%- for f in tool.features %}
+                        <li><span class="wc-dot"></span>{{ f }}</li>
+                        {%- endfor %}
+                    </ul>
+                    <div class="wch-tool-cta">
+                        <a class="wc-btn wc-btn--ghost wc-btn--inline" href="{{ tool.href }}">{{ tool.cta }}</a>
+                    </div>
+                </article>
+                {%- endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="card wc-card" aria-labelledby="wch-resources-title">
+        <div class="card-header">
+            <h2 class="wc-card-title" id="wch-resources-title">Resources &amp; Support</h2>
+        </div>
+        <div class="card-body">
+            <p class="wc-card-desc wch-resources-desc">The docs have full command lists, setup guides, and advanced tips. For help or to request access, use the contact form.</p>
+            <div class="list-group wch-resources">
+                {%- for r in resources %}
+                <div class="list-group-item">
+                    <div class="wch-resource-text">
+                        <span class="wc-row-label">{{ r.label }}</span>
+                        <span class="wc-mono wch-resource-host">{{ r.host }}</span>
+                    </div>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ r.href }}"{% if r.external %} target="_blank" rel="noopener"{% endif %}>{{ r.cta }}</a>
+                </div>
+                {%- endfor %}
+            </div>
+        </div>
+    </section>
+
+</div>
+</main>
+
+<footer class="wch-footer">
+    <span class="wc-readout">wildcat.chat</span>
+    <span class="wc-readout">Made by parfaitfair</span>
+</footer>
 
 <!-- Floating Support Widget -->
 <aside class="floating-support" aria-label="Support">
@@ -167,9 +200,7 @@ custom chat overlays for streamers."
 <dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title">
     <div class="kofi-sheet__header">
         <h2 id="kofi-title" class="kofi-sheet__title">Support parfaitfair</h2>
-        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog">
-            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog"><i data-lucide="x"></i></button>
     </div>
     <div class="kofi-sheet__body">
         <div id="kofi-embed-container" class="kofi-embed-container">
@@ -180,57 +211,3 @@ custom chat overlays for streamers."
         </div>
     </div>
 </dialog>
-
-<script>
-    (function () {
-        const dialog = document.getElementById('kofi-modal');
-        const openBtn = document.getElementById('kofi-open');
-        const closeBtn = document.getElementById('kofi-close');
-        const embedContainer = document.getElementById('kofi-embed-container');
-        if (!dialog) return;
-
-        function open() {
-            if (typeof dialog.showModal === 'function') {
-                if (!dialog.open) dialog.showModal();
-            } else {
-                dialog.setAttribute('open', '');
-            }
-            if (embedContainer && !embedContainer.querySelector('iframe')) {
-                const iframe = document.createElement('iframe');
-                iframe.src = 'https://ko-fi.com/parfaitfair/?hidefeed=true&widget=true&embed=true';
-                iframe.title = 'Support parfaitfair on Ko-fi';
-                iframe.className = 'kofi-iframe';
-                embedContainer.appendChild(iframe);
-            }
-        }
-
-        function close() {
-            if (typeof dialog.close === 'function') {
-                if (dialog.open) dialog.close();
-            } else {
-                dialog.removeAttribute('open');
-            }
-        }
-
-        openBtn?.addEventListener('click', function (e) {
-            e.preventDefault();
-            open();
-        });
-
-        closeBtn?.addEventListener('click', function (e) {
-            e.preventDefault();
-            close();
-        });
-
-        dialog.addEventListener('click', function (e) {
-            if (e.target !== dialog) return;
-            const rect = dialog.getBoundingClientRect();
-            const isInside =
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom;
-            if (!isInside) close();
-        });
-    })();
-</script>

@@ -4,11 +4,24 @@ This repository contains the landing page for [wildcat.chat](https://wildcat.cha
 
 ## Features
 
-- Canvas element with an animated TV-static background.
-- 3D skeuomorphic button design system.
-- Automatic dark mode based on system preferences.
+- Homepage built on the shared Wildcat design system, the same one the WildcatSage and WildcatTTS web UIs use.
+- Light and dark themes. The page follows the system setting until a visitor picks one, then saves the choice.
+- Header links that open Sage, TTS and the chat overlay from anywhere on the page.
+- Pixelated TV-static hero background. Reduced-motion settings replace it with a still texture.
 - Responsive layout for mobile devices.
-- Atkinson Hyperlegible Next typography.
+
+## Design system
+
+`src/styles/design-system.css` is a copy of `design-system.css` from the
+[wildcat-design-system](https://github.com/detekoi/wildcat-design-system) repo. Do not edit the copy.
+Homepage-only rules go in `src/styles/home.css`. With both repos checked out side by side, run:
+
+```bash
+npm run sync:design-system   # copy ../wildcat-design-system/design-system.css into place
+npm run check:design-system  # fail if the copy has drifted
+```
+
+The blog and the chat overlay pages still use the older site styles (`base.njk`, `unified.css`).
 
 ## Chat Overlay
 

@@ -6,7 +6,9 @@
     "dev": "eleventy --serve",
     "build": "eleventy",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync:design-system": "cp ../wildcat-design-system/design-system.css src/styles/design-system.css",
+    "check:design-system": "cmp -s ../wildcat-design-system/design-system.css src/styles/design-system.css && echo design-system.css in sync || (echo design-system.css has drifted from ../wildcat-design-system && exit 1)"
   },
   "repository": {
     "type": "git",

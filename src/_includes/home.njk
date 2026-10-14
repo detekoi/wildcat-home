@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ description }}">
+    <title>{{ title }}</title>
+
+    <!-- Apply the saved or system theme before first paint so the page never flashes the wrong one.
+         The key and fallback order are mirrored in /scripts/home.js. -->
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('wildcat-home-theme'); } catch (e) {}
+            if (t !== 'light' && t !== 'dark') {
+                t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/logo192.png">
+
+    <!-- Fonts: Archivo names things, Public Sans sets copy, DM Mono sets readouts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&family=Public+Sans:wght@400..700&family=DM+Mono:wght@400;500&display=swap">
+
+    <!-- Stylesheets. design-system.css is vendored from wildcat-design-system
+         (npm run sync:design-system); do not edit it here. home.css is the app layer. -->
+    <link rel="stylesheet" href="/styles/design-system.css">
+    <link rel="stylesheet" href="/styles/home.css">
+
+    <!-- Icons (Downloaded local script) -->
+    <script src="/scripts/lucide.min.js"></script>
+
+    <!-- Analytics -->
+    <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
+</head>
+
+<body>
+    <a href="#main-content" class="wc-skip-link">Skip to main content</a>
+
+    {{ content | safe }}
+
+    <script src="/scripts/home.js" defer></script>
+</body>
+
+</html>

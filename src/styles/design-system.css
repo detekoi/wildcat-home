@@ -1,0 +1,2273 @@
+/* =====================================================
+   WILDCAT DESIGN SYSTEM
+   Implements the "Wildcat Bot UIs" handoff spec.
+
+   Source of truth: the wildcat-design-system repo. Each
+   app's copy is written by `npm run sync:design-system`
+   and `npm run check` fails if it drifts, so do not edit
+   the copy in an app. Keep this file free of rules that
+   only one app's markup uses;
+   those go in the app layer (chatsage-specific.css /
+   chatvibes-specific.css), which loads after this file.
+   Load order in both apps: reset.css, custom.css (theme),
+   this file, app layer; WildcatTTS also loads base.css
+   (the Bootstrap-era element and component bases) before
+   custom.css. Neither app loads Bootstrap: section 14 is
+   the utility shim that replaces it. The few !important
+   flags outside the shim exist because the shim's .text-*
+   utilities are !important, as Bootstrap's were, and a
+   component rule that must recolour such an element has
+   to match that.
+   Section 1 redefines the shared tokens (and remaps the
+   legacy names onto them) so the theme rules in custom.css
+   inherit the new palette. Sections 2+ add the components
+   the spec introduces.
+
+   Two values differ from the spec sheet, both to clear the
+   project's WCAG AA bar; hue and role are unchanged:
+     text-3   dark  0.545 -> 0.630   (was 3.19:1 on surface-2)
+              light 0.560 -> 0.537   (was 4.09:1 on surface-2)
+     border-strong  new token at 3:1 for control outlines;
+                    --wc-border stays at the spec value and
+                    is used only for decorative hairlines.
+   ===================================================== */
+
+/* =====================================================
+   1. TOKENS
+   ===================================================== */
+:root {
+    /* Type */
+    --wc-font-name: 'Archivo', system-ui, sans-serif;
+    --wc-font-body: 'Public Sans', system-ui, sans-serif;
+    --wc-font-mono: 'DM Mono', ui-monospace, monospace;
+
+    /* Geometry */
+    --wc-radius-card: 2px;
+    --wc-radius-field: 3px;
+    --wc-btn-h: 48px;
+    --wc-btn-h-inline: 36px;
+    --wc-control-h: 34px;
+    --wc-aside-w: 292px;
+
+    /* Surfaces — light */
+    --wc-bg: oklch(0.972 0.003 300);
+    --wc-surface-1: oklch(1 0 0);
+    --wc-surface-2: oklch(0.955 0.004 300);
+    --wc-field: oklch(0.985 0.002 300);
+    --wc-border: oklch(0.858 0.008 300);
+    --wc-hairline: oklch(0.918 0.005 300);
+    --wc-border-strong: oklch(0.636 0.008 300);
+    --wc-track: oklch(0.880 0.006 300);
+
+    /* Text and accent — light */
+    --wc-text-1: oklch(0.205 0.006 300);
+    --wc-text-2: oklch(0.430 0.008 300);
+    --wc-text-3: oklch(0.537 0.010 300);
+    --wc-accent: oklch(0.480 0.130 300);
+    --wc-accent-dim: oklch(0.760 0.070 300);
+    --wc-accent-soft: color-mix(in oklab, oklch(0.760 0.070 300) 55%, transparent);
+    --wc-on-accent: oklch(0.995 0.002 300);
+    --wc-ghost-shadow: oklch(0.780 0.010 300);
+    --wc-ghost-soft: color-mix(in oklab, oklch(0.780 0.010 300) 55%, transparent);
+
+    /* Status — light */
+    --wc-ok: oklch(0.520 0.110 155);
+    --wc-danger: oklch(0.520 0.150 25);
+    --wc-warning: oklch(0.520 0.130 65);
+    /* Text on a status-coloured surface (.text-bg-*). White clears AA on every
+       light-theme status colour (5.2:1+); black does on the dark-theme ones (6.4:1+). */
+    --wc-on-status: #fff;
+    --wc-danger-border: oklch(0.830 0.060 25);
+    --wc-danger-bg: oklch(0.960 0.020 25);
+    --wc-danger-soft: color-mix(in oklab, oklch(0.830 0.060 25) 55%, transparent);
+
+    /* Login video dim */
+    --wc-overlay: color-mix(in oklab, oklch(0.995 0.002 300) 84%, transparent);
+
+    /* Toggle knob */
+    --wc-knob-off: var(--wc-text-3);
+    --wc-knob-on: var(--wc-on-accent);
+
+    /* ---- Legacy remap: existing custom.css follows the new palette ---- */
+    --font-primary: var(--wc-font-body);
+    --font-code: var(--wc-font-mono);
+    --font-mascot: var(--wc-font-name);
+    --bg-primary: var(--wc-bg);
+    --bg-secondary: var(--wc-surface-1);
+    --bg-tertiary: var(--wc-surface-2);
+    --text-primary: var(--wc-text-1);
+    --text-secondary: var(--wc-text-2);
+    --text-muted: var(--wc-text-3);
+    --border-color: var(--wc-border);
+    --border-hover: var(--wc-border-strong);
+    --accent-primary: var(--wc-accent);
+    --accent-primary-hover: var(--wc-accent-dim);
+    --accent-focus: color-mix(in oklab, var(--wc-accent) 30%, transparent);
+    --shadow-color: var(--wc-accent-dim);
+    --danger-primary: var(--wc-danger);
+    --danger-secondary: var(--wc-danger-border);
+    --danger-bg: var(--wc-danger-bg);
+    --danger-text: var(--wc-danger);
+    --help-icon-bg: var(--wc-surface-2);
+    --help-icon-text: var(--wc-text-1);
+    --modal-text: var(--wc-text-1);
+    --color-grid-line: var(--wc-hairline);
+    --color-accent-grey: var(--wc-text-3);
+}
+
+[data-theme="dark"] {
+    /* Surfaces — dark */
+    --wc-bg: oklch(0.170 0.004 300);
+    --wc-surface-1: oklch(0.214 0.005 300);
+    --wc-surface-2: oklch(0.254 0.006 300);
+    --wc-field: oklch(0.190 0.004 300);
+    --wc-border: oklch(0.324 0.008 300);
+    --wc-hairline: oklch(0.278 0.007 300);
+    --wc-border-strong: oklch(0.531 0.008 300);
+    --wc-track: oklch(0.324 0.008 300);
+
+    /* Text and accent — dark */
+    --wc-text-1: oklch(0.940 0.004 300);
+    --wc-text-2: oklch(0.720 0.006 300);
+    --wc-text-3: oklch(0.630 0.007 300);
+    --wc-accent: oklch(0.665 0.105 300);
+    --wc-accent-dim: oklch(0.430 0.062 300);
+    --wc-accent-soft: color-mix(in oklab, oklch(0.430 0.062 300) 55%, transparent);
+    --wc-on-accent: oklch(0.170 0.004 300);
+    --wc-ghost-shadow: oklch(0.470 0.008 300);
+    --wc-ghost-soft: color-mix(in oklab, oklch(0.470 0.008 300) 55%, transparent);
+
+    /* Status — dark */
+    --wc-ok: oklch(0.720 0.090 155);
+    --wc-danger: oklch(0.660 0.115 25);
+    --wc-warning: oklch(0.800 0.150 80);
+    --wc-on-status: #000;
+    --wc-danger-border: oklch(0.400 0.070 25);
+    --wc-danger-bg: oklch(0.260 0.040 25);
+    --wc-danger-soft: color-mix(in oklab, oklch(0.400 0.070 25) 55%, transparent);
+
+    --wc-overlay: color-mix(in oklab, oklch(0.170 0.004 300) 88%, transparent);
+}
+
+/* =====================================================
+   2. BASE
+   ===================================================== */
+body {
+    font-family: var(--wc-font-body);
+    background-color: var(--wc-bg);
+    color: var(--wc-text-1);
+    line-height: 1.6;
+}
+
+/* Archivo names things; it never sets body copy. */
+:root h1, :root h2, :root h3, :root h4, :root h5, :root h6,
+.wc-name {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+}
+
+.wc-mono {
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Anchors inside design-system components carry .wc-link so the legacy
+   a:not(...) rule in custom.css skips them (it matches [class*="wc-"]). */
+.wc-link {
+    color: var(--wc-accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.wc-link:hover { text-decoration: underline; }
+
+.wc-link--underline { text-decoration: underline; }
+.wc-link--muted { color: var(--wc-text-2); }
+.wc-link--muted:hover { color: var(--wc-accent); text-decoration: none; }
+
+/* Diagonal arrow for links that open in a new tab. Ported from the Wildcat
+   homepage repo (its src/styles/unified.css) so the family reads the same. Drawn as a
+   currentColor mask so it inherits the link colour in both themes. */
+a[target="_blank"]::after {
+    content: "";
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    margin-inline-start: 0.25em;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='7' y1='17' x2='17' y2='7' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/line%3E%3Cpolyline points='7 7 17 7 17 17' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/polyline%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cline x1='7' y1='17' x2='17' y2='7' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/line%3E%3Cpolyline points='7 7 17 7 17 17' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C/polyline%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    vertical-align: middle;
+    opacity: 0.75;
+    transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
+}
+
+a[target="_blank"]:hover::after,
+a[target="_blank"]:focus-visible::after {
+    transform: translate(1px, -1px);
+    opacity: 1;
+}
+
+/* A link that already carries an icon says "external" on its own — the Quick
+   Links list is the case that matters. i[data-lucide] is matched as well as
+   svg so the arrow never flashes before lucide.createIcons() swaps them. */
+a[target="_blank"]:has(svg)::after,
+a[target="_blank"]:has(img)::after,
+a[target="_blank"]:has(i[data-lucide])::after,
+a[target="_blank"].wc-btn::after,
+a[target="_blank"].wc-chipbtn::after,
+a[target="_blank"].no-arrow::after {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    a[target="_blank"]::after { transition: none; }
+}
+
+/* Focus is never removed, only restyled. */
+:root :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--wc-accent);
+    outline-offset: 2px;
+}
+
+/* Sharp corners, per the spec's 2px / 3px geometry. */
+:root :is(.card, .list-group, .list-group-item, .alert, .modal-content,
+          .dropdown-menu, .badge, .toast) {
+    border-radius: var(--wc-radius-card);
+}
+
+:root :is(.form-control, .form-select, .btn, input:not([type="checkbox"]):not([type="range"]), textarea, select) {
+    border-radius: var(--wc-radius-field);
+}
+
+/* =====================================================
+   3. BRAND LOCKUP AND READOUTS
+   ===================================================== */
+.wc-lockup {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+    white-space: nowrap;
+}
+
+.wc-lockup b {
+    font-weight: 600;
+    color: var(--wc-text-1);
+    margin-inline-start: 0.16em;
+}
+
+.wc-readout {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wc-readout--accent { color: var(--wc-accent); }
+.wc-readout--ok { color: var(--wc-ok); }
+.wc-readout--danger { color: var(--wc-danger); }
+
+.wc-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    background: currentColor;
+}
+
+/* =====================================================
+   4. FRAME — the card shared by login, auth states and 404
+   ===================================================== */
+.wc-stage {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    padding: 20px 24px 56px;
+    /* No background here: the video and its dim sit at negative z-index and
+       would be painted over by this element's own background. */
+}
+
+/* Auth states and 404 are transient — no video behind them. */
+.wc-stage--transient {
+    justify-content: flex-start;
+    padding-top: 12vh;
+}
+
+.wc-stage--transient .wc-frame { max-width: 520px; }
+
+@media (max-width: 767.98px) {
+    .wc-stage--transient { padding-top: 6vh; }
+}
+
+.wc-stage-video {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+}
+
+/* 88% in dark, 84% in light — set by --wc-overlay. */
+.wc-stage-dim {
+    position: fixed;
+    inset: 0;
+    background: var(--wc-overlay);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.wc-frame {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    border: 1px solid var(--wc-border);
+    border-radius: var(--wc-radius-card);
+    background: var(--wc-surface-1);
+    overflow: hidden;
+}
+
+.wc-frame--wide { max-width: 720px; }
+
+.wc-frame-head,
+.wc-frame-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 20px;
+}
+
+.wc-frame-head {
+    border-bottom: 1px solid var(--wc-border);
+}
+
+.wc-frame-foot {
+    border-top: 1px solid var(--wc-border);
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.wc-frame-foot span { color: var(--wc-text-3); }
+.wc-frame-foot a { color: var(--wc-accent); }
+
+.wc-frame-body {
+    padding: 26px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.wc-title {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--wc-text-1);
+}
+
+.wc-title .wc-title-brand { color: var(--wc-text-3); }
+.wc-title .wc-title-suffix { margin-inline-start: 0.14em; }
+.wc-title .wc-title-line { display: block; }
+
+.wc-title--sm { font-size: 24px; }
+
+.wc-lede {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--wc-text-2);
+    margin: 0;
+    max-width: 48ch;
+    text-wrap: pretty;
+}
+
+/* Tinted note — replaces the yellow invite-only banner. */
+.wc-note {
+    border: 1px solid transparent;
+    border-radius: var(--wc-radius-card);
+    background: var(--wc-surface-2);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wc-note-label {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-accent);
+}
+
+.wc-note p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--wc-text-2);
+    margin: 0;
+    text-wrap: pretty;
+}
+
+.wc-note a { text-decoration: underline; }
+
+/* Tinted mono block — error codes, session detail. */
+.wc-code {
+    border: 1px solid transparent;
+    border-radius: var(--wc-radius-card);
+    background: var(--wc-surface-2);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.wc-code-label {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+}
+
+.wc-code-value {
+    font-family: var(--wc-font-mono);
+    font-size: 12px;
+    color: var(--wc-text-2);
+    word-break: break-word;
+}
+
+/* Section name with a rule running to the edge. */
+.wc-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wc-rule-name {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--wc-text-1);
+}
+
+.wc-rule::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--wc-border);
+}
+
+/* Mono line under a button — replaces the tooltip help icon. */
+.wc-help {
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--wc-text-3);
+    text-wrap: pretty;
+}
+
+.wc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.wc-action {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* =====================================================
+   5. BUTTONS — offset shadow, kept from the current build
+   ===================================================== */
+.wc-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: var(--wc-btn-h);
+    padding: 0 18px;
+    border-radius: var(--wc-radius-card);
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    background: var(--wc-accent);
+    color: var(--wc-on-accent);
+    border: 2px solid var(--wc-accent);
+    box-shadow: 4px 4px 0 var(--wc-accent-dim);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wc-btn:hover,
+.wc-btn:focus-visible {
+    color: var(--wc-on-accent);
+    text-decoration: none;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 1px var(--wc-accent-soft);
+}
+
+.wc-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--wc-accent-dim);
+}
+
+.wc-btn[disabled],
+.wc-btn.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Outlined secondary — one accent leads per screen. */
+.wc-btn--ghost {
+    background: transparent;
+    color: var(--wc-text-1);
+    border-color: var(--wc-text-1);
+    box-shadow: 4px 4px 0 var(--wc-ghost-shadow);
+}
+
+.wc-btn--ghost:hover,
+.wc-btn--ghost:focus-visible {
+    color: var(--wc-text-1);
+    box-shadow: 6px 6px 1px var(--wc-ghost-soft);
+}
+
+.wc-btn--ghost:active { box-shadow: 1px 1px 0 var(--wc-ghost-shadow); }
+
+.wc-btn--danger {
+    background: transparent;
+    color: var(--wc-danger);
+    border-color: var(--wc-danger);
+    box-shadow: 4px 4px 0 var(--wc-danger-border);
+}
+
+.wc-btn--danger:hover,
+.wc-btn--danger:focus-visible {
+    color: var(--wc-danger);
+    box-shadow: 6px 6px 1px var(--wc-danger-soft);
+}
+
+.wc-btn--danger:active { box-shadow: 1px 1px 0 var(--wc-danger-border); }
+
+.wc-btn--inline {
+    width: auto;
+    height: var(--wc-btn-h-inline);
+    padding: 0 15px;
+    font-size: 12px;
+    letter-spacing: 0.07em;
+}
+
+.wc-btn--aside {
+    height: 38px;
+    font-size: 12px;
+    letter-spacing: 0.07em;
+}
+
+.wc-btn i,
+.wc-btn svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+}
+
+.wc-btn--inline i,
+.wc-btn--inline svg,
+.wc-btn--aside i,
+.wc-btn--aside svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Small square/chip buttons in the app bar. */
+.wc-iconbtn,
+.wc-chipbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 32px;
+    border-radius: var(--wc-radius-card);
+    background: transparent;
+    border: 1px solid var(--wc-border-strong);
+    color: var(--wc-text-2);
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.wc-iconbtn { width: 32px; padding: 0; }
+.wc-chipbtn { padding: 0 12px; color: var(--wc-text-1); }
+
+.wc-iconbtn:hover,
+.wc-chipbtn:hover {
+    border-color: var(--wc-accent);
+    color: var(--wc-accent);
+}
+
+.wc-chipbtn--danger {
+    border-color: var(--wc-danger);
+    color: var(--wc-danger);
+}
+
+.wc-chipbtn--danger:hover {
+    background: var(--wc-danger-bg);
+    border-color: var(--wc-danger);
+    color: var(--wc-danger);
+}
+
+/* Language picker. Shares the chip geometry but not its uppercasing: the
+   options are endonyms, and upper-casing them is wrong in scripts that have no
+   case and actively misleading in Turkish, where i/I do not pair. */
+.wc-langselect {
+    height: 32px;
+    max-width: 9.5rem;
+    padding: 0 26px 0 10px;
+    padding-inline: 10px 26px;
+    border-radius: var(--wc-radius-card);
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23495057' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 13px 10px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 1px solid var(--wc-border-strong);
+    color: var(--wc-text-1);
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+[data-theme="dark"] .wc-langselect {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+[dir="rtl"] .wc-langselect {
+    background-position: left 9px center;
+}
+
+.wc-langselect:hover {
+    border-color: var(--wc-accent);
+    color: var(--wc-accent);
+}
+
+/* The popup list is painted by the OS, which does not inherit the page colors;
+   without this the options are black-on-black in dark mode on Windows. */
+.wc-langselect option {
+    background: var(--wc-surface-1);
+    color: var(--wc-text-1);
+}
+
+.wc-iconbtn i, .wc-iconbtn svg { width: 14px; height: 14px; }
+.wc-chipbtn i, .wc-chipbtn svg { width: 13px; height: 13px; }
+
+/* Outline buttons inside section cards: the outline is the affordance, so it
+   uses the 3:1 control-outline token rather than the decorative hairline. */
+:root .wc-card :is(.btn-outline-primary, .btn-outline-secondary) {
+    border-color: var(--wc-border-strong);
+    color: var(--wc-text-1);
+}
+
+:root .wc-card :is(.btn-outline-primary, .btn-outline-secondary):hover {
+    border-color: var(--wc-accent);
+    color: var(--wc-accent);
+    background-color: transparent;
+}
+
+:root .wc-card .btn:not(.btn-sm):not(.wc-btn):not(.wc-chipbtn):not(.wc-iconbtn) {
+    height: var(--wc-control-h);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11.5px;
+    font-family: var(--wc-font-name);
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+/* Segmented light/dark indicator on the login card. */
+.wc-themeswitch {
+    display: flex;
+    border: 1px solid var(--wc-border);
+    border-radius: var(--wc-radius-card);
+    overflow: hidden;
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.wc-themeswitch button {
+    padding: 5px 10px;
+    border: 0;
+    background: transparent;
+    color: var(--wc-text-3);
+    font: inherit;
+    letter-spacing: inherit;
+    /* Form controls get text-transform:none from the UA sheet, so it has to
+       be set here rather than inherited from .wc-themeswitch. */
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.wc-themeswitch button[aria-pressed="true"] {
+    background: var(--wc-text-1);
+    color: var(--wc-surface-1);
+}
+
+/* =====================================================
+   6. AUTH-COMPLETE — step list and indeterminate bar
+   ===================================================== */
+.wc-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wc-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+}
+
+.wc-step::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    flex: none;
+    background: var(--wc-track);
+}
+
+.wc-step.is-done {
+    color: var(--wc-text-2);
+}
+
+.wc-step.is-done::before { background: var(--wc-accent); }
+
+/* A 25% segment on a 1.5s loop — no fake percentage. */
+.wc-bar {
+    height: 2px;
+    background: var(--wc-track);
+    overflow: hidden;
+}
+
+.wc-bar span {
+    display: block;
+    height: 2px;
+    width: 25%;
+    background: var(--wc-accent);
+    animation: wcBarTrack 1.5s cubic-bezier(0.55, 0.1, 0.35, 0.9) infinite;
+}
+
+@keyframes wcBarTrack {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+}
+
+/* Determinate mode. Set data-progress and an inline width from real completed
+   work — never from a timer. See setProgress() in common/ui.ts. */
+.wc-bar[data-progress] span {
+    animation: none;
+    transform: none;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+/* The one loading indicator. Page-level overlays and per-section loaders both
+   use this, so nothing anywhere spins. */
+.wc-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 0;
+}
+
+.wc-loading .wc-bar { width: 100%; }
+
+.wc-loading-label {
+    margin: 0;
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+}
+
+/* Card-level loaders — zero layout shift top indicator */
+:root .wc-card > .card-body {
+    position: relative;
+}
+
+:root .wc-card > .card-body > .wc-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    gap: 0;
+    pointer-events: none;
+}
+
+:root .wc-card > .card-body > .wc-loading .wc-bar {
+    height: 2px;
+    background: transparent;
+    border-radius: 0;
+}
+
+:root .wc-card > .card-body > .wc-loading .wc-loading-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Page-level overlay sits in the content column rather than edge to edge. */
+.wc-loading--page {
+    max-width: 420px;
+    padding: 40px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wc-bar span { animation-duration: 3s; }
+    .wc-bar[data-progress] span { transition: none; }
+    .wc-btn, .wc-iconbtn, .wc-chipbtn { transition: none; }
+    .wc-stage-video { display: none; }
+}
+
+/* 404 numeral */
+.wc-bignum {
+    font-family: var(--wc-font-mono);
+    font-size: 52px;
+    line-height: 0.9;
+    color: var(--wc-border-strong);
+}
+
+/* =====================================================
+   7. APP SHELL
+   ===================================================== */
+.wc-appbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 12px 24px;
+    background: var(--wc-bg);
+    border-bottom: 1px solid var(--wc-hairline);
+}
+
+.wc-appbar-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    min-width: 0;
+}
+
+.wc-appbar-brand .wc-sep {
+    width: 1px;
+    height: 13px;
+    flex: none;
+    background: var(--wc-border-strong);
+    align-self: center;
+}
+
+.wc-appbar-page {
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wc-text-2);
+}
+
+.wc-appbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+/* The controls keep their intrinsic width. Left to shrink they do not clip,
+   they squeeze past the brand and paint on top of it, because a flex item is
+   allowed to become narrower than the text inside it. */
+.wc-appbar-actions > * { flex: none; }
+
+.wc-page-head {
+    padding: 26px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wc-page-head h1 {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.wc-page-head p {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--wc-text-2);
+    margin: 0;
+    max-width: 62ch;
+    text-wrap: pretty;
+}
+
+.wc-main > .alert {
+    margin: 20px 24px 0;
+}
+
+/* Mono stat strip: unboxed columns. */
+.wc-stats {
+    margin: 20px 24px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 44px;
+}
+
+.wc-stat {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wc-stat dt {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+    font-weight: 400;
+}
+
+.wc-stat dd {
+    font-family: var(--wc-font-mono);
+    font-size: 14px;
+    color: var(--wc-text-1);
+    margin: 0;
+}
+
+.wc-stat dd.is-ok { color: var(--wc-ok); }
+.wc-stat dd.is-danger { color: var(--wc-danger); }
+.wc-stat dd.is-muted { color: var(--wc-text-2); }
+
+/* The bot status readout is keyed off the .text-* utility classes the app's
+   script toggles (bot-status.js in Sage, bot-management.ts in TTS). The flags
+   beat the shim's own .text-* utilities. */
+.wc-stat dd .text-success { color: var(--wc-ok) !important; }
+.wc-stat dd .text-secondary { color: var(--wc-text-2) !important; }
+.wc-stat dd .text-danger { color: var(--wc-danger) !important; }
+.wc-stat dd .fw-semibold { font-weight: 400 !important; }
+
+.wc-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--wc-aside-w);
+    gap: 40px;
+    padding: 22px 24px 44px;
+    align-items: start;
+}
+
+.wc-shell-main {
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+    min-width: 0;
+}
+
+.wc-shell-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    position: sticky;
+    top: 78px;
+}
+
+@media (max-width: 991.98px) {
+    .wc-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .wc-shell-aside {
+        position: static;
+    }
+}
+
+/* =====================================================
+   8. SECTION CARDS AND SETTING ROWS
+   A section is .card.wc-card > .card-header (title) + .card-body; the body
+   holds an optional .wc-card-desc lead paragraph, then row stacks
+   (.list-group > .list-group-item, .wc-switch-rows) or free-form blocks.
+   Sections are unframed: hierarchy comes from the caps title over one rule,
+   hairlines between rows, and the gap between sections. Outlines are kept
+   for things you act on (fields, toggles, chips, buttons) and for the single
+   focal box of a .wc-frame or dialog.
+   ===================================================== */
+.wc-card {
+    /* The section owns its box; a theme's Bootstrap-era .card border,
+       padding, flex layout and overflow-wrap must not leak in. */
+    display: block;
+    margin: 0;
+    padding: 0;
+    overflow-wrap: normal;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Lead paragraph at the top of a card body: the section description. */
+.wc-card-desc {
+    margin: 0;
+    padding: 12px 0 2px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--wc-text-2);
+    text-wrap: pretty;
+}
+
+/* The list-group inside a section card is the row stack. */
+:root .wc-card .list-group,
+:root .wc-card .list-group.shadow {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+:root .wc-card .list-group-item,
+.wc-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 13px 0;
+    border: 0;
+    border-top: 1px solid var(--wc-hairline);
+    border-radius: 0;
+    background: transparent;
+    color: var(--wc-text-1);
+}
+
+:root .wc-card .list-group-item.text-center {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Label + description left, control right at a fixed width, so the
+   controls line up in a column down the card. */
+:root .wc-card .list-group-item > .row {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 0;
+}
+
+:root .wc-card .list-group-item > .row > .col {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+:root .wc-card .list-group-item > .row > .col-auto {
+    flex: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Ignore/banned-word/pronunciation rows pair a user-supplied label with a
+   Remove button. A username is one unbreakable word, so the label's automatic
+   minimum size can exceed the space left over and shove the button past the
+   row's padding — the buttons then stop lining up. overflow-wrap: anywhere
+   lets the label break, which lowers its min-content size; it inherits, so it
+   also reaches the bare text node banned-words.ts sets on the row itself. */
+:root .list-group-item.justify-content-between {
+    overflow-wrap: anywhere;
+}
+
+/* The action side holds our own strings, not user data, so it neither breaks
+   mid-word nor absorbs the shrink. The :has() arm covers voice-calibration.ts,
+   which groups its Edit and Reset buttons in a wrapper div. */
+:root .list-group-item.justify-content-between > :is(.btn, button),
+:root .list-group-item.justify-content-between > :has(> :is(.btn, button)) {
+    flex: none;
+}
+
+:root .list-group-item.justify-content-between :is(.btn, button) {
+    overflow-wrap: normal;
+}
+
+:root .wc-card .list-group-item strong,
+.wc-row-label {
+    font-family: var(--wc-font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--wc-text-1);
+}
+
+:root .wc-card .list-group-item .text-muted,
+.wc-row-desc {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--wc-text-3) !important; /* beats the .text-muted utility */
+    margin: 0;
+    text-wrap: pretty;
+}
+
+/* Section cards also host free-form blocks — ignore lists, the channel-point
+   reward form. Pad and rule them so they sit in the section like rows do.
+   .list-group and .wc-switch-rows are row stacks, not blocks: their rows
+   carry their own padding, so padding here would inset them a second time. */
+:root .wc-card > .card-body > *:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows):not(:empty) {
+    margin: 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--wc-hairline);
+}
+
+:root .wc-card h6 {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wc-text-1);
+    margin: 0 0 6px;
+}
+
+:root .wc-card h6 strong { font-weight: 600; }
+
+/* No card-in-card: nested cards become plain blocks. */
+:root .wc-card .card {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+:root .wc-card .card .card-body { padding: 0; }
+
+/* ---- header and body ---- */
+:root .wc-card > .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 0;
+    padding: 0 0 10px;
+    background: transparent;
+    border-bottom: 1px solid var(--wc-border);
+}
+
+:root .wc-card > .card-header :is(h2, h3, h5) {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--wc-text-1);
+    margin: 0;
+}
+
+:root .wc-card > .card-body { padding: 0; }
+/* No double rule directly under the title: the first block that renders
+   drops its top rule, as does the first row of a leading row stack. "First"
+   skips the loading bar (absolutely positioned when shown), hidden blocks
+   and empty ones, which often precede the content in the markup. The second
+   selector repeats the free-form block rule's :not() chain so it outranks
+   that rule. */
+:root .wc-card > .card-body > :nth-child(1 of :not(.wc-loading, [hidden], .d-none, :empty)),
+:root .wc-card > .card-body > :not(.wc-card-desc):not(.list-group):not(.wc-switch-rows):not(:empty):nth-child(1 of :not(.wc-loading, [hidden], .d-none, :empty)),
+:root .wc-card > .card-body > :is(.list-group, .wc-switch-rows):nth-child(1 of :not(.wc-loading, [hidden], .d-none, :empty)) > :nth-child(1 of :not([hidden], .d-none)) {
+    border-top: 0;
+}
+
+/* Card titles: the section-title face at 12px wherever the class is used
+   on its own. In a section header the heading rule above sets 13px; in an
+   aside header the title takes the header's mono label (section 11). */
+.wc-card-title {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--wc-text-1);
+    margin: 0;
+}
+
+/* Mono meta on the right of a card header, e.g. a row count. */
+.wc-card-meta {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+}
+
+/* Lead paragraph at the top of a card body reads as the section description. */
+:root .wc-card > .card-body > p {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--wc-text-2);
+    text-wrap: pretty;
+}
+
+/* A .wc-switch-rows wrapper (or the card body itself) holds settings stated as
+   .form-check.form-switch with an inline label and description. Lay each out
+   as a row: label + description left, toggle right. Opt-in via the class so a
+   wrapper with its own padding is not double-inset. */
+:root .wc-card > .card-body > .form-check.form-switch,
+:root .wc-card > .card-body > .wc-switch-rows > .form-check.form-switch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label toggle" "desc toggle";
+    align-items: center;
+    gap: 3px 20px;
+    margin: 0;
+    padding: 13px 0;
+    border-top: 1px solid var(--wc-hairline);
+}
+
+:root .wc-card > .card-body > .form-check.form-switch .form-check-label,
+:root .wc-card > .card-body > .wc-switch-rows > .form-check.form-switch .form-check-label {
+    grid-area: label;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--wc-text-1);
+}
+
+:root .wc-card > .card-body > .form-check.form-switch .form-check-input,
+:root .wc-card > .card-body > .wc-switch-rows > .form-check.form-switch .form-check-input {
+    grid-area: toggle;
+    align-self: center;
+}
+
+:root .wc-card > .card-body > .form-check.form-switch small,
+:root .wc-card > .card-body > .wc-switch-rows > .form-check.form-switch small {
+    grid-area: desc;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--wc-text-3) !important; /* the <small> often carries .text-muted */
+    text-wrap: pretty;
+}
+
+/* Footer rail of a section card. */
+.wc-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding: 13px 0;
+    border-top: 1px solid var(--wc-hairline);
+}
+
+/* =====================================================
+   9. CONTROLS
+   ===================================================== */
+
+/* Toggle — 44x24 rectangle, 2px radius, 18x18 knob. */
+:root .form-switch .form-check-input,
+:root .form-check-input[type="checkbox"][role="switch"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 44px;
+    height: 24px;
+    min-height: 24px;
+    flex: none;
+    margin: 0;
+    border-radius: var(--wc-radius-card);
+    border: 1px solid var(--wc-border-strong);
+    background-color: var(--wc-field);
+    background-image: linear-gradient(var(--wc-knob-off), var(--wc-knob-off));
+    background-size: 18px 18px;
+    background-position: 2px center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    transition: background-position 0.15s ease, background-color 0.15s ease,
+                border-color 0.15s ease, background-image 0.15s ease;
+}
+
+:root .form-switch .form-check-input:checked,
+:root .form-check-input[type="checkbox"][role="switch"]:checked {
+    background-color: var(--wc-accent);
+    border-color: var(--wc-accent);
+    background-image: linear-gradient(var(--wc-knob-on), var(--wc-knob-on));
+    background-position: calc(100% - 2px) center;
+}
+
+:root .form-switch .form-check-input:focus-visible {
+    outline: 2px solid var(--wc-accent);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+/* Selects, text and number fields — 34px tall at 3px radius. */
+:root .wc-card .form-select,
+:root .wc-card .form-control:not(textarea),
+.wc-field {
+    height: var(--wc-control-h);
+    min-width: 0;
+    max-width: 100%;
+    padding: 0 11px;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background-color: var(--wc-field);
+    color: var(--wc-text-1);
+    font-family: var(--wc-font-body);
+    font-size: 12.5px;
+    line-height: var(--wc-control-h);
+}
+
+:root .wc-card .form-select {
+    padding-inline-end: 28px;
+}
+
+:root .wc-card .list-group-item > .row > .col-auto :is(.form-select, .form-control:not(textarea):not([type="number"]):not([inputmode="numeric"]), .wc-field:not(.wc-field--number)) {
+    min-width: 172px;
+}
+
+:root .wc-card :is(input[type="number"], input[inputmode="numeric"]),
+.wc-field--number {
+    min-width: 0;
+    font-family: var(--wc-font-mono);
+}
+
+:root .wc-card .form-select:focus,
+:root .wc-card .form-control:focus {
+    border-color: var(--wc-accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--wc-accent) 25%, transparent);
+}
+
+:root .wc-card textarea.form-control,
+:root .wc-shell-aside textarea.form-control {
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background-color: var(--wc-field);
+    color: var(--wc-text-1);
+    font-size: 12.5px;
+    line-height: 1.5;
+    padding: 9px 11px;
+}
+
+/* Input groups — ensure inputs and buttons align seamlessly at --wc-control-h */
+:root .input-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+}
+
+:root .input-group > :is(.form-control, .form-select):not(textarea) {
+    min-width: 0;
+    height: var(--wc-control-h);
+}
+
+/* Prefix/suffix addon (e.g. the "!" before a command name) sits inline with the field. */
+:root .input-group > .input-group-text {
+    display: inline-flex;
+    align-items: center;
+    height: var(--wc-control-h);
+    padding: 0 11px;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background-color: var(--wc-field);
+    color: var(--wc-text-3);
+    font-family: var(--wc-font-mono);
+    font-size: 12.5px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+:root .input-group > .input-group-text + .form-control {
+    border-inline-start: 0;
+}
+
+:root .input-group > .btn {
+    height: var(--wc-control-h);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    font-size: 11.5px;
+    font-family: var(--wc-font-name);
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+:root .input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+:root .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+/* Unit suffix beside a number field. */
+.wc-unit {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wc-text-3);
+}
+
+/* Slider — 3px track, 11x13 rectangular thumb. */
+:root .form-range {
+    width: 212px;
+    height: 13px;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+:root .form-range::-webkit-slider-runnable-track {
+    height: 3px;
+    border: 0;
+    border-radius: 0;
+    background: var(--wc-track);
+}
+
+:root .form-range::-moz-range-track {
+    height: 3px;
+    border: 0;
+    border-radius: 0;
+    background: var(--wc-track);
+}
+
+:root .form-range::-moz-range-progress {
+    height: 3px;
+    background: var(--wc-accent);
+}
+
+:root .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 13px;
+    margin-top: -5px;
+    border: 0;
+    border-radius: 0;
+    background: var(--wc-accent);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+:root .form-range::-moz-range-thumb {
+    width: 11px;
+    height: 13px;
+    border: 0;
+    border-radius: 0;
+    background: var(--wc-accent);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+/* Readout beside a slider. */
+.wc-slider-value {
+    width: 44px;
+    text-align: end;
+    font-family: var(--wc-font-mono);
+    font-size: 12.5px;
+    color: var(--wc-text-1);
+}
+
+/* Tag chips — ignore lists, banned words, opt-outs. */
+.wc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+    max-width: 250px;
+}
+
+.wc-tag,
+:root .wc-card .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-card);
+    background: var(--wc-field);
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--wc-text-2);
+}
+
+.wc-tag button {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--wc-text-3);
+    cursor: pointer;
+}
+
+.wc-tag button:hover { color: var(--wc-danger); }
+.wc-tag i, .wc-tag svg { width: 11px; height: 11px; }
+
+/* =====================================================
+   10. TABS
+   ===================================================== */
+:root .nav-tabs {
+    margin: 22px 24px 0;
+    gap: 0;
+    border-bottom: 1px solid var(--wc-border);
+}
+
+@media (max-width: 767.98px) {
+    :root .nav-tabs { margin: 18px 16px 0; }
+}
+
+:root .nav-tabs .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--wc-text-3);
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+:root .nav-tabs .nav-link:hover {
+    color: var(--wc-text-2);
+    border-color: transparent transparent var(--wc-border-strong);
+}
+
+:root .nav-tabs .nav-link.active {
+    background: transparent;
+    border-bottom-color: var(--wc-accent);
+    color: var(--wc-text-1);
+}
+
+/* =====================================================
+   11. ASIDE CARDS
+   Unframed like section cards: a mono label over one rule.
+   ===================================================== */
+.wc-aside-card {
+    border: 0;
+    background: transparent;
+}
+
+.wc-aside-card > header,
+:root .wc-aside-card .card-header {
+    padding: 0 0 8px;
+    background: transparent;
+    border-bottom: 1px solid var(--wc-border);
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-2);
+}
+
+/* A .wc-card-title in an aside header reads as the same mono label. */
+.wc-aside-card > header .wc-card-title,
+:root .wc-aside-card .card-header .wc-card-title {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+}
+
+.wc-aside-body,
+:root .wc-aside-card .card-body {
+    padding: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wc-aside-headline {
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: var(--wc-text-1);
+}
+
+.wc-aside-note {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--wc-text-3);
+    text-wrap: pretty;
+}
+
+/* Key/value readout rows. */
+.wc-kv {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.wc-kv > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-top: 1px solid var(--wc-hairline);
+    font-family: var(--wc-font-mono);
+    font-size: 11.5px;
+}
+
+.wc-kv dt { color: var(--wc-text-3); font-weight: 400; }
+.wc-kv dd { color: var(--wc-text-1); margin: 0; }
+
+.wc-links {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.wc-links a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--wc-text-2);
+    text-decoration: none;
+}
+
+.wc-links a:hover { color: var(--wc-accent); text-decoration: none; }
+.wc-links i, .wc-links svg { width: 13px; height: 13px; flex: none; }
+
+/* =====================================================
+   12. RESPONSIVE
+   ===================================================== */
+@media (max-width: 767.98px) {
+    /* The language picker joins the theme button and sign-out, and three
+       controls plus the brand do not fit a phone-width row: let the actions
+       drop to a line of their own rather than overlap the lockup. */
+    .wc-appbar {
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+    .wc-appbar-actions {
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    /* The one control that can give: an endonym truncates and stays readable,
+       where a chip label wraps into two broken words. */
+    .wc-langselect {
+        flex: 0 1 auto;
+        min-width: 5.5rem;
+    }
+    .wc-page-head { padding-inline: 16px; }
+    .wc-stats {
+        flex-direction: column;
+        margin-inline-start: 16px;
+        margin-inline-end: 16px;
+    }
+    .wc-shell { padding: 18px 16px 36px; }
+
+    /* Stack the setting row so controls keep their width, and right-align action buttons. */
+    :root .wc-card .list-group-item > .row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    :root .wc-card .list-group-item > .row > .col-auto {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    :root .wc-card .list-group-item > .row > .col-auto > :is(.btn, button, .form-switch) {
+        margin-inline-start: auto;
+    }
+
+    /* Stacking earns its keep for wide controls, but a lone toggle is 40px —
+       keep those rows inline so the switches hold one column down every card.
+       A cell pairing the switch with a button is wide again, so it still stacks. */
+    :root .wc-card .list-group-item > .row:has(> .col-auto > .form-check.form-switch:only-child) {
+        flex-direction: row;
+        align-items: center;
+    }
+    :root .wc-card .list-group-item > .row > .col-auto:has(> .form-check.form-switch:only-child) {
+        width: auto;
+        justify-content: flex-end;
+    }
+    .wc-tags { justify-content: flex-start; max-width: none; }
+    .wc-stage { padding: 16px 16px 40px; }
+    .wc-title { font-size: 24px; }
+}
+
+/* =====================================================
+   13. ACCESSIBILITY & MODERN NATIVE UTILITIES
+   Eliminates external framework dependencies with lean,
+   zero-runtime native CSS layout rules.
+   ===================================================== */
+
+/* Skip Link */
+.wc-skip-link {
+    position: absolute;
+    top: -100px;
+    inset-inline-start: 16px;
+    z-index: 10000;
+    padding: 10px 18px;
+    background: var(--wc-surface-1);
+    color: var(--wc-text-1);
+    border: 2px solid var(--wc-accent);
+    border-radius: var(--wc-radius-card);
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    transition: top 0.15s ease-out;
+}
+
+.wc-skip-link:focus,
+.wc-skip-link:focus-visible {
+    top: 16px;
+    outline: 2px solid var(--wc-accent);
+    outline-offset: 2px;
+}
+
+/* =====================================================
+   14. UTILITY SHIM
+   The few Bootstrap-style utilities the markup uses.
+   !important is deliberate here: a utility class must win
+   over any component rule, which is the whole point of it.
+   ===================================================== */
+.d-none { display: none !important; }
+.d-grid { display: grid !important; }
+.position-fixed { position: fixed !important; }
+.bottom-0 { bottom: 0 !important; }
+.end-0 { inset-inline-end: 0 !important; }
+.flex-grow-1 { flex-grow: 1 !important; }
+.flex-shrink-0 { flex-shrink: 0 !important; }
+.align-items-end { align-items: flex-end !important; }
+.w-100 { width: 100% !important; }
+.border-0 { border: 0 !important; }
+.m-auto { margin: auto !important; }
+.fw-bold { font-weight: 700 !important; }
+.fw-semibold { font-weight: 600 !important; }
+.fst-italic { font-style: italic !important; }
+.text-uppercase { text-transform: uppercase !important; }
+.text-decoration-none { text-decoration: none !important; }
+.text-truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.border-danger { border-color: var(--wc-danger) !important; }
+/* Colour utilities. Bootstrap's are !important, and so are these, so a
+   component rule with more specificity cannot swallow an explicit .text-*. */
+.text-muted { color: var(--wc-text-3) !important; }
+.text-secondary { color: var(--wc-text-2) !important; }
+.text-success { color: var(--wc-ok) !important; }
+.text-danger { color: var(--wc-danger) !important; }
+.text-warning { color: var(--wc-warning) !important; }
+.small { font-size: .875em !important; }
+
+/* Gutters. Every .row re-initialises its own gutter from --wc-row-gutter-x/y
+   (WildcatTTS sets 24px on :root, Bootstrap's default; otherwise 16px), so a
+   nested row never inherits a parent's .g-*. The .g-* classes then override
+   the row's own value. */
+.row {
+    --wc-gutter-x: var(--wc-row-gutter-x, 16px);
+    --wc-gutter-y: var(--wc-row-gutter-y, 0px);
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: calc(var(--wc-gutter-y) * -1);
+    margin-inline: calc(var(--wc-gutter-x) * -0.5);
+}
+
+.row > * {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 100%;
+    margin-top: var(--wc-gutter-y);
+    padding-inline: calc(var(--wc-gutter-x) * 0.5);
+}
+.g-2 { --wc-gutter-x: 8px; --wc-gutter-y: 8px; }
+.g-3 { --wc-gutter-x: 16px; --wc-gutter-y: 16px; }
+
+.col { flex: 1 0 0%; }
+.col-auto { flex: 0 0 auto; width: auto; }
+.col-12 { flex: 0 0 auto; width: 100%; }
+.col-4 { flex: 0 0 auto; width: 33.33333333%; }
+.col-8 { flex: 0 0 auto; width: 66.66666667%; }
+@media (min-width: 768px) {
+    .col-md-2 { flex: 0 0 auto; width: 16.66666667%; }
+    .col-md-3 { flex: 0 0 auto; width: 25%; }
+    .col-md-4 { flex: 0 0 auto; width: 33.33333333%; }
+    .col-md-5 { flex: 0 0 auto; width: 41.66666667%; }
+    .col-md-6 { flex: 0 0 auto; width: 50%; }
+}
+
+.d-flex { display: flex !important; }
+.d-block { display: block !important; }
+.align-items-center { align-items: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-center { justify-content: center !important; }
+.justify-content-end { justify-content: flex-end !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.text-center { text-align: center !important; }
+
+.gap-1 { gap: 4px !important; }
+.gap-2 { gap: 8px !important; }
+.gap-3 { gap: 16px !important; }
+
+/* Spacing */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: 4px !important; }
+.mb-2 { margin-bottom: 8px !important; }
+.mb-3 { margin-bottom: 16px !important; }
+.mb-4 { margin-bottom: 24px !important; }
+.mt-1 { margin-top: 4px !important; }
+.mt-2 { margin-top: 8px !important; }
+.mt-3 { margin-top: 16px !important; }
+.ms-2 { margin-inline-start: 8px !important; }
+.me-2 { margin-inline-end: 8px !important; }
+.me-3 { margin-inline-end: 16px !important; }
+.p-0 { padding: 0 !important; }
+.py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+.p-3 { padding: 16px !important; }
+.py-3 { padding-top: 16px !important; padding-bottom: 16px !important; }
+
+/* Native Forms & Controls */
+/* (0,2,0) so it beats the :root control base rule above; keep it no higher,
+   so later two-class rules (including the app layer's) can still override it. */
+:root .btn-sm,
+.btn-sm {
+    min-height: 32px;
+    min-width: 44px;
+    padding: 6px 12px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+summary,
+details > summary {
+    min-height: 32px;
+    line-height: 32px;
+    display: list-item;
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+.form-label {
+    display: inline-block;
+    margin-bottom: 5px;
+    font-size: 11.5px;
+    font-family: var(--wc-font-name);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--wc-text-1);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    min-height: 24px;
+}
+
+.form-check-label {
+    font-size: 13px;
+    color: var(--wc-text-1);
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+}
+
+.form-check-input {
+    flex-shrink: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Bootstrap's base layout for fields; the shared rules above only re-theme. */
+.form-control:not(textarea),
+.form-select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    height: var(--wc-control-h);
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background-color: var(--wc-field);
+    color: var(--wc-text-1);
+    font-family: var(--wc-font-body);
+    font-size: 13px;
+    padding: 0 11px;
+    line-height: var(--wc-control-h);
+}
+
+textarea.form-control {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background-color: var(--wc-field);
+    color: var(--wc-text-1);
+    font-family: var(--wc-font-body);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.input-group > :is(.form-control, .form-select):not(textarea) {
+    flex: 1 1 auto;
+    width: 1%;
+}
+
+.form-text {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--wc-text-3);
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-family: var(--wc-font-name);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--wc-radius-card);
+}
+.text-bg-danger { color: var(--wc-on-status) !important; background-color: var(--wc-danger) !important; }
+.text-bg-success { color: var(--wc-on-status) !important; background-color: var(--wc-ok) !important; }
+.text-bg-secondary { color: var(--wc-on-status) !important; background-color: var(--wc-text-2) !important; }
+.text-bg-warning { color: var(--wc-on-status) !important; background-color: var(--wc-warning) !important; }
+.text-bg-info { color: var(--wc-on-status) !important; background-color: var(--wc-accent) !important; }
+/* A link inside a .text-bg-* surface takes that surface's text colour. */
+.link-light { color: inherit !important; text-decoration-color: currentColor !important; }
+
+/* Standalone Alert Styles */
+.alert {
+    position: relative;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--wc-border);
+    border-radius: var(--wc-radius-card);
+    font-size: 13px;
+    line-height: 1.5;
+    background: var(--wc-surface-1);
+    color: var(--wc-text-1);
+}
+
+.alert-info {
+    border-color: var(--wc-border-strong);
+    background: var(--wc-surface-2);
+    color: var(--wc-text-1);
+}
+
+.alert-danger {
+    border-color: var(--wc-danger-border);
+    background: var(--wc-danger-bg);
+    color: var(--wc-danger);
+}
+
+.alert-success {
+    border-color: color-mix(in oklab, var(--wc-ok) 40%, transparent);
+    background: color-mix(in oklab, var(--wc-ok) 12%, var(--wc-surface-1));
+    color: var(--wc-ok);
+}
+
+.alert-warning {
+    border-color: color-mix(in oklab, var(--wc-warning) 40%, transparent);
+    background: color-mix(in oklab, var(--wc-warning) 12%, var(--wc-surface-1));
+    color: var(--wc-text-1);
+}
+
+/* =====================================================
+   FLOATING SUPPORT WIDGET & KO-FI MODAL
+   ===================================================== */
+.floating-support {
+    position: fixed;
+    bottom: clamp(1rem, 2.5vw, 1.5rem);
+    inset-inline-start: clamp(1rem, 2.5vw, 1.5rem);
+    z-index: 90;
+}
+
+.floating-support__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #794bc4;
+    color: #ffffff;
+    border: 1px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-card);
+    font-family: var(--wc-font-name);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 var(--wc-ghost-shadow);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.floating-support__btn:hover,
+.floating-support__btn:focus-visible {
+    background: #683bb5;
+    color: #ffffff;
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 1px var(--wc-ghost-soft);
+}
+
+.floating-support__btn:focus-visible {
+    outline: 2px solid var(--wc-accent);
+    outline-offset: 2px;
+}
+
+.floating-support__btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--wc-ghost-shadow);
+}
+
+.floating-support__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ko-fi Modal Dialog */
+dialog.kofi-sheet {
+    border: 1px solid var(--wc-border);
+    border-radius: var(--wc-radius-card);
+    background: var(--wc-surface-1);
+    color: var(--wc-text-1);
+    padding: 0;
+    width: calc(100% - 2rem);
+    max-width: 480px;
+    margin: auto;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+dialog.kofi-sheet:not([open]) {
+    display: none !important;
+}
+
+dialog.kofi-sheet::backdrop {
+    background-color: var(--wc-overlay);
+    backdrop-filter: blur(2px);
+}
+
+.kofi-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--wc-surface-2);
+    border-bottom: 1px solid var(--wc-border);
+}
+
+.kofi-sheet__title {
+    font-family: var(--wc-font-name);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--wc-text-1);
+    margin: 0;
+}
+
+.kofi-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--wc-border);
+    border-radius: var(--wc-radius-card);
+    color: var(--wc-text-2);
+    padding: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.kofi-icon-btn:hover,
+.kofi-icon-btn:focus-visible {
+    background: var(--wc-surface-1);
+    border-color: var(--wc-border-strong);
+    color: var(--wc-text-1);
+}
+
+.kofi-icon-btn:focus-visible {
+    outline: 2px solid var(--wc-accent);
+    outline-offset: 2px;
+}
+
+.kofi-sheet__body {
+    padding: 16px 18px;
+}
+
+.kofi-embed-container {
+    width: 100%;
+    height: 520px;
+    max-height: 65vh;
+    border: 1px solid var(--wc-border);
+    background: var(--wc-surface-2);
+    border-radius: var(--wc-radius-field);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.kofi-embed-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.kofi-fallback {
+    text-align: center;
+    font-family: var(--wc-font-mono);
+    font-size: 11px;
+    color: var(--wc-text-3);
+}
+
+.kofi-direct-link {
+    color: var(--wc-accent);
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.kofi-direct-link:hover,
+.kofi-direct-link:focus-visible {
+    color: var(--wc-accent-dim);
+}
+
+/* =====================================================
+   I18N HELPERS  (public/js/i18n.js)
+   The language picker itself is .wc-langselect, in the
+   app bar section above alongside the other chips.
+   ===================================================== */
+
+/* Used by i18n.js for the live region that announces a language change and for the
+   "(opens in a new tab)" hints it appends. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Japanese, Chinese and Korean need a little more line height to stay legible. */
+body.cjk-language {
+    line-height: 1.75;
+}
+
+/* The `hidden` attribute. Only the browser default hides these elements, and
+   any author display rule beats it (.wc-loading is flex, .d-flex is flex
+   !important). This rule matches the highest specificity used on display
+   rules and comes last, so `hidden` wins everywhere. */
+[hidden],
+:root [hidden],
+:root .wc-card [hidden] {
+    display: none !important;
+}
