@@ -26,4 +26,4 @@ Setting and regenerating is scoped to the channel's own emotes — global Twitch
 
 ## Documentation
 
-Full details are available in the [WildcatTTS Docs](https://docs.wildcat.chat/wildcatttsdocs.html#emote-descriptions) under the new **Emote Descriptions** section.
+Full details are available in the [WildcatTTS Docs](https://docs.wildcat.chat/tts-filtering.html#emote-descriptions) under the new **Emote Descriptions** section.

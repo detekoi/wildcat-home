@@ -78,4 +78,4 @@ One more thing: the bot only starts remembering from the day this went live. It 
 !forgetme            delete what the bot knows about you here, and opt out
 ```
 
-Full details are in the [Channel Memory documentation](https://docs.wildcat.chat/botcommands.html#channel-memory). If you have questions or feedback, [get in touch](https://parfaitfair.com/#contact).
+Full details are in the [Channel Memory documentation](https://docs.wildcat.chat/sage-memory.html#channel-memory). If you have questions or feedback, [get in touch](https://parfaitfair.com/#contact).
