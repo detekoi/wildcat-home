@@ -28,6 +28,11 @@
     padding: 0;
 }
 
+/* design-system.css gives :root .nav-tabs app-shell margins (22px 24px 0); here
+   the tabs sit in the blog column, aligned with the heading, and the column's
+   gap spaces them. */
+:root .wch-blog-tabs { margin: 0; }
+
 /* One row of tabs; on a phone the row scrolls sideways rather than wrapping. */
 .wch-blog-tabs .nav-item { flex: none; }
 
@@ -89,8 +94,6 @@
 }
 
 @media (max-width: 720px) {
-    :root .wch-blog-tabs { margin-inline: 0; }
-
     .wch-post-list .wch-post {
         grid-template-columns: minmax(0, 1fr);
         gap: 6px;

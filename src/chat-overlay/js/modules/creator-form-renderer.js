@@ -101,9 +101,14 @@ export class CreatorFormRenderer {
 
                 const textCol = document.createElement('div');
                 textCol.className = 'wch-row-text';
-                const label = document.createElement('label');
+                // Presets (a button group) and the theme carousel (a hidden input
+                // plus cards) have no labelable control, so they get a plain text
+                // label that names the group through aria-labelledby instead.
+                const groupLabelled = item.control === 'presets' || item.control === 'themeCarousel';
+                const label = document.createElement(groupLabelled ? 'span' : 'label');
                 label.className = 'wc-row-label';
-                label.htmlFor = `schema-input-${item.key}`;
+                label.id = `schema-label-${item.key}`;
+                if (!groupLabelled) label.htmlFor = `schema-input-${item.key}`;
                 label.textContent = item.label;
                 textCol.appendChild(label);
                 row.appendChild(textCol);
@@ -124,6 +129,8 @@ export class CreatorFormRenderer {
                     const presetGroup = document.createElement('div');
                     presetGroup.className = 'preset-group';
                     presetGroup.id = `schema-presets-${item.key}`;
+                    presetGroup.setAttribute('role', 'group');
+                    presetGroup.setAttribute('aria-labelledby', label.id);
 
                     item.options.forEach(opt => {
                         const btn = document.createElement('button');
@@ -188,6 +195,8 @@ export class CreatorFormRenderer {
                     const mountDiv = document.createElement('div');
                     mountDiv.id = `schema-themecarousel-${item.key}`;
                     mountDiv.className = 'theme-carousel-mount';
+                    mountDiv.setAttribute('role', 'group');
+                    mountDiv.setAttribute('aria-labelledby', label.id);
 
                     // Hidden input holds the selected theme's value so the generic
                     // read/populate loops in readFormConfig()/populateForm() keep
@@ -395,7 +404,7 @@ export class CreatorFormRenderer {
                     const helpDiv = document.createElement('div');
                     helpDiv.className = 'help-text wch-row-desc';
                     // Help text sits under the label, inside the row, so hiding the row
-                    // hides it too. applyChatModeVisibility() still addresses it by id.
+                    // hides it too.
                     helpDiv.id = `schema-help-${item.key}`;
                     // Point the control at its own help text, so it's announced with
                     // the field rather than being visual-only.
@@ -441,6 +450,11 @@ export class CreatorFormRenderer {
                     if (this.onFormChange) this.onFormChange();
                 }
             });
+            // createFontPicker (shared with chat.html) gives its input no id. Give
+            // it the row's control id so the "Font family" label names it. Font
+            // values are read and written through this.fontPicker, never by id.
+            const fontInput = fontMount.querySelector('.font-picker-input');
+            if (fontInput) fontInput.id = 'schema-input-fontFamily';
         }
 
         if (window.lucide) window.lucide.createIcons();
@@ -520,9 +534,8 @@ export class CreatorFormRenderer {
 
     /**
      * Show/hide the controls that only apply to one chat mode. Popup mode replaces
-     * the window-mode sizing/history settings with the popup block, so those rows —
-     * and their help text, which renders as a sibling of the row rather than inside
-     * it — have to be hidden together or the blurb is left stranded on its own.
+     * the window-mode sizing/history settings with the popup block. Each row holds
+     * its own help text, so hiding the row hides both.
      * @param {boolean} isPopup
      */
     applyChatModeVisibility(isPopup) {
@@ -532,8 +545,6 @@ export class CreatorFormRenderer {
         ['chatHeight', 'maxMessages', 'topFade'].forEach(key => {
             const row = document.getElementById(`schema-row-${key}`);
             if (row) row.style.display = isPopup ? 'none' : 'flex';
-            const help = document.getElementById(`schema-help-${key}`);
-            if (help) help.style.display = isPopup ? 'none' : '';
         });
     }
 

@@ -13,6 +13,9 @@
     --text-color: var(--wc-text-1);
     --spinner-color: var(--wc-border);
     --spinner-accent: var(--wc-accent);
+    /* font-manager.js (shared with chat.html) colours its "use this font anyway"
+       fallback with --primary-light; chat.html defines it in variables.css. */
+    --primary-light: var(--wc-accent);
 }
 
 /* ---- Page frame ---- */
@@ -118,6 +121,32 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+/* design-system.css pads and rules every free-form block in a section card
+   body with :root .wc-card > .card-body > *:not(...)x4, (0,7,0). These bodies
+   space their own blocks (the stack's gap, the disclosure rows' own rules), so
+   the same selector shape switches that off, and the blocks that need their own
+   padding or top border get it back at one class higher. */
+:root .wc-card > .card-body.wch-stack > :not(.wc-card-desc):not(.list-group):not(.wc-switch-rows),
+:root .wc-card.wch-advanced > .card-body > .advanced-section:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows) {
+    padding: 0;
+    border-top: 0;
+}
+
+/* With the blocks unpadded, the stack keeps the 14px under the title rule. */
+:root .wc-card > .card-body.wch-stack { padding-top: 14px; }
+
+:root .wc-card > .card-body.wch-stack > .wc-code:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows) {
+    padding: 10px 12px;
+}
+
+:root .wc-card > .card-body.wch-stack > .wch-obs-setup:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows) {
+    padding-top: 4px;
+}
+
+:root .wc-card > .card-body.wch-stack > .preview-iframe-container:not(.wc-card-desc):not(.list-group):not(.wc-switch-rows) {
+    border-top: 1px solid var(--wc-border);
 }
 
 /* ---- Scene list ---- */
@@ -811,7 +840,6 @@
 }
 
 .wch-obs-setup {
-    padding-top: 4px;
     font-size: 13px;
     line-height: 1.55;
     color: var(--wc-text-2);

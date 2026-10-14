@@ -154,9 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyChannelBtn: document.getElementById('applyChannelBtn'),
                 saveSettingsBtn: document.getElementById('saveSettingsBtn'),
                 instanceUrlConfig: document.getElementById('instanceUrlConfig'),
-                instanceUrlSetup: document.getElementById('instanceUrlSetup'),
                 copyUrlBtnConfig: document.getElementById('copyUrlBtnConfig'),
-                copyUrlBtnSetup: document.getElementById('copyUrlBtnSetup'),
                 previewIframe: document.getElementById('previewIframe'),
                 previewIframeContainer: document.getElementById('previewIframeContainer'),
                 previewBgBtns: document.querySelectorAll('.preview-bg-btn'),
@@ -604,7 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!plate) return;
 
             if (!this.accountUser) {
-                plate.classList.remove('account-plate--signed-in');
                 const statusHtml = status
                     ? `<p class="account-status account-status--warning">${UIHelpers.escapeHtml(status)}</p>`
                     : '';
@@ -617,7 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             } else {
-                plate.classList.add('account-plate--signed-in');
                 const { displayName, avatarUrl } = this.accountUser;
                 const avatarHtml = (typeof avatarUrl === 'string' && avatarUrl.startsWith('https://'))
                     ? `<img class="account-avatar" src="${UIHelpers.escapeHtml(avatarUrl)}" alt="" width="24" height="24">`
@@ -1079,9 +1075,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (this.dom.copyUrlBtnConfig) {
                 this.dom.copyUrlBtnConfig.addEventListener('click', () => CreatorIOManager.copyUrl(this.dom.instanceUrlConfig.textContent));
-            }
-            if (this.dom.copyUrlBtnSetup) {
-                this.dom.copyUrlBtnSetup.addEventListener('click', () => CreatorIOManager.copyUrl(this.dom.instanceUrlSetup.textContent));
             }
 
             if (this.dom.instanceModal) {

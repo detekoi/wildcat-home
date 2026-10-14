@@ -108,6 +108,5 @@ export class CreatorSyncManager {
         }
 
         if (domRefs.instanceUrlConfig) domRefs.instanceUrlConfig.textContent = url;
-        if (domRefs.instanceUrlSetup) domRefs.instanceUrlSetup.textContent = url;
     }
 }
