@@ -107,6 +107,13 @@ export class CreatorSyncManager {
             url += `&sync=${encodeURIComponent(instance.syncToken)}`;
         }
 
-        if (domRefs.instanceUrlConfig) domRefs.instanceUrlConfig.textContent = url;
+        if (domRefs.instanceUrlConfig) {
+            // The URL carries the sync token, so it stays masked on screen (streamers
+            // may show this page live) until Show is pressed. Copy reads data-url.
+            const el = domRefs.instanceUrlConfig;
+            el.dataset.url = url;
+            const masked = `${baseUrl}?scene=••••••••${instance.syncToken ? '&sync=••••••••' : ''}`;
+            el.textContent = el.dataset.revealed === 'true' ? url : masked;
+        }
     }
 }
