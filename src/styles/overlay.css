@@ -13,8 +13,6 @@
     overflow: hidden;
 }
 
-.wch-overlay-stage:focus { outline: none; }
-
 /* Still texture under the video: shows while it loads and under reduced motion. */
 .wch-stage-grain {
     position: fixed;

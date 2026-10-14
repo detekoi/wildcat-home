@@ -9,8 +9,6 @@
     padding: 44px 24px 120px;
 }
 
-.wch-blog:focus { outline: none; }
-
 /* ---- Index ---- */
 .wch-blog-index {
     display: flex;

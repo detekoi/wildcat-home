@@ -39,6 +39,9 @@ button {
 
 a { color: var(--wc-accent); }
 
+/* <main> takes focus from the skip link; it is not a control, so no ring. */
+main#main-content:focus { outline: none; }
+
 /* Pages whose content fills the rest of the viewport under the app bar. */
 body.wch-fill {
     display: flex;

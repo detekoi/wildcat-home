@@ -253,9 +253,6 @@
 }
 
 /* ---- Footer ---- */
-/* <main> takes focus from the skip link; it is not a control, so no ring. */
-main#main-content:focus { outline: none; }
-
 /* The footer sits after <main> as the page's contentinfo landmark, but lines
    up with the main column above it. */
 .wch-footer {
