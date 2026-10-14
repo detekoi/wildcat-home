@@ -245,13 +245,11 @@ export class CreatorInstanceManager {
             const unsavedTag = isDirty ? ' <span class="unsaved-dot" title="Unsaved changes">●</span>' : '';
 
             item.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div>
-                        <div class="instance-name" style="font-weight: 600;">${UIHelpers.escapeHtml(instance.name)}${unsavedTag}</div>
-                        <div style="font-size: 11px; opacity: 0.6;">${statusText}</div>
-                    </div>
-                    <i data-lucide="grip-vertical" style="opacity: 0.4; cursor: grab;" aria-hidden="true"></i>
-                </div>
+                <span class="instance-text">
+                    <span class="instance-name">${UIHelpers.escapeHtml(instance.name)}${unsavedTag}</span>
+                    <span class="instance-status wc-readout">${statusText}</span>
+                </span>
+                <i data-lucide="grip-vertical" class="instance-grip" aria-hidden="true"></i>
             `;
 
             item.addEventListener('click', () => onSelectCallback(id));

@@ -17,8 +17,8 @@
  * inertness, Escape, and handing back the element to refocus on close.
  */
 
-// Non-rendered elements — inerting them is meaningless. base.njk emits several
-// <script> tags as direct children of <body>.
+// Non-rendered elements — inerting them is meaningless. The site layout emits
+// several <script> tags as direct children of <body>.
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'LINK', 'TEMPLATE', 'NOSCRIPT']);
 
 // Live regions must stay in the accessibility tree. Inert removes a subtree from
@@ -31,10 +31,10 @@ const KEEP_ACTIVE = '[data-a11y-live-region]';
  * Inerts everything except the dialog by walking to <body> and inerting each
  * level's siblings.
  *
- * The dialogs are nested inside base.njk's <main>, so <main> itself can never be
- * inerted — it contains the dialog. Inerting only the page wrapper would leave
- * the skip link, navbar and footer (all siblings of <main>, not descendants)
- * reachable by Tab. Walking up covers every level in one pass.
+ * A dialog can sit at any depth: the Scene Creator's are children of <body>
+ * beside <main>, while one nested inside a wrapper would leave that wrapper's
+ * own siblings (the skip link, app bar, footer) reachable by Tab if only its
+ * siblings were inerted. Walking up to <body> covers every level in one pass.
  *
  * @returns {Element[]} only the elements this call changed, so close() can never
  *          clear inertness that something else owns.

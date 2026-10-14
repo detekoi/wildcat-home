@@ -329,10 +329,10 @@ describe('CreatorFormRenderer - Theme Carousel Control', () => {
 
         const options = Array.from(dirSelect.options).map(opt => ({ value: opt.value, label: opt.textContent.trim() }));
         expect(options).toEqual([
-            { value: 'from-bottom', label: 'From Bottom' },
-            { value: 'from-top', label: 'From Top' },
-            { value: 'from-left', label: 'From Left' },
-            { value: 'from-right', label: 'From Right' }
+            { value: 'from-bottom', label: 'From bottom' },
+            { value: 'from-top', label: 'From top' },
+            { value: 'from-left', label: 'From left' },
+            { value: 'from-right', label: 'From right' }
         ]);
     });
 });

@@ -48,6 +48,47 @@ body.wch-fill {
     flex-direction: column;
 }
 
+/* ---- Bootstrap-named buttons ----
+   design-system.css themes .btn-sm and the outline buttons inside section
+   cards; the apps take the rest of .btn from their own theme layer, so this
+   site sets it here. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 2px solid var(--wc-border-strong);
+    border-radius: var(--wc-radius-field);
+    background: transparent;
+    color: var(--wc-text-1);
+    font-weight: 600;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn:hover {
+    border-color: var(--wc-accent);
+    color: var(--wc-accent);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Filled secondary action: the button half of an input group. */
+.btn-secondary {
+    border-width: 1px;
+    background: var(--wc-surface-2);
+}
+
+.btn svg { width: 13px; height: 13px; flex: none; }
+
 /* ---- App bar: brand, tool switcher, resources, theme ---- */
 .wc-appbar {
     flex-wrap: wrap;

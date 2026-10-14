@@ -360,7 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.instanceManager.currentInstanceId = instanceId;
 
                 if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
-                if (this.dom.configLayout) this.dom.configLayout.style.display = 'grid';
+                // Clear the inline 'none' rather than forcing a display value: the
+                // stylesheet lays #configLayout out (display: contents, so its two
+                // columns sit in the page grid beside the scene list).
+                if (this.dom.configLayout) this.dom.configLayout.style.display = '';
                 if (this.dom.workspaceActions) this.dom.workspaceActions.style.display = 'flex';
                 if (this.dom.workspaceTitle) this.dom.workspaceTitle.textContent = instance.name;
 
@@ -606,11 +609,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `<p class="account-status account-status--warning">${UIHelpers.escapeHtml(status)}</p>`
                     : '';
                 plate.innerHTML = `
-                    <p class="account-eyebrow">Scene list stored in</p>
-                    <p class="account-value">This browser only</p>
-                    <button type="button" class="btn btn-secondary account-signin" id="twitchLoginBtn"><svg class="lucide-inline" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg> Sign in with Twitch</button>
-                    <p class="account-hint">Optional. Keeps your scenes on every computer you use.</p>
+                    <span class="wc-note-label account-eyebrow">Scene list stored in this browser</span>
+                    <p class="account-hint">Sign in with Twitch to keep your scenes on every computer you use. Signing in is optional.</p>
                     ${statusHtml}
+                    <div class="account-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm account-signin" id="twitchLoginBtn"><svg class="lucide-inline" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg> Sign in with Twitch</button>
+                    </div>
                 `;
             } else {
                 plate.classList.add('account-plate--signed-in');
@@ -619,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `<img class="account-avatar" src="${UIHelpers.escapeHtml(avatarUrl)}" alt="" width="24" height="24">`
                     : `<span class="account-avatar account-avatar--empty" aria-hidden="true"></span>`;
                 plate.innerHTML = `
-                    <p class="account-eyebrow">Scene list stored in</p>
+                    <span class="wc-note-label account-eyebrow">Scene list stored in your Twitch account</span>
                     <div class="account-user">
                         ${avatarHtml}
                         <span class="account-name">${UIHelpers.escapeHtml(displayName)}</span>
@@ -1056,10 +1060,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleObsSetupBtn.addEventListener('click', () => {
                     if (this.dom.obsSetup.style.display === 'none') {
                         this.dom.obsSetup.style.display = 'block';
-                        toggleObsSetupBtn.innerHTML = '<i data-lucide="eye-off" class="lucide-inline"></i> Hide OBS Setup Instructions';
+                        toggleObsSetupBtn.setAttribute('aria-expanded', 'true');
+                        toggleObsSetupBtn.innerHTML = '<i data-lucide="eye-off" class="lucide-inline"></i> Hide OBS setup';
                     } else {
                         this.dom.obsSetup.style.display = 'none';
-                        toggleObsSetupBtn.innerHTML = '<i data-lucide="monitor" class="lucide-inline"></i> Detailed OBS Setup Instructions';
+                        toggleObsSetupBtn.setAttribute('aria-expanded', 'false');
+                        toggleObsSetupBtn.innerHTML = '<i data-lucide="monitor" class="lucide-inline"></i> OBS setup steps';
                     }
                     if (window.lucide) window.lucide.createIcons();
                 });

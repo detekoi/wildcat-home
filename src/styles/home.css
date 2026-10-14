@@ -236,21 +236,7 @@
     color: var(--wc-text-3);
 }
 
-/* Outline action button. The apps get the base .btn from their theme layer;
-   the homepage has none, so the pieces it needs are set here. */
-.wch-resources .btn {
-    flex: none;
-    border: 2px solid var(--wc-border-strong);
-    background: transparent;
-    color: var(--wc-text-1);
-    font-weight: 600;
-    line-height: 1.5;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
-}
+.wch-resources .btn { flex: none; }
 
 /* ---- Footer ---- */
 /* The footer sits after <main> as the page's contentinfo landmark, but lines

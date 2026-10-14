@@ -10,12 +10,12 @@ export class CreatorBgImageHandler {
         const bgImgBox = document.createElement('div');
         bgImgBox.className = 'creator-bg-image-box creator-subcard';
         bgImgBox.innerHTML = `
-            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">Background Image</label>
-            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
-                <input type="file" id="creatorBgFile" accept="image/*" style="font-size: 12px; flex: 1; min-width: 0;">
-                <button type="button" class="btn btn-secondary" id="creatorBgClear" style="padding: 4px 8px; font-size: 12px;">Clear Image</button>
+            <label class="wc-note-label" for="creatorBgFile">Background image</label>
+            <div class="creator-bg-image-controls">
+                <input type="file" id="creatorBgFile" accept="image/*" class="creator-file-input">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="creatorBgClear">Clear image</button>
             </div>
-            <div id="creatorBgPreview" style="font-size: 12px; opacity: 0.7;">No background image set</div>
+            <div id="creatorBgPreview" class="wc-readout">No background image set</div>
         `;
         return bgImgBox;
     }
