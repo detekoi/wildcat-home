@@ -97,7 +97,8 @@ extraScripts:
                                 </div>
                                 <div class="wch-row-control wch-row-control--wide">
                                     <div class="input-group">
-                                        <input type="text" id="syncTokenDisplay" class="form-control wch-mono-field" readonly tabindex="0">
+                                        <input type="password" id="syncTokenDisplay" class="form-control wch-mono-field" readonly tabindex="0" autocomplete="off" data-1p-ignore data-lpignore="true">
+                                        <button type="button" class="btn btn-secondary" id="toggleSyncTokenBtn" aria-pressed="false" aria-controls="syncTokenDisplay" title="Show sync token"><i data-lucide="eye" class="lucide-inline"></i> Show</button>
                                         <button type="button" class="btn btn-secondary" id="copySyncTokenBtn" title="Copy Sync Token">Copy</button>
                                     </div>
                                 </div>
@@ -154,6 +155,7 @@ extraScripts:
                             </div>
                             <div class="wch-chips">
                                 <button type="button" class="wc-chipbtn" id="copyUrlBtnConfig"><i data-lucide="clipboard"></i>Copy</button>
+                                <button type="button" class="wc-chipbtn" id="toggleUrlRevealBtn" aria-pressed="false" aria-controls="instanceUrlConfig" title="Show the full URL"><i data-lucide="eye"></i>Show</button>
                                 <button type="button" class="wc-chipbtn" id="toggleObsSetupBtn" aria-expanded="false" aria-controls="obsSetup"><i data-lucide="monitor" class="lucide-inline"></i> OBS setup steps</button>
                             </div>
 

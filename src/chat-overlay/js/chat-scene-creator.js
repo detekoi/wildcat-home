@@ -149,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 instanceName: document.getElementById('instanceName'),
                 syncTokenDisplay: document.getElementById('syncTokenDisplay'),
                 copySyncTokenBtn: document.getElementById('copySyncTokenBtn'),
+                toggleSyncTokenBtn: document.getElementById('toggleSyncTokenBtn'),
+                toggleUrlRevealBtn: document.getElementById('toggleUrlRevealBtn'),
                 creatorTwitchChannel: document.getElementById('creatorTwitchChannel'),
                 creatorYoutubeTarget: document.getElementById('creatorYoutubeTarget'),
                 applyChannelBtn: document.getElementById('applyChannelBtn'),
@@ -1074,7 +1076,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             if (this.dom.copyUrlBtnConfig) {
-                this.dom.copyUrlBtnConfig.addEventListener('click', () => CreatorIOManager.copyUrl(this.dom.instanceUrlConfig.textContent));
+                this.dom.copyUrlBtnConfig.addEventListener('click', () => {
+                    const el = this.dom.instanceUrlConfig;
+                    CreatorIOManager.copyUrl(el.dataset.url || el.textContent);
+                });
+            }
+
+            // Show/Hide toggles: the sync token and OBS URL stay masked by default so
+            // a streamer showing this page on stream doesn't leak edit access.
+            const setRevealButton = (btn, revealed, what) => {
+                btn.setAttribute('aria-pressed', String(revealed));
+                btn.title = `${revealed ? 'Hide' : 'Show'} ${what}`;
+                btn.innerHTML = `<i data-lucide="${revealed ? 'eye-off' : 'eye'}" class="lucide-inline"></i> ${revealed ? 'Hide' : 'Show'}`;
+                if (window.lucide) window.lucide.createIcons();
+            };
+            if (this.dom.toggleSyncTokenBtn && this.dom.syncTokenDisplay) {
+                this.dom.toggleSyncTokenBtn.addEventListener('click', () => {
+                    const input = this.dom.syncTokenDisplay;
+                    const revealed = input.type === 'password';
+                    input.type = revealed ? 'text' : 'password';
+                    setRevealButton(this.dom.toggleSyncTokenBtn, revealed, 'sync token');
+                });
+            }
+            if (this.dom.toggleUrlRevealBtn && this.dom.instanceUrlConfig) {
+                this.dom.toggleUrlRevealBtn.addEventListener('click', () => {
+                    const el = this.dom.instanceUrlConfig;
+                    const revealed = el.dataset.revealed !== 'true';
+                    el.dataset.revealed = String(revealed);
+                    if (el.dataset.url) {
+                        const instanceId = this.instanceManager.currentInstanceId;
+                        this.syncManager.updateInstanceUrl(this.instanceManager.instances[instanceId], instanceId, this.dom);
+                    }
+                    setRevealButton(this.dom.toggleUrlRevealBtn, revealed, 'the full URL');
+                });
             }
 
             if (this.dom.instanceModal) {
