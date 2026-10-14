@@ -64,4 +64,4 @@ In latency benchmarks comparing my updated architecture against the previous Gem
 
 Enjoy the faster translations and sharper AI chat on your stream!
 
-[View Bot Commands Docs](https://docs.wildcat.chat/botcommands.html)
+[View Bot Commands Docs](https://docs.wildcat.chat/sage-commands.html)
