@@ -293,7 +293,7 @@
        those pages define names like --panel-color with opposite meanings (the
        overlay's variables.css sets --panel-color: #ffffff). Reading them directly
        rendered a white dialog inside the dark overlay panel. These defaults are the
-       overlay's treatment; wildcat-theme.css remaps them to the site's own tokens
+       overlay's treatment; scene-creator.css remaps them to the site's own tokens
        on the pages that load it, so both stay theme-aware. */
     --tc-modal-bg: #0a0a0a;
     --tc-modal-fg: #efeff1;
@@ -325,10 +325,10 @@
     to { opacity: 1; }
 }
 
-/* Square corners, hard borders and offset (blurless) shadows, matching the boxy
-   treatment wildcat-theme.css applies site-wide. The custom properties resolve on
-   chat-scene-creator.html, which loads that stylesheet; the fallbacks keep the
-   dialog looking right inside the OBS overlay panel, which does not. */
+/* Square corners, hard borders and offset (blurless) shadows: the overlay's
+   treatment. On chat-scene-creator.html, scene-creator.css remaps the custom
+   properties to the design system; the fallbacks keep the dialog looking right
+   inside the OBS overlay panel, which does not load that stylesheet. */
 .theme-carousel-modal {
     background: var(--tc-modal-bg);
     border: 1px solid var(--tc-modal-border);
