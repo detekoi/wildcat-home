@@ -33,6 +33,6 @@ Full variable docs & examples:
 
 ## Web Dashboard
 
-Manage your custom commands through the [web dashboard](https://app.wildcat.chat)
+Manage your custom commands through the [web dashboard](https://bot.wildcat.chat)
 
 Add, edit, and configure commands with clickable variable chips — no chat commands needed.

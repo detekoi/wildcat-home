@@ -270,6 +270,18 @@ a[target="_blank"].no-arrow::after {
     margin-inline-start: 0.16em;
 }
 
+/* In the apps, "Wildcat" in the lockup is a link back to wildcat.chat:
+   <span class="wc-lockup"><a class="wc-lockup-link" href="https://wildcat.chat">Wildcat</a><b>TTS</b></span>.
+   It keeps the lockup's muted colour and takes the accent on hover. The wc-
+   class is what exempts it from the apps' generic link colours. */
+.wc-lockup-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.wc-lockup-link:hover { color: var(--wc-accent); }
+
 .wc-readout {
     font-family: var(--wc-font-mono);
     font-size: 10px;
@@ -1036,12 +1048,25 @@ a[target="_blank"].no-arrow::after {
     min-width: 0;
 }
 
+/* A sticky aside taller than the window hides its own end until the page ends,
+   so it is capped at the viewport and scrolls by itself instead. The padding,
+   cancelled by the negative margin, keeps the 6px button shadows and the 4px
+   focus ring inside the scroll box, which would otherwise clip them; top is
+   78px less that padding, so the content sits where it always did. */
 .wc-shell-aside {
     display: flex;
     flex-direction: column;
     gap: 32px;
     position: sticky;
-    top: 78px;
+    top: 74px;
+    max-height: calc(100vh - 90px);
+    max-height: calc(100dvh - 90px);
+    overflow: hidden auto;
+    scrollbar-width: thin;
+    padding-block: 4px 8px;
+    padding-inline: 4px 8px;
+    margin-block: -4px -8px;
+    margin-inline: -4px -8px;
 }
 
 @media (max-width: 991.98px) {
@@ -1050,6 +1075,8 @@ a[target="_blank"].no-arrow::after {
     }
     .wc-shell-aside {
         position: static;
+        max-height: none;
+        overflow: visible;
     }
 }
 
