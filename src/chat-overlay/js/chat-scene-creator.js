@@ -1085,9 +1085,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show/Hide toggles: the sync token and OBS URL stay masked by default so
             // a streamer showing this page on stream doesn't leak edit access.
             const setRevealButton = (btn, revealed, what) => {
-                btn.setAttribute('aria-pressed', String(revealed));
-                btn.title = `${revealed ? 'Hide' : 'Show'} ${what}`;
-                btn.innerHTML = `<i data-lucide="${revealed ? 'eye-off' : 'eye'}" class="lucide-inline"></i> ${revealed ? 'Hide' : 'Show'}`;
+                // The label alone carries the state (no aria-pressed, which would read
+                // as "Hide, pressed"), and names what it reveals so the two buttons differ.
+                const action = revealed ? 'Hide' : 'Show';
+                btn.setAttribute('aria-label', `${action} ${what}`);
+                btn.title = `${action} ${what}`;
+                btn.innerHTML = `<i data-lucide="${revealed ? 'eye-off' : 'eye'}" class="lucide-inline" aria-hidden="true"></i> ${action}`;
                 if (window.lucide) window.lucide.createIcons();
             };
             if (this.dom.toggleSyncTokenBtn && this.dom.syncTokenDisplay) {
