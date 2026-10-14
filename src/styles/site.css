@@ -14,7 +14,11 @@
 
 html {
     -webkit-text-size-adjust: 100%;
+    /* Native controls and scrollbars follow the page theme. */
+    color-scheme: light;
 }
+
+[data-theme="dark"] { color-scheme: dark; }
 
 body {
     margin: 0;
