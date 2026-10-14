@@ -1,6 +1,6 @@
 /**
  * site.js - Behaviour every page shares: icons, the Light/Dark switch, the
- * homepage hero's static video and the Ko-fi support dialog.
+ * pixel-static videos (homepage hero, overlay hub) and the Ko-fi support dialog.
  *
  * The initial theme is applied by an inline script in app.njk before first
  * paint; this file keeps the switch, storage and <html data-theme> in step.
@@ -47,7 +47,7 @@
     // The static video is decoration. Reduced motion stops it; the CSS shows the
     // grain texture underneath instead.
     function initHeroVideo() {
-        const video = document.querySelector('.wch-hero-video');
+        const video = document.querySelector('.wch-hero-video, .wch-stage-video');
         if (!video) return;
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
         function sync() {

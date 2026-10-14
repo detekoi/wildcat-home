@@ -1,111 +1,47 @@
 ---
-layout: base.njk
+layout: app.njk
 permalink: /chat-overlay/index.html
 title: Wildcat Chat Overlay
 description: Wildcat Chat Overlay – a customizable Twitch and YouTube chat overlay for OBS with AI-generated themes. No login required.
+pageLabel: "Chat Overlay"
+activeTool: "overlay"
+bodyClass: "wch-fill"
 extraStyles:
-  - /chat-overlay/css/styles.css
-  - /chat-overlay/css/wildcat-theme.css
+  - /styles/overlay.css
 ---
-<div class="card">
-    <h1>Chat Overlay for Twitch &amp; YouTube</h1>
-    <p>A customizable chat overlay with themes generated using natural language. No login required — just plug into
-        OBS.</p>
-    <div class="buttons">
-        <a href="chat-scene-creator.html" class="button secondary"><i data-lucide="layout-grid"
-                class="lucide-inline"></i> Chat Scene Creator</a>
-        <a href="chat.html" class="button"><i data-lucide="message-circle" class="lucide-inline"></i> Just Take Me
-            to Chat</a>
-    </div>
-    <p style="margin-top: 16px; font-size: 13px; opacity: 0.6;">
-        <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank"
-            style="color: inherit; text-decoration: underline;">
-            View Documentation →
-        </a>
-    </p>
-</div>
+<main id="main-content" class="wc-stage wch-overlay-stage" tabindex="-1">
+    <div class="wch-stage-grain" aria-hidden="true"></div>
+    <video class="wc-stage-video wch-stage-video" autoplay loop muted playsinline aria-hidden="true">
+        <source src="/assets/video/Pixelated_static_pattern_web_balanced.mp4" type="video/mp4">
+    </video>
+    <div class="wc-stage-dim" aria-hidden="true"></div>
 
-<!-- Floating Support Widget -->
-<aside class="floating-support" aria-label="Support">
-    <button type="button" id="kofi-open" class="floating-support__btn" aria-haspopup="dialog">
-        <span class="floating-support__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.797-.679.797s-.108 8.053.487 11.225c.605 3.22 3.197 3.518 3.197 3.518h7.986c5.77 0 6.64-5.26 6.64-5.26 1.83.003 3.633-.948 4.673-2.613 1.258-2.016 1.238-4.538.854-5.074zm-2.812 4.385c-.605.968-1.571 1.48-2.584 1.48v-6.38h2.083c.789 0 1.693.308 2.054 1.2.378.932.11 2.732-1.553 3.7zm-6.286-3.844c-.752.887-2.146 2.45-3.084 3.32-.234.218-.553.336-.87.336-.316 0-.636-.118-.87-.336-.938-.87-2.332-2.433-3.084-3.32-1.125-1.328-1.12-3.13.01-4.303 1.13-1.17 2.973-1.168 4.093.005l.006.006.006-.006c1.12-1.173 2.963-1.175 4.093-.005 1.13 1.173 1.135 3.175.01 4.303z"/>
-            </svg>
-        </span>
-        <span class="floating-support__text">Support me</span>
-    </button>
-</aside>
-
-<!-- Ko-fi Donation Modal Dialog -->
-<dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title">
-    <div class="kofi-sheet__header">
-        <h2 id="kofi-title" class="kofi-sheet__title">Support parfaitfair</h2>
-        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog">
-            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-    </div>
-    <div class="kofi-sheet__body">
-        <div id="kofi-embed-container" class="kofi-embed-container">
-            <!-- Loaded on-demand when modal opens -->
+    <div class="wc-frame">
+        <div class="wc-frame-head">
+            <span class="wc-lockup">Wildcat<b>Overlay</b></span>
         </div>
-        <div class="kofi-fallback">
-            <a href="https://ko-fi.com/parfaitfair" target="_blank" rel="noopener noreferrer" class="kofi-direct-link">Open in new tab on Ko-fi.com</a>
+        <div class="wc-frame-body wch-overlay-body">
+            <div class="wch-overlay-intro">
+                <h1 class="wc-title">
+                    <span class="wc-title-brand">Chat overlay</span>
+                    <span class="wc-title-line">for Twitch &amp; YouTube</span>
+                </h1>
+                <p class="wc-lede">A chat overlay for OBS with themes you describe in plain words. You don't need to sign in. Add it to OBS as a browser source.</p>
+            </div>
+            <div class="wc-actions">
+                <div class="wc-action">
+                    <a class="wc-btn" href="chat-scene-creator.html"><i data-lucide="layout-grid"></i>Open Chat Scene Creator</a>
+                    <span class="wc-help">Save named scenes • Edit them on the web • Sync changes to OBS without a refresh</span>
+                </div>
+                <div class="wc-action">
+                    <a class="wc-btn wc-btn--ghost" href="chat.html"><i data-lucide="message-circle"></i>Go straight to chat</a>
+                    <span class="wc-help">Open the overlay and set it up in OBS with Interact</span>
+                </div>
+            </div>
+        </div>
+        <div class="wc-frame-foot">
+            <span>wildcat.chat/chat-overlay</span>
+            <a href="https://docs.wildcat.chat/chatoverlay.html" target="_blank" rel="noopener">Documentation</a>
         </div>
     </div>
-</dialog>
-
-<script>
-    (function () {
-        const dialog = document.getElementById('kofi-modal');
-        const openBtn = document.getElementById('kofi-open');
-        const closeBtn = document.getElementById('kofi-close');
-        const embedContainer = document.getElementById('kofi-embed-container');
-        if (!dialog) return;
-
-        function open() {
-            if (typeof dialog.showModal === 'function') {
-                if (!dialog.open) dialog.showModal();
-            } else {
-                dialog.setAttribute('open', '');
-            }
-            if (embedContainer && !embedContainer.querySelector('iframe')) {
-                const iframe = document.createElement('iframe');
-                iframe.src = 'https://ko-fi.com/parfaitfair/?hidefeed=true&widget=true&embed=true';
-                iframe.title = 'Support parfaitfair on Ko-fi';
-                iframe.className = 'kofi-iframe';
-                embedContainer.appendChild(iframe);
-            }
-        }
-
-        function close() {
-            if (typeof dialog.close === 'function') {
-                if (dialog.open) dialog.close();
-            } else {
-                dialog.removeAttribute('open');
-            }
-        }
-
-        openBtn?.addEventListener('click', function (e) {
-            e.preventDefault();
-            open();
-        });
-
-        closeBtn?.addEventListener('click', function (e) {
-            e.preventDefault();
-            close();
-        });
-
-        dialog.addEventListener('click', function (e) {
-            if (e.target !== dialog) return;
-            const rect = dialog.getBoundingClientRect();
-            const isInside =
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom;
-            if (!isInside) close();
-        });
-    })();
-</script>
-
+</main>

@@ -39,6 +39,12 @@ button {
 
 a { color: var(--wc-accent); }
 
+/* Pages whose content fills the rest of the viewport under the app bar. */
+body.wch-fill {
+    display: flex;
+    flex-direction: column;
+}
+
 /* ---- App bar: brand, tool switcher, resources, theme ---- */
 .wc-appbar {
     flex-wrap: wrap;

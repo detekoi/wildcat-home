@@ -45,7 +45,7 @@
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>
 </head>
 
-<body>
+<body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
     <a href="#main-content" class="wc-skip-link">Skip to main content</a>
 
     {% include "partials/appbar.njk" %}
