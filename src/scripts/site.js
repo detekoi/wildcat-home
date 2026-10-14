@@ -1,8 +1,8 @@
 /**
- * home.js - Homepage behaviour: icons, the Light/Dark switch, the hero static
- * video and the Ko-fi support dialog.
+ * site.js - Behaviour every page shares: icons, the Light/Dark switch, the
+ * homepage hero's static video and the Ko-fi support dialog.
  *
- * The initial theme is applied by an inline script in home.njk before first
+ * The initial theme is applied by an inline script in app.njk before first
  * paint; this file keeps the switch, storage and <html data-theme> in step.
  */
 

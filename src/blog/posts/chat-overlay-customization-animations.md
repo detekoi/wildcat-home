@@ -2,6 +2,7 @@
 title: "Chat Overlay Update: Ultimate Color Customization & Smoother Animations"
 date: 2026-07-03
 description: "Take total control of your chat overlay's aesthetic with fully customizable colors for usernames, messages, timestamps, and pronoun badges. Plus, enjoy buttery-smooth new animations that respect your system's motion settings."
+tags: [overlay]
 ---
 
 The Wildcat Chat Overlay just got a massive upgrade focused on giving you more control over its appearance and improving the feel of the chat feed.

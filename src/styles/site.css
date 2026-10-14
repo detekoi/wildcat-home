@@ -1,0 +1,115 @@
+/* =====================================================
+   site.css - App layer every wildcat.chat page shares: the reset, the app
+   bar and the bits of chrome around each page. Loads after design-system.css
+   (vendored from wildcat-design-system; never edit that copy) and before the
+   page's own layer (home.css, blog.css, overlay.css, scene-creator.css).
+   ===================================================== */
+
+/* ---- Reset (the web UIs ship their own; this site needs the basics) ---- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--wc-bg);
+    color: var(--wc-text-1);
+    font-family: var(--wc-font-body);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-style: none;
+}
+
+button {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin: 0;
+}
+
+a { color: var(--wc-accent); }
+
+/* ---- App bar: brand, tool switcher, resources, theme ---- */
+.wc-appbar {
+    flex-wrap: wrap;
+    row-gap: 12px;
+}
+
+.wch-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.wch-brand .wc-lockup { color: var(--wc-text-1); }
+
+.wch-brand-icon {
+    display: block;
+    align-self: center;
+    margin-inline-end: -4px;
+    image-rendering: pixelated;
+    border-radius: 2px;
+}
+
+.wch-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-inline-start: auto;
+}
+
+a.wc-chipbtn,
+a.wc-chipbtn:hover {
+    text-decoration: none;
+}
+
+/* The tool or option this page is showing. */
+.wc-chipbtn.wch-active {
+    border-color: var(--wc-accent);
+    color: var(--wc-accent);
+}
+
+.wch-actions { gap: 20px; }
+
+.wch-rule {
+    width: 1px;
+    height: 13px;
+    flex: none;
+    background: var(--wc-border-strong);
+}
+
+.wch-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 12.5px;
+}
+
+/* Two rows on phones: brand + theme on top, the three tools as equal buttons below.
+   Docs, Blog and GitHub stay reachable from the page body (the homepage's
+   Resources section, the blog itself, the overlay docs link). */
+@media (max-width: 720px) {
+    .wch-desk { display: none !important; }
+
+    .wch-tools {
+        order: 3;
+        width: 100%;
+        margin-inline-start: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .wch-tools .wc-chipbtn { justify-content: center; }
+}

@@ -2,6 +2,7 @@
 title: "New: Daily Check-In with Channel Points"
 date: 2026-03-05
 description: "Viewers can now check in daily using a Channel Point Reward. Track streaks, use response variables, or let AI generate a unique message for every check-in."
+tags: [sage]
 ---
 
 WildcatSage now supports **Daily Check-In** — a Channel Point Reward that lets viewers check in once per stream and track their streak.

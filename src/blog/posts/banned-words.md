@@ -2,6 +2,7 @@
 title: "New WildcatTTS Feature: Banned Words & Phrases"
 date: 2026-02-07
 description: "You can now configure a list of banned words and phrases for WildcatTTS. Any chat message containing a banned word or phrase will be silently skipped by TTS — filtered out."
+tags: [tts]
 ---
 
 You can now configure a list of banned words and phrases for WildcatTTS. Any chat message containing a banned word or phrase will be silently skipped by TTS — filtered out.

@@ -2,6 +2,7 @@
 title: "TTS Update: Speech 2.8 Turbo + Interjection Tags"
 date: 2026-03-06
 description: "WildcatTTS now uses Speech 2.8 Turbo for faster, more natural text-to-speech. Plus, you can add interjection tags like (laughs), (sighs), and more for lifelike delivery."
+tags: [tts]
 ---
 
 The WildcatTTS engine has been upgraded to **Speech 2.8 Turbo** (MiniMax via 302.ai), the latest generation of the MiniMax TTS model. This update also highlights **interjection tags** — a powerful feature for making your TTS messages sound more human.

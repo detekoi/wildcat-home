@@ -2,6 +2,7 @@
 title: "New: Cloud-Synced Chat Scene Creator & Expanded Theme Controls"
 date: 2026-08-02
 description: "Customize your chat overlay with the new Web Chat Scene Creator. Create and manage scenes, sync edits live to OBS browser sources, store up to 50 themes, export scene files, and automatically generate themes with a wider variety of styling options."
+tags: [overlay]
 ---
 
 The Wildcat Chat Overlay now features a web-based [Chat Scene Creator](https://wildcat.chat/chat-overlay/chat-scene-creator.html). You can build, customize, and manage your chat overlay OBS browser sources directly from your browser.

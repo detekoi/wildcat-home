@@ -1,17 +1,44 @@
 ---
-layout: base.njk
+layout: app.njk
+pageLabel: "Blog"
+activeLink: "blog"
+extraStyles:
+  - /styles/blog.css
 ---
-<link rel="stylesheet" href="/styles/blog.css">
+{%- set newer = collections.posts | getPreviousCollectionItem(page) %}
+{%- set older = collections.posts | getNextCollectionItem(page) %}
+<main id="main-content" class="wch-blog" tabindex="-1">
+    <article class="wch-article">
+        <div>
+            <a class="wc-chipbtn" href="/blog/"><i data-lucide="arrow-left"></i>All posts</a>
+        </div>
+        <header class="wch-article-head">
+            <time class="wc-readout" datetime="{{ date | isoDate }}">{{ date | readableDate }}</time>
+            <h1 class="wc-title wch-article-title">{{ title }}</h1>
+            {%- if description %}
+            <p class="wc-lede wch-article-lede">{{ description }}</p>
+            {%- endif %}
+        </header>
 
-<article class="blog-post">
-    <header class="post-header">
-        <h1 class="post-title">{{ title }}</h1>
-        <time class="post-date" datetime="{{ date | isoDate }}">{{ date | readableDate }}</time>
-        {% if description %}
-        <p class="post-description">{{ description }}</p>
-        {% endif %}
-    </header>
-    <div class="post-content">
-        {{ content | safe }}
-    </div>
-</article>
+        <div class="wch-body">
+            {{ content | safe }}
+        </div>
+
+        {%- if newer or older %}
+        <nav class="wch-more-posts" aria-label="More posts">
+            {%- if newer %}
+            <a class="wch-post wch-neighbor" href="{{ newer.url }}">
+                <span class="wc-readout">Newer</span>
+                <span class="wch-post-title">{{ newer.data.title }}</span>
+            </a>
+            {%- endif %}
+            {%- if older %}
+            <a class="wch-post wch-neighbor" href="{{ older.url }}">
+                <span class="wc-readout">Older</span>
+                <span class="wch-post-title">{{ older.data.title }}</span>
+            </a>
+            {%- endif %}
+        </nav>
+        {%- endif %}
+    </article>
+</main>

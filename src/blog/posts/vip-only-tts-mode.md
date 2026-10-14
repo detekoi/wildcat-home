@@ -2,6 +2,7 @@
 title: "New Feature: VIP-Only TTS Mode!"
 date: 2025-11-22
 description: "You can now restrict Text-to-Speech to VIPs (plus Mods & Broadcaster)! This is the perfect middle ground when 'Everyone' is too chaotic but 'Mods Only' is a bit too quiet."
+tags: [tts]
 ---
 
 Hey everyone! I've just rolled out a new feature for ChatVibes TTS audio.

@@ -1,0 +1,59 @@
+---
+layout: app.njk
+pageLabel: "Blog"
+activeLink: "blog"
+extraStyles:
+  - /styles/blog.css
+description: "Updates, announcements, and development notes from the Wildcat.chat platform."
+blogFilters:
+  - { id: "all", label: "All" }
+  - { id: "sage", label: "Sage" }
+  - { id: "tts", label: "TTS" }
+  - { id: "overlay", label: "Overlay" }
+  - { id: "platform", label: "Platform" }
+pagination:
+  data: blogFilters
+  size: 1
+  alias: filter
+permalink: "/blog/{% if filter.id != 'all' %}{{ filter.id }}/{% endif %}index.html"
+eleventyComputed:
+  title: "{% if filter.id == 'all' %}Blog{% else %}{{ filter.label }} posts{% endif %} - Wildcat.chat"
+---
+{#- One page per filter: /blog/ lists every post, /blog/<tag>/ lists the posts tagged
+    with that product. Each post's front matter sets one of the tags above. -#}
+<main id="main-content" class="wch-blog" tabindex="-1">
+    <section class="wch-blog-index" aria-labelledby="wch-blog-title">
+        <div class="wc-page-head">
+            <h1 id="wch-blog-title">Blog</h1>
+            <p>Platform updates, feature announcements, and development notes.</p>
+        </div>
+
+        <nav aria-label="Filter posts by product">
+            <ul class="nav nav-tabs wch-blog-tabs">
+                {%- for f in blogFilters %}
+                <li class="nav-item">
+                    <a class="nav-link{% if f.id == filter.id %} active{% endif %}" href="/blog/{% if f.id != 'all' %}{{ f.id }}/{% endif %}"{% if f.id == filter.id %} aria-current="page"{% endif %}>{{ f.label }}</a>
+                </li>
+                {%- endfor %}
+            </ul>
+        </nav>
+
+        <ol class="wch-post-list">
+            {%- for post in collections.posts %}
+            {%- if filter.id == 'all' or filter.id in post.data.tags %}
+            <li>
+                <a class="wch-post" href="{{ post.url }}">
+                    <time class="wc-readout wch-post-date" datetime="{{ post.date | isoDate }}">{{ post.date | readableDate }}</time>
+                    <span class="wch-post-text">
+                        <span class="wch-post-title">{{ post.data.title }}</span>
+                        {%- if post.data.description %}
+                        <span class="wch-post-desc">{{ post.data.description }}</span>
+                        {%- endif %}
+                    </span>
+                </a>
+            </li>
+            {%- endif %}
+            {%- endfor %}
+        </ol>
+    </section>
+</main>

@@ -2,6 +2,7 @@
 title: "WildcatSage Update: Dual-Model AI Architecture & GPT-5.6 Luna Integration"
 date: 2026-07-30
 description: "WildcatSage updates its 2-model architecture — pairing Gemini 3.5 Flash Lite for ~350ms background translations & emotes with GPT-5.6 Luna to make interactive chat, search, and games 2.6× faster and less slop-y."
+tags: [sage]
 ---
 
 I'm excited to announce a major upgrade to the intelligence engine behind **WildcatSage**. Today, WildcatSage updates its **Dual-Model AI Architecture** — retaining Google's ultra-fast **Gemini 3.5 Flash Lite** for background utilities while migrating all main interactive features from Gemini 3 Flash to OpenAI's latest **GPT-5.6 Luna** model.

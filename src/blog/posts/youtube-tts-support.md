@@ -2,6 +2,7 @@
 title: "New: YouTube Live Chat TTS Support for Multi-Streamers"
 date: 2026-05-17
 description: "WildcatTTS now natively supports reading YouTube Live chat aloud, perfect for broadcasters multistreaming to Twitch and YouTube simultaneously."
+tags: [tts]
 ---
 
 We're excited to announce that **YouTube Live Chat TTS** is now fully integrated into WildcatTTS! Following the success of our YouTube-compatible chat overlay, we've brought the same reliable integration directly to the text-to-speech engine.

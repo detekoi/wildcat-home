@@ -2,6 +2,7 @@
 title: "WildcatTTS: Emote Description Cache & Management"
 date: 2026-03-10
 description: "Emote descriptions are now permanently cached and moderators can view, regenerate, or manually set descriptions with the new !tts emote command."
+tags: [tts]
 ---
 
 Emote descriptions are now permanently cached so the bot doesn't need to re-generate them every time an emote appears. Moderators also get a new command to manage descriptions directly from chat.

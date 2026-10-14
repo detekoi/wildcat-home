@@ -2,6 +2,7 @@
 title: "Getting Started with WildcatTTS"
 date: 2026-08-31
 description: "A walkthrough for streamers setting up WildcatTTS for the first time: getting access, putting the audio in OBS, and choosing whether chat is read on command, all the time, or only for bits and channel points."
+tags: [tts]
 ---
 
 WildcatTTS reads your Twitch chat out loud on stream. This post walks through setting it up from nothing, and then through the three common ways streamers use it: reading only messages that start with `!tts`, reading every message, or reading only when someone spends bits or channel points.

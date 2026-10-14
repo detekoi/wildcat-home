@@ -2,6 +2,7 @@
 title: "Chat Overlay: New Home & Full Google Fonts Support"
 date: 2026-04-01
 description: "The Wildcat Chat Overlay has moved to wildcat.chat, and you can now pick any font from the Google Fonts catalog — over 1,900 options — including AI-generated themes that choose the perfect font for your vibe."
+tags: [overlay]
 ---
 
 Two big updates to the Wildcat Chat Overlay: it has a permanent new home, and font selection just got a whole lot more powerful.
