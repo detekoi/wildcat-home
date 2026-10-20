@@ -48,6 +48,10 @@
     --wc-btn-h-inline: 36px;
     --wc-control-h: 34px;
     --wc-aside-w: 292px;
+    --wc-page-w: 1140px;
+    /* Inline gutter of the app shell above phone width: the app bar, page head,
+       stat strip, tabs and settings shell all inset their content by it. */
+    --wc-gutter: 24px;
 
     /* Surfaces — light */
     --wc-bg: oklch(0.972 0.003 300);
@@ -919,7 +923,7 @@ a[target="_blank"].no-arrow::after {
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    padding: 12px 24px;
+    padding: 12px var(--wc-gutter);
     background: var(--wc-bg);
     border-bottom: 1px solid var(--wc-hairline);
 }
@@ -960,7 +964,7 @@ a[target="_blank"].no-arrow::after {
 .wc-appbar-actions > * { flex: none; }
 
 .wc-page-head {
-    padding: 26px 24px 0;
+    padding: 26px var(--wc-gutter) 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -986,12 +990,36 @@ a[target="_blank"].no-arrow::after {
 }
 
 .wc-main > .alert {
-    margin: 20px 24px 0;
+    margin: 20px var(--wc-gutter) 0;
+}
+
+/* An app page stops growing at --wc-page-w and centres. A setting row puts
+   its label at one edge of the column and its control at the other, so on a
+   wide screen an uncapped column left a 1400px gap between the two. At this
+   width the settings column is 760px. The page head and the app bar's
+   content line up with the capped column; the app bar's rule stays full
+   width. Only the settings pages of the two apps have a .wc-main. */
+/* Separate rules, not one list: a browser without :has() drops a whole
+   selector list it cannot parse, and the cap on .wc-main must survive. The
+   :where() keeps the app bar rule at the specificity of .wc-appbar, so the
+   phone-width padding in section 12, later in the file, still wins. */
+.wc-main {
+    max-inline-size: var(--wc-page-w);
+    margin-inline: auto;
+}
+
+.wc-page-head:has(~ .wc-main) {
+    max-inline-size: var(--wc-page-w);
+    margin-inline: auto;
+}
+
+.wc-appbar:where(:has(~ .wc-main)) {
+    padding-inline: max(var(--wc-gutter), calc((100% - var(--wc-page-w)) / 2 + var(--wc-gutter)));
 }
 
 /* Mono stat strip: unboxed columns. */
 .wc-stats {
-    margin: 20px 24px 0;
+    margin: 20px var(--wc-gutter) 0;
     display: flex;
     flex-wrap: wrap;
     gap: 12px 44px;
@@ -1037,7 +1065,7 @@ a[target="_blank"].no-arrow::after {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--wc-aside-w);
     gap: 40px;
-    padding: 22px 24px 44px;
+    padding: 22px var(--wc-gutter) 44px;
     align-items: start;
 }
 
@@ -1610,7 +1638,7 @@ a[target="_blank"].no-arrow::after {
    10. TABS
    ===================================================== */
 :root .nav-tabs {
-    margin: 22px 24px 0;
+    margin: 22px var(--wc-gutter) 0;
     gap: 0;
     border-bottom: 1px solid var(--wc-border);
 }
