@@ -48,6 +48,7 @@
     --wc-btn-h-inline: 36px;
     --wc-control-h: 34px;
     --wc-aside-w: 292px;
+    --wc-page-w: 1140px;
 
     /* Surfaces — light */
     --wc-bg: oklch(0.972 0.003 300);
@@ -987,6 +988,24 @@ a[target="_blank"].no-arrow::after {
 
 .wc-main > .alert {
     margin: 20px 24px 0;
+}
+
+/* An app page stops growing at --wc-page-w and centres. A setting row puts
+   its label at one edge of the column and its control at the other, so on a
+   wide screen an uncapped column left a 1400px gap between the two. At this
+   width the settings column is 760px. The page head and the app bar's
+   content line up with the capped column; the app bar's rule stays full
+   width. Only the settings pages of the two apps have a .wc-main. */
+.wc-main,
+.wc-page-head:has(+ .wc-main) {
+    max-inline-size: var(--wc-page-w);
+    margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+    .wc-appbar:has(~ .wc-main) {
+        padding-inline: max(24px, calc((100% - var(--wc-page-w)) / 2 + 24px));
+    }
 }
 
 /* Mono stat strip: unboxed columns. */
