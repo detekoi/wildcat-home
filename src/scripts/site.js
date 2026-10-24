@@ -42,6 +42,13 @@
         systemDark.addEventListener('change', (event) => {
             if (!readSavedTheme()) applyTheme(event.matches ? 'dark' : 'light');
         });
+
+        // Keep open tabs in sync when the visitor flips the theme in another tab.
+        window.addEventListener('storage', (event) => {
+            if (event.key === THEME_KEY && (event.newValue === 'light' || event.newValue === 'dark')) {
+                applyTheme(event.newValue);
+            }
+        });
     }
 
     // The static video is decoration. Reduced motion stops it; the CSS shows the
@@ -69,12 +76,7 @@
         const embedContainer = document.getElementById('kofi-embed-container');
         if (!dialog) return;
 
-        function open() {
-            if (typeof dialog.showModal === 'function') {
-                if (!dialog.open) dialog.showModal();
-            } else {
-                dialog.setAttribute('open', '');
-            }
+        function ensureEmbed() {
             if (embedContainer && !embedContainer.querySelector('iframe')) {
                 const iframe = document.createElement('iframe');
                 iframe.src = 'https://ko-fi.com/parfaitfair/?hidefeed=true&widget=true&embed=true';
@@ -83,6 +85,19 @@
                 embedContainer.appendChild(iframe);
             }
         }
+
+        function open() {
+            if (typeof dialog.showModal === 'function') {
+                if (!dialog.open) dialog.showModal();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+            ensureEmbed();
+        }
+
+        dialog.addEventListener('toggle', () => {
+            if (dialog.open) ensureEmbed();
+        });
 
         function close() {
             if (typeof dialog.close === 'function') {

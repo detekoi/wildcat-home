@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="text-scale" content="scale">
     <meta name="description" content="{{ description }}">
     <title>{{ title }}</title>
 
@@ -27,8 +29,13 @@
     <!-- Fonts: Archivo names things, Public Sans sets copy, DM Mono sets readouts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&family=Public+Sans:wght@400..700&family=DM+Mono:wght@400;500&display=swap">
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&family=Public+Sans:wght@400..700&family=DM+Mono:wght@400;500&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&family=Public+Sans:wght@400..700&family=DM+Mono:wght@400;500&display=swap">
+    </noscript>
 
     <!-- Stylesheets. design-system.css is vendored from wildcat-design-system
          (npm run sync:design-system); do not edit it here. site.css is the app layer
@@ -39,7 +46,7 @@
     {% endfor %}
 
     <!-- Icons (Downloaded local script) -->
-    <script src="/scripts/lucide.min.js"></script>
+    <script src="/scripts/lucide.min.js" defer></script>
 
     <!-- Analytics -->
     <script src="https://app.rybbit.io/api/script.js" data-site-id="a1de59b65a61" defer></script>

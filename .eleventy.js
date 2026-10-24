@@ -52,6 +52,7 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/favicon.ico");
     eleventyConfig.addPassthroughCopy("src/logo192.png");
     eleventyConfig.addPassthroughCopy("src/logo512.png");
+    eleventyConfig.addPassthroughCopy("src/logo-nav.webp");
     eleventyConfig.addPassthroughCopy("src/robots.txt");
 
     // chat.html is the OBS browser source. It must never get the site chrome, and its

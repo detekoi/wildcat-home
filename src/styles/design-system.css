@@ -36,6 +36,9 @@
    1. TOKENS
    ===================================================== */
 :root {
+    color-scheme: light dark;
+    interpolate-size: allow-keywords;
+
     /* Type */
     --wc-font-name: 'Archivo', system-ui, sans-serif;
     --wc-font-body: 'Public Sans', system-ui, sans-serif;
@@ -53,44 +56,82 @@
        stat strip, tabs and settings shell all inset their content by it. */
     --wc-gutter: 24px;
 
-    /* Surfaces — light */
+    /* Surfaces — light fallback + light-dark() */
     --wc-bg: oklch(0.972 0.003 300);
+    --wc-bg: light-dark(oklch(0.972 0.003 300), oklch(0.170 0.004 300));
     --wc-surface-1: oklch(1 0 0);
+    --wc-surface-1: light-dark(oklch(1 0 0), oklch(0.214 0.005 300));
     --wc-surface-2: oklch(0.955 0.004 300);
+    --wc-surface-2: light-dark(oklch(0.955 0.004 300), oklch(0.254 0.006 300));
     --wc-field: oklch(0.985 0.002 300);
+    --wc-field: light-dark(oklch(0.985 0.002 300), oklch(0.190 0.004 300));
     --wc-border: oklch(0.858 0.008 300);
+    --wc-border: light-dark(oklch(0.858 0.008 300), oklch(0.324 0.008 300));
     --wc-hairline: oklch(0.918 0.005 300);
+    --wc-hairline: light-dark(oklch(0.918 0.005 300), oklch(0.278 0.007 300));
     --wc-border-strong: oklch(0.636 0.008 300);
+    --wc-border-strong: light-dark(oklch(0.636 0.008 300), oklch(0.531 0.008 300));
     --wc-track: oklch(0.880 0.006 300);
+    --wc-track: light-dark(oklch(0.880 0.006 300), oklch(0.324 0.008 300));
 
-    /* Text and accent — light */
+    /* Text and accent — light fallback + light-dark() */
     --wc-text-1: oklch(0.205 0.006 300);
+    --wc-text-1: light-dark(oklch(0.205 0.006 300), oklch(0.940 0.004 300));
     --wc-text-2: oklch(0.430 0.008 300);
+    --wc-text-2: light-dark(oklch(0.430 0.008 300), oklch(0.720 0.006 300));
     --wc-text-3: oklch(0.537 0.010 300);
+    --wc-text-3: light-dark(oklch(0.537 0.010 300), oklch(0.630 0.007 300));
     --wc-accent: oklch(0.480 0.130 300);
+    --wc-accent: light-dark(oklch(0.480 0.130 300), oklch(0.665 0.105 300));
     --wc-accent-dim: oklch(0.760 0.070 300);
-    --wc-accent-soft: color-mix(in oklab, oklch(0.760 0.070 300) 55%, transparent);
+    --wc-accent-dim: light-dark(oklch(0.760 0.070 300), oklch(0.430 0.062 300));
+    --wc-accent-soft: color-mix(in oklab, var(--wc-accent-dim) 55%, transparent);
     --wc-on-accent: oklch(0.995 0.002 300);
+    --wc-on-accent: light-dark(oklch(0.995 0.002 300), oklch(0.170 0.004 300));
     --wc-ghost-shadow: oklch(0.780 0.010 300);
-    --wc-ghost-soft: color-mix(in oklab, oklch(0.780 0.010 300) 55%, transparent);
+    --wc-ghost-shadow: light-dark(oklch(0.780 0.010 300), oklch(0.470 0.008 300));
+    --wc-ghost-soft: color-mix(in oklab, var(--wc-ghost-shadow) 55%, transparent);
 
-    /* Status — light */
+    /* Status — light fallback + light-dark() */
     --wc-ok: oklch(0.520 0.110 155);
+    --wc-ok: light-dark(oklch(0.520 0.110 155), oklch(0.720 0.090 155));
     --wc-danger: oklch(0.520 0.150 25);
+    --wc-danger: light-dark(oklch(0.520 0.150 25), oklch(0.660 0.115 25));
     --wc-warning: oklch(0.520 0.130 65);
+    --wc-warning: light-dark(oklch(0.520 0.130 65), oklch(0.800 0.150 80));
     /* Text on a status-coloured surface (.text-bg-*). White clears AA on every
        light-theme status colour (5.2:1+); black does on the dark-theme ones (6.4:1+). */
     --wc-on-status: #fff;
+    --wc-on-status: light-dark(#fff, #000);
     --wc-danger-border: oklch(0.830 0.060 25);
+    --wc-danger-border: light-dark(oklch(0.830 0.060 25), oklch(0.400 0.070 25));
     --wc-danger-bg: oklch(0.960 0.020 25);
-    --wc-danger-soft: color-mix(in oklab, oklch(0.830 0.060 25) 55%, transparent);
+    --wc-danger-bg: light-dark(oklch(0.960 0.020 25), oklch(0.260 0.040 25));
+    --wc-danger-soft: color-mix(in oklab, var(--wc-danger-border) 55%, transparent);
 
     /* Login video dim */
     --wc-overlay: color-mix(in oklab, oklch(0.995 0.002 300) 84%, transparent);
+    --wc-overlay: light-dark(
+        color-mix(in oklab, oklch(0.995 0.002 300) 84%, transparent),
+        color-mix(in oklab, oklch(0.170 0.004 300) 88%, transparent)
+    );
 
     /* Toggle knob */
     --wc-knob-off: var(--wc-text-3);
     --wc-knob-on: var(--wc-on-accent);
+
+    /* Scrollbars */
+    --wc-scrollbar-thumb: var(--wc-border-strong);
+    --wc-scrollbar-track: transparent;
+
+    /* Shared platform icons (CSS mask tokens for zero-JS first paint) */
+    --wc-icon-bot: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 8V4H8'/><rect width='16' height='12' x='4' y='8' rx='2'/><path d='M2 14h2'/><path d='M20 14h2'/><path d='M15 13v2'/><path d='M9 13v2'/></svg>");
+    --wc-icon-chevron-down: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    --wc-icon-message-square: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z'/></svg>");
+    --wc-icon-mic: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 19v3'/><path d='M19 10v2a7 7 0 0 1-14 0v-2'/><rect x='9' y='2' width='6' height='13' rx='3'/></svg>");
+    --wc-icon-search: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m21 21-4.34-4.34'/><circle cx='11' cy='11' r='8'/></svg>");
+    --wc-icon-settings: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915'/><circle cx='12' cy='12' r='3'/></svg>");
+    --wc-icon-x: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6 6 18'/><path d='m6 6 12 12'/></svg>");
 
     /* ---- Legacy remap: existing custom.css follows the new palette ---- */
     --font-primary: var(--wc-font-body);
@@ -119,7 +160,13 @@
     --color-accent-grey: var(--wc-text-3);
 }
 
+[data-theme="light"] {
+    color-scheme: light;
+}
+
 [data-theme="dark"] {
+    color-scheme: dark;
+
     /* Surfaces — dark */
     --wc-bg: oklch(0.170 0.004 300);
     --wc-surface-1: oklch(0.214 0.005 300);
@@ -153,9 +200,21 @@
     --wc-overlay: color-mix(in oklab, oklch(0.170 0.004 300) 88%, transparent);
 }
 
+@media (prefers-contrast: more) {
+    :root {
+        --wc-scrollbar-thumb: CanvasText;
+    }
+}
+
 /* =====================================================
    2. BASE
    ===================================================== */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+        navigation: auto;
+    }
+}
+
 body {
     font-family: var(--wc-font-body);
     background-color: var(--wc-bg);
@@ -171,6 +230,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.01em;
     line-height: 1.05;
+    text-wrap: balance;
 }
 
 .wc-mono {
@@ -178,6 +238,43 @@ body {
     font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+}
+
+/* Pure-CSS mask icons for shared [data-lucide] elements when lucide.js is not loaded. */
+i[data-lucide="bot"]:empty { --_wc-icon: var(--wc-icon-bot); }
+i[data-lucide="chevron-down"]:empty { --_wc-icon: var(--wc-icon-chevron-down); }
+i[data-lucide="message-square"]:empty { --_wc-icon: var(--wc-icon-message-square); }
+i[data-lucide="mic"]:empty { --_wc-icon: var(--wc-icon-mic); }
+i[data-lucide="search"]:empty { --_wc-icon: var(--wc-icon-search); }
+i[data-lucide="settings"]:empty { --_wc-icon: var(--wc-icon-settings); }
+i[data-lucide="x"]:empty { --_wc-icon: var(--wc-icon-x); }
+
+i[data-lucide]:empty {
+    display: inline-block;
+    inline-size: 1em;
+    block-size: 1em;
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+    background-color: currentColor;
+    -webkit-mask: var(--_wc-icon) no-repeat center / contain;
+    mask: var(--_wc-icon) no-repeat center / contain;
+}
+
+@media (forced-colors: active) {
+    i[data-lucide]:empty {
+        forced-color-adjust: auto;
+        background-color: currentColor;
+    }
+}
+
+/* Prevent page scroll bleed under modal dialogs. */
+dialog:modal {
+    overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+    overflow: hidden;
+    overscroll-behavior: contain;
 }
 
 /* Anchors inside design-system components carry .wc-link so the legacy
@@ -199,6 +296,7 @@ body {
    currentColor mask so it inherits the link colour in both themes. */
 a[target="_blank"]::after {
     content: "";
+    content: "" / "";
     display: inline-block;
     width: 0.75em;
     height: 0.75em;
@@ -1091,10 +1189,17 @@ a[target="_blank"].no-arrow::after {
     max-height: calc(100dvh - 90px);
     overflow: hidden auto;
     scrollbar-width: thin;
+    scrollbar-color: var(--wc-scrollbar-thumb) var(--wc-scrollbar-track);
     padding-block: 4px 8px;
     padding-inline: 4px 8px;
     margin-block: -4px -8px;
     margin-inline: -4px -8px;
+}
+
+@supports not (scrollbar-color: auto) {
+    .wc-shell-aside::-webkit-scrollbar { width: 8px; height: 8px; }
+    .wc-shell-aside::-webkit-scrollbar-track { background: var(--wc-scrollbar-track); }
+    .wc-shell-aside::-webkit-scrollbar-thumb { background-color: var(--wc-scrollbar-thumb); border-radius: 9999px; }
 }
 
 @media (max-width: 991.98px) {
@@ -1392,7 +1497,8 @@ a[target="_blank"].no-arrow::after {
 
 /* Toggle — 44x24 rectangle, 2px radius, 18x18 knob. */
 :root .form-switch .form-check-input,
-:root .form-check-input[type="checkbox"][role="switch"] {
+:root .form-check-input[type="checkbox"][role="switch"],
+:root .form-check-input[type="checkbox"][switch] {
     appearance: none;
     -webkit-appearance: none;
     width: 44px;
@@ -1413,7 +1519,8 @@ a[target="_blank"].no-arrow::after {
 }
 
 :root .form-switch .form-check-input:checked,
-:root .form-check-input[type="checkbox"][role="switch"]:checked {
+:root .form-check-input[type="checkbox"][role="switch"]:checked,
+:root .form-check-input[type="checkbox"][switch]:checked {
     background-color: var(--wc-accent);
     border-color: var(--wc-accent);
     background-image: linear-gradient(var(--wc-knob-on), var(--wc-knob-on));
@@ -2300,7 +2407,7 @@ dialog.kofi-sheet::backdrop {
 
 /* Used by i18n.js for the live region that announces a language change and for the
    "(opens in a new tab)" hints it appends. */
-.visually-hidden {
+.visually-hidden:where(:not(:focus-within, :active)) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -2320,9 +2427,10 @@ body.cjk-language {
 /* The `hidden` attribute. Only the browser default hides these elements, and
    any author display rule beats it (.wc-loading is flex, .d-flex is flex
    !important). This rule matches the highest specificity used on display
-   rules and comes last, so `hidden` wins everywhere. */
-[hidden],
-:root [hidden],
-:root .wc-card [hidden] {
+   rules and comes last, so `hidden` wins everywhere while preserving
+   `hidden="until-found"` for native find-in-page indexing. */
+[hidden]:not([hidden="until-found"]),
+:root [hidden]:not([hidden="until-found"]),
+:root .wc-card [hidden]:not([hidden="until-found"]) {
     display: none !important;
 }

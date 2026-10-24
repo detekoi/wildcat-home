@@ -13,11 +13,13 @@
 }
 
 html {
-    -webkit-text-size-adjust: 100%;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
     /* Native controls and scrollbars follow the page theme. */
-    color-scheme: light;
+    color-scheme: light dark;
 }
 
+[data-theme="light"] { color-scheme: light; }
 [data-theme="dark"] { color-scheme: dark; }
 
 body {
@@ -26,6 +28,11 @@ body {
     background: var(--wc-bg);
     color: var(--wc-text-1);
     font-family: var(--wc-font-body);
+    font-size-adjust: from-font;
+}
+
+h1, h2, h3, h4, h5, h6, code, pre, .wc-mono {
+    font-size-adjust: from-font;
 }
 
 img {
@@ -111,6 +118,8 @@ body.wch-fill {
 
 .wch-brand-icon {
     display: block;
+    width: 22px;
+    height: 22px;
     align-self: center;
     margin-inline-end: -4px;
     image-rendering: pixelated;

@@ -6,16 +6,16 @@
 <header class="wc-appbar">
     <div class="wc-appbar-brand">
         <a class="wch-brand" href="/">
-            <img class="wch-brand-icon" src="/logo192.png" alt="" width="22" height="22">
+            <img class="wch-brand-icon" src="/logo-nav.webp" alt="" width="22" height="22" decoding="async">
             <span class="wc-lockup">Wildcat</span>
         </a>
         <span class="wc-sep" aria-hidden="true"></span>
         <span class="wc-appbar-page">{{ pageLabel }}</span>
     </div>
     <nav class="wch-tools" aria-label="Open a Wildcat tool">
-        <a class="wc-chipbtn" href="https://bot.wildcat.chat"><i data-lucide="bot"></i>Sage</a>
-        <a class="wc-chipbtn" href="https://tts.wildcat.chat"><i data-lucide="mic"></i>TTS</a>
-        <a class="wc-chipbtn{% if activeTool == 'overlay' %} wch-active{% endif %}" href="/chat-overlay/"{% if activeTool == 'overlay' %} aria-current="page"{% endif %}><i data-lucide="message-square"></i>Overlay</a>
+        <a class="wc-chipbtn" href="https://bot.wildcat.chat"><i data-lucide="bot" aria-hidden="true"></i>Sage</a>
+        <a class="wc-chipbtn" href="https://tts.wildcat.chat"><i data-lucide="mic" aria-hidden="true"></i>TTS</a>
+        <a class="wc-chipbtn{% if activeTool == 'overlay' %} wch-active{% endif %}" href="/chat-overlay/"{% if activeTool == 'overlay' %} aria-current="page"{% endif %}><i data-lucide="message-square" aria-hidden="true"></i>Overlay</a>
     </nav>
     <div class="wc-appbar-actions wch-actions">
         <span class="wch-rule wch-desk" aria-hidden="true"></span>

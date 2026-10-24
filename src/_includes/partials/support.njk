@@ -1,6 +1,6 @@
 <!-- Floating Support Widget -->
 <aside class="floating-support" aria-label="Support">
-    <button type="button" id="kofi-open" class="floating-support__btn" aria-haspopup="dialog">
+    <button type="button" id="kofi-open" class="floating-support__btn" aria-haspopup="dialog" commandfor="kofi-modal" command="show-modal">
         <span class="floating-support__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                 <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.797-.679.797s-.108 8.053.487 11.225c.605 3.22 3.197 3.518 3.197 3.518h7.986c5.77 0 6.64-5.26 6.64-5.26 1.83.003 3.633-.948 4.673-2.613 1.258-2.016 1.238-4.538.854-5.074zm-2.812 4.385c-.605.968-1.571 1.48-2.584 1.48v-6.38h2.083c.789 0 1.693.308 2.054 1.2.378.932.11 2.732-1.553 3.7zm-6.286-3.844c-.752.887-2.146 2.45-3.084 3.32-.234.218-.553.336-.87.336-.316 0-.636-.118-.87-.336-.938-.87-2.332-2.433-3.084-3.32-1.125-1.328-1.12-3.13.01-4.303 1.13-1.17 2.973-1.168 4.093.005l.006.006.006-.006c1.12-1.173 2.963-1.175 4.093-.005 1.13 1.173 1.135 3.175.01 4.303z"/>
@@ -11,10 +11,10 @@
 </aside>
 
 <!-- Ko-fi Donation Modal Dialog -->
-<dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title">
+<dialog id="kofi-modal" class="kofi-sheet" aria-labelledby="kofi-title" closedby="any">
     <div class="kofi-sheet__header">
         <h2 id="kofi-title" class="kofi-sheet__title">Support parfaitfair</h2>
-        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog"><i data-lucide="x"></i></button>
+        <button type="button" id="kofi-close" class="kofi-icon-btn" aria-label="Close support dialog" commandfor="kofi-modal" command="close"><i data-lucide="x" aria-hidden="true"></i></button>
     </div>
     <div class="kofi-sheet__body">
         <div id="kofi-embed-container" class="kofi-embed-container">
