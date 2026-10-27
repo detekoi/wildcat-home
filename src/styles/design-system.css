@@ -1365,6 +1365,52 @@ a[target="_blank"].no-arrow::after {
 
 :root .wc-card h6 strong { font-weight: 600; }
 
+/* A group header names a group inside a section: a mono caps title
+   (.wc-group-title) over an optional note (.wc-group-note). At the top of a
+   free-form block it sits above the block's content. As a row of a
+   .list-group it starts a group of rows: it drops the rule above it, and the
+   extra space above it divides the groups. */
+.wc-group-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 0 0 10px;
+}
+
+:root .wc-card .list-group-item.wc-group-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 0;
+    padding: 26px 0 10px;
+    border-top: 0;
+}
+
+:root .wc-card .list-group-item.wc-group-head:first-child {
+    padding-top: 14px;
+}
+
+/* :root .wc-card so the :root h3 face and a theme's .card-body p colour do
+   not win. */
+:root .wc-card .wc-group-title {
+    font-family: var(--wc-font-mono);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--wc-text-2);
+    margin: 0;
+}
+
+:root .wc-card .wc-group-note {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--wc-text-3);
+    margin: 0;
+}
+
 /* No card-in-card: nested cards become plain blocks. */
 :root .wc-card .card {
     padding: 0;
