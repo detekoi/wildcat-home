@@ -1743,8 +1743,15 @@ a[target="_blank"].no-arrow::after {
 
 /* =====================================================
    10. TABS
+   A .nav-tabs row is a list of tabs. In the apps it is a [role="tablist"]
+   of buttons that switch [role="tabpanel"] sections (wc-tabs.js). On the
+   homepage blog it is a row of links that scrolls sideways on a phone, so
+   the tablist rules below do not apply to it.
    ===================================================== */
 :root .nav-tabs {
+    display: flex;
+    padding-inline-start: 0;
+    list-style: none;
     margin: 22px var(--wc-gutter) 0;
     gap: 0;
     border-bottom: 1px solid var(--wc-border);
@@ -1752,6 +1759,8 @@ a[target="_blank"].no-arrow::after {
 
 @media (max-width: 767.98px) {
     :root .nav-tabs { margin: 18px 16px 0; }
+    /* On a phone a tab shows only its label, so more tabs fit on one row. */
+    :root .nav-tabs[role="tablist"] .nav-link > :is(i, svg) { display: none; }
 }
 
 :root .nav-tabs .nav-link {
@@ -1771,6 +1780,12 @@ a[target="_blank"].no-arrow::after {
     text-transform: uppercase;
 }
 
+:root .nav-tabs .nav-link > svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+}
+
 :root .nav-tabs .nav-link:hover {
     color: var(--wc-text-2);
     border-color: transparent transparent var(--wc-border-strong);
@@ -1780,6 +1795,24 @@ a[target="_blank"].no-arrow::after {
     background: transparent;
     border-bottom-color: var(--wc-accent);
     color: var(--wc-text-1);
+}
+
+/* Tabs that do not fit wrap to a second row. The underline of a tab covers
+   the rule under the row. */
+:root .nav-tabs[role="tablist"] {
+    flex-wrap: wrap;
+}
+
+:root .nav-tabs[role="tablist"] .nav-link {
+    margin-bottom: -1px;
+}
+
+/* A panel stacks its sections like .wc-shell-main does. A panel that is not
+   open carries [hidden], and the [hidden] rule at the end of this file hides it. */
+.wc-shell-main [role="tabpanel"] {
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
 }
 
 /* =====================================================
