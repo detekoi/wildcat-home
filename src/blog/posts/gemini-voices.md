@@ -5,13 +5,13 @@ description: "WildcatTTS now runs on Gemini TTS. There are more than 2,000 voice
 tags: [tts]
 ---
 
-WildcatTTS has a new speech engine. I've moved it from MiniMax to Google's Gemini TTS. I started looking for a replacement after the payment processors I can use seemed to drop 302.ai, which was how I paid for MiniMax. When I tested Gemini, it also sounded better, cost less, and started speaking in about half the time, so I made the move. This update changes more than the last few did, so here is what's different.
+WildcatTTS has a new speech engine. I've moved it from MiniMax to Google's Gemini TTS after more than 268,000 messages spoken on the old model. I started looking for a replacement when the payment processors I can use seemed to drop 302.ai, which was how I paid for MiniMax. When I tested Gemini, it also sounded better, cost less, and started speaking in about half the time, so I made the move. This update changes more than the last few did, so here is what's different.
 
 ## Your voice was moved for you
 
-None of the old voices exist on the new engine. That sounds worse than it is: every one of the 475 old voices has been matched to the closest new one, and the voice you picked (or the default your channel uses) was switched over automatically. You don't have to do anything.
+None of the old voices exist on the new engine. Don't be alarmed: every one of the 475 old voices has been matched to the closest new one, and the voice you picked (or the default your channel uses) was switched over automatically. You don't have to do anything, but you might want to configure a new voice that you like.
 
-It will not sound identical. I listened to the matches for the voices people use and replaced the ones that were off, like a British narrator who had turned into a West Country lawyer. A few character voices had no real twin. The pirate and the troll are now a normal voice with a style attached, which gets close. The husky metalhead I could not match at all, and I'm sorry to the user who picked him.
+It will not sound identical. I listened to the matches for the voices people use and replaced the ones that were off, like a British narrator who had turned into a West Country lawyer. A few character voices had no real twin. The pirate and the troll are now a normal voice with a style attached, which gets close. The husky metalhead I could not match very well, and I'm sorry to the user who picked him.
 
 If you don't like where you landed, there is a lot more to choose from now.
 
@@ -21,7 +21,7 @@ The old list had 475. The new one has 2,114.
 
 Thirty of them are studio voices that speak every language. The rest are a library of individual speakers, each with a language, an accent, and a one-line description such as "58-year-old storyteller from Egypt" or "42-year-old tech support agent from Germany."
 
-You can search those descriptions. In the [dashboard](https://tts.wildcat.chat/) or on your viewer settings page, open the voice list and type a few words, for example `german calm low` or `glasgow`. Every word has to match. There are filters for language, gender and pitch as well, and each voice has a play button. The samples are spoken in the voice's own language, so the Japanese voices ask "チャット、これマジ？" instead of struggling through English.
+You can search those descriptions. In the [dashboard](https://tts.wildcat.chat/) or on your viewer settings page, open the voice list and type a few words, for example `german calm low` or `glasgow`. Every word has to match. There are filters for language, gender and pitch as well, and each voice has a play button. The samples are spoken in the voice's own language, so the Japanese voices ask "チャット、これマジ？" instead of accented English.
 
 The full list, with the same search, is in the [voice docs](https://docs.wildcat.chat/tts-voices.html). In chat, `!tts voice <id>` still works, and the IDs look like `puck` or `en-gb-podcaster-1`.
 
