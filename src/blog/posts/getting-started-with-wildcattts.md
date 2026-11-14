@@ -102,15 +102,15 @@ The channel point reward works in every mode, so you can run All Messages or Com
 
 ## 5. Pick a Voice
 
-The **Voice Defaults** tab sets the voice your channel uses. There are 472 to choose from across 45 languages, each with a play button next to it so you can hear a sample before committing. The default is "Friendly_Person". Pitch, speed, and emotion are there too. Type something into the **Voice preview** card on the right and click **Send preview** to hear the result with your current settings; that preview plays in your browser, not through OBS.
+The **Voice Defaults** tab sets the voice your channel uses. There are 2,114 to choose from. Thirty are studio voices that speak every language, and the rest are individual speakers, each with a language, an accent, and a short description. Open the voice list and type a few words, such as `german calm low`, to search those descriptions. Each voice has a play button next to it so you can hear a sample before committing. The default is "Puck". Emotion is there too, or you can pick **Custom…** and write a speaking style in your own words. Pitch and speed are five steps each, from very slow to very fast and from very low to very high. Type something into the **Voice preview** card on the right and click **Send preview** to hear the result with your current settings; that preview plays in your browser, not through OBS.
 
 ![The Voice Defaults tab. Rows for Default Voice, Default Emotion set to Neutral, sliders for Default Pitch, Default Speed and Voice Volume each with a Reset button, and Default Language set to English.](/assets/images/tts-voice-defaults.png)
 
 ![The Default Voice picker open, listing voices such as English Expressive Narrator, English Radiant Girl and English Aussie Bloke, each with a purple play button to its right.](/assets/images/tts-voice-picker.png)
 
-Viewers can pick their own voice. Typing `!myvoice` in chat gives them a link to the viewer settings page with your channel loaded. There they can choose a voice, pitch, speed, and language that follows them across channels. They can also manage channel opt-outs on that page. If you'd rather everyone sound the same, turn off **Allow Viewer Voice Preferences**.
+Viewers can pick their own voice. Typing `!myvoice` in chat gives them a link to the viewer settings page with your channel loaded. There they can choose a voice, a speaking style, pitch, speed, and language that follows them across channels. They can also manage channel opt-outs on that page. If you'd rather everyone sound the same, turn off **Allow Viewer Voice Preferences**.
 
-If your chat isn't in English, set **Default Language** so the voice pronounces things properly. The bot reads the language you declared on Twitch and fills this in for you if you never touch it, and announcements come out in that language too. There's more on that in the [40 languages post](https://wildcat.chat/blog/posts/multilingual-tts/).
+If your chat isn't in English, set **Default Language**. The voice works out the language of most messages without help, and the setting is a hint for short or unclear text such as a number. The bot reads the language you declared on Twitch and fills this in for you if you never touch it, and announcements come out in that language too. There's more on that in the [40 languages post](https://wildcat.chat/blog/posts/multilingual-tts/).
 
 ## 6. Things That Are On by Default
 
