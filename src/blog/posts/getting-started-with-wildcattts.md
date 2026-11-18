@@ -1,11 +1,11 @@
 ---
 title: "Getting Started with WildcatTTS"
 date: 2026-08-31
-description: "A walkthrough for streamers setting up WildcatTTS for the first time: getting access, putting the audio in OBS, and choosing whether chat is read on command, all the time, or only for bits and channel points."
+description: "A walkthrough for streamers setting up WildcatTTS for the first time: getting access, putting the audio in OBS, and choosing whether chat is read on command, all the time, only when the bot picks a message, or only for bits and channel points."
 tags: [tts]
 ---
 
-WildcatTTS reads your Twitch chat out loud on stream. This post walks through setting it up from nothing, and then through the three common ways streamers use it: reading only messages that start with `!tts`, reading every message, or reading only when someone spends bits or channel points.
+WildcatTTS reads your Twitch chat out loud on stream. This post walks through setting it up from nothing, and then through the four common ways streamers use it: reading only messages that start with `!tts`, reading every message, letting the bot pick the few messages worth reading, or reading only when someone spends bits or channel points.
 
 You need a Twitch channel and OBS, or any streaming app with a browser source.
 
@@ -39,7 +39,7 @@ The bot does not play sound on its own. It sends audio to a small web page, and 
 
    ![The OBS Browser Source panel. At the top is the browser source URL with a Copy button beside it, then a red caution box with a Regenerate URL button, then three expandable setup steps: Add browser source, Control audio via OBS, and Monitor and output.](/assets/images/tts-obs-setup.png)
 
-2. In OBS, add a new **Browser** source and name it "WildcatTTS". Paste the URL. Width and height do not matter for audio, so the defaults are fine.
+2. In OBS, add a new **Browser** source and name it "WildcatTTS". Paste the URL. Width and height do not matter for audio, so the defaults are fine. Keep them at the default 800 by 600 or larger if you plan to use the Spotlight card described below, because the card is drawn inside this source.
 3. Tick **Control audio via OBS**. Make sure **Shutdown source when not visible** is *not* ticked, or TTS will go silent whenever you switch to a scene that doesn't contain the source.
 4. In the OBS audio mixer, find WildcatTTS, click the gear, and open **Advanced Audio Properties**. Set Audio Monitoring to **Monitor and Output**. That means both you and your stream hear it. "Monitor Only" is handy while testing.
 
@@ -49,7 +49,7 @@ If you ever think the URL has leaked, **Regenerate URL** in the same panel inval
 
 ## 4. Decide What Gets Read
 
-This is the main decision. The setting is **TTS Mode** in the **Broadcaster** tab, under "Engine & Mode". There are three options.
+This is the main decision. The setting is **TTS Mode** in the **Broadcaster** tab, under "Engine & Mode". Most channels use one of the four options below. A fifth, **Highlighted Messages**, reads only messages that viewers send with Twitch's "Highlight My Message" reward.
 
 ![Two rows from the Engine & Mode card. TTS Mode, "Choose which messages trigger TTS", is set to !tts Command Only. Below it, TTS Permission, "Who can use text-to-speech", is set to Everyone.](/assets/images/tts-mode-permission.png)
 
@@ -76,7 +76,25 @@ Cheers bypass this permission rule. Because the viewer spent bits, the bot reads
 
 ![The Cheers card. Its description reads "A cheer is paid for, so its message is read in every TTS Mode and is not limited by TTS Permission." It has an Announce Cheers toggle, a Read Cheer Messages toggle, and a Minimum Bits field set to 1.](/assets/images/tts-cheers.png)
 
-If chat gets busy, raising the permission level can be better than turning TTS off. Viewers who would rather not be read can opt out with `!tts ignore`. You can also encourage viewers to use `!myvoice` in chat. It sends them a link to a web page where they can choose a voice and manage channel opt-outs. Mods can add anyone to the ignore list with `!tts ignore add username`.
+If chat gets busy, raising the permission level can be better than turning TTS off. Spotlight, the next mode, is the other way to handle a busy chat. Viewers who would rather not be read can opt out with `!tts ignore`. You can also encourage viewers to use `!myvoice` in chat. It sends them a link to a web page where they can choose a voice and manage channel opt-outs. Mods can add anyone to the ignore list with `!tts ignore add username`.
+
+### Let the bot pick the messages
+
+Choose **Spotlight**. A small model reads chat as it comes in and picks the few messages worth saying out loud, such as a good joke or a real question for you. TTS reads only those, and each one starts with "Chat spotlight from" and the viewer's name. Most messages are never read, and a quiet stretch of greetings and emotes stays quiet.
+
+A message has to pass the same rules as in All Messages before it can be picked, so **TTS Permission**, the ignore list, and banned words all still apply. `!tts` messages are read as usual. Messages that start with any other `!` are left alone.
+
+Two things are different from the other modes. A pick is spoken about eight to ten seconds after the viewer typed it, because the bot has to see a few messages together before it can choose. And the mode only runs while your OBS browser source is open.
+
+When you choose Spotlight, a **Spotlight** card appears on the dashboard with three things in it:
+
+- **What to look for** is a box where you tell the bot what you like, in your own words. "Prefer questions about the game. Skip backseating." is the kind of thing that works. You can ask for more kinds of message, such as cute or silly ones, and you can rule kinds out. The bot never reads sexual or rude messages, personal data, or spam.
+- **Show a card in the browser source** puts the viewer's name and message on screen while a pick is read. The card sits in the bottom left corner of the browser source, so drag the source in OBS to where you want the card, keep it above your game and camera in the Sources list, and don't crop it. Refresh the source once after you turn the card on.
+- **Recent picks** lists the last 30 messages the bot chose, each with a short reason.
+
+![The Spotlight card on the dashboard. The What to look for box holds the text "anything silly, fun, opinionated, absurd, cute". The switch Show a card in the browser source is on. Recent picks lists five messages. Each one has the viewer name, the time, and a reason.](/assets/images/chat-spotlight-settings.png)
+
+The [Chat Spotlight post](https://wildcat.chat/blog/posts/chat-spotlight/) goes into more detail.
 
 ### Read only when someone spends bits or channel points
 
@@ -98,7 +116,7 @@ Whatever the viewer types into the redemption is what gets spoken. Links are blo
 
 ### Mixing them
 
-The channel point reward works in every mode, so you can run All Messages or Command Only and still have the reward. Cheer messages are read in every mode too, since someone paid for them. If you'd rather they weren't, switch off **Read Cheer Messages** in the **Cheers** card. In Bits/Points Only that switch is locked on, because reading cheers is what the mode is for.
+The channel point reward works in every mode, so you can run All Messages, Spotlight or Command Only and still have the reward. Cheer messages are read in every mode too, since someone paid for them. If you'd rather they weren't, switch off **Read Cheer Messages** in the **Cheers** card. In Bits/Points Only that switch is locked on, because reading cheers is what the mode is for.
 
 ## 5. Pick a Voice
 
@@ -129,6 +147,7 @@ About 70 chat acronyms are expanded before speaking, so `ngl` reads as "not gonn
 !tts on             turn it back on (mods)
 !tts mode all       enable all messages (mods)
 !tts mode command   enable only !tts messages (mods)
+!tts mode spotlight let the bot pick which messages to read (mods)
 !tts mode bits      enable only bits and channel points (mods)
 !tts stop           cut off whatever is playing right now
 !tts clear          drop everything waiting in the queue (mods)
@@ -146,7 +165,7 @@ Work through these in order. The first three cover most cases.
 1. Is the OBS browser source in your current scene, unmuted, and set to Monitor and Output?
 2. Type `!tts status` in chat. If the bot doesn't answer, it isn't in your channel yet. Check that **Service** at the top of the dashboard says Active, and type `/mod WildcatTTS` in chat to be safe.
 3. If it answers but says the engine is off, type `!tts on`.
-4. Check the mode. In Command Only, regular chat is meant to be silent. In Bits/Points Only, so are cheers below the minimum.
+4. Check the mode. In Command Only, regular chat is meant to be silent. In Spotlight, most of it is too, and a pick comes several seconds after the message. In Bits/Points Only, cheers below the minimum are silent as well.
 5. If you regenerated the browser source URL at some point, OBS still has the old one.
 
 The [full documentation](https://docs.wildcat.chat/wildcatttsdocs.html) has every command and setting, and the [troubleshooting section](https://docs.wildcat.chat/tts-troubleshooting.html#troubleshooting) covers the rarer cases. If you're stuck, [get in touch](https://parfaitfair.com/#contact).
