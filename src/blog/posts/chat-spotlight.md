@@ -76,6 +76,8 @@ Spotlight is slower than the other modes, because it has to read a few messages 
 
 If the model can't be reached, nothing is read for that stretch of chat. I chose silence over falling back to reading everything, since reading everything is what you turned this mode on to avoid.
 
+If a mod or a spam bot like Sery Bot deletes a message, or times out or bans the viewer who sent it, TTS won't read that message. If it's already being read, it stops. This works in every TTS mode. A deleted Spotlight pick can still show up under Recent picks on the dashboard, but it isn't spoken.
+
 ## What still works the same
 
 `!tts <message>` is still read. So are cheers, the Channel Points TTS reward, and event announcements, each under its own setting. YouTube chat is included if you have YouTube turned on.
@@ -83,8 +85,6 @@ If the model can't be reached, nothing is read for that stretch of chat. I chose
 ## What it doesn't do yet
 
 There is no limit on how often it speaks. The model decides, and in my testing it was conservative, but a very good chat could keep it busy. It also doesn't try to be fair between viewers, so a regular who is funny every night may get picked every night.
-
-And if a mod deletes a message after it was picked but before it was spoken, it is still read. That is true of every TTS mode right now, and I'd like to fix it for all of them.
 
 Chat messages are sent to Google's Gemini model for the picking, the same company that already turns them into speech. They are sent with storage turned off. The model does not get trained on your chat.
 
