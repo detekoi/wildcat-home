@@ -1,0 +1,23 @@
+---
+layout: app.njk
+extraStyles:
+  - /styles/blog.css
+---
+{#- A plain text page, such as a policy. It reuses the blog article styles. #}
+<main id="main-content" class="wch-blog" tabindex="-1">
+    <article class="wch-article">
+        <header class="wch-article-head">
+            {%- if updated %}
+            <p class="wc-readout">Updated <time datetime="{{ updated | isoDate }}">{{ updated | readableDate }}</time></p>
+            {%- endif %}
+            <h1 class="wc-title wch-article-title">{{ title }}</h1>
+            {%- if description %}
+            <p class="wc-lede wch-article-lede">{{ description }}</p>
+            {%- endif %}
+        </header>
+
+        <div class="wch-body">
+            {{ content | safe }}
+        </div>
+    </article>
+</main>
