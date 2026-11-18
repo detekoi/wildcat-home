@@ -16,7 +16,7 @@ Twitch Scheduler is a personal tool. It runs on one computer and has one user, t
 | See your calendar events | The tool reads the times of events on your primary calendar. If an event overlaps a stream, the tool removes or skips that stream. It reads the event name only to put it in the email to you. |
 | Make secondary calendars | The tool makes one calendar named Streams. It adds, changes, and deletes stream events on that calendar only. |
 | Send email for you | The tool sends the schedule email from your account to your own address. |
-| Read your email | The tool reads the replies in the schedule email thread that it started. It does not use other email. |
+| Read, compose, and send email, and change labels | The tool reads the replies in the schedule email thread that it started. After it reads a reply, it takes that reply out of your inbox and marks it read. It does not use or change other email. |
 | See your email address | The tool uses your address to send the email and to make sure that a reply came from you. |
 
 ## Where the data goes
